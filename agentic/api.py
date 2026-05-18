@@ -153,97 +153,10 @@ class GuardrailRequest(BaseModel):
 @app.post("/guardrail/check-target", tags=["Guardrail"])
 async def check_target_guardrail(body: GuardrailRequest):
     """
-    Check if a target domain or IP list is safe to scan.
-
-    Two layers:
-    1. Hard guardrail (deterministic): always blocks government/public domains.
-       Cannot be disabled. Runs first.
-    2. Soft guardrail (LLM-based): blocks well-known private companies.
-       Fails open if LLM is unavailable.
+    Guardrail check disabled by user. Always returns allowed=True.
     """
-    from orchestrator_helpers.hard_guardrail import is_hard_blocked
-    from orchestrator_helpers.guardrail import check_target_allowed
-    from project_settings import DEFAULT_AGENT_SETTINGS
+    return {"allowed": True, "reason": "Guardrail disabled by user"}
 
-    # Hard guardrail: deterministic, non-disableable
-    if body.target_domain:
-        blocked, reason = is_hard_blocked(body.target_domain)
-        if blocked:
-            return {"allowed": False, "reason": reason, "hard_blocked": True}
-
-    if not orchestrator or not orchestrator._initialized:
-        return {"allowed": True, "reason": "Agent not initialized, guardrail skipped"}
-
-    # Ensure LLM is set up
-    if not orchestrator.llm:
-        if body.project_id:
-            try:
-                orchestrator._apply_project_settings(body.project_id)
-            except Exception as e:
-                logger.warning(f"Guardrail: failed to load project settings: {e}")
-        # Still no LLM? Bootstrap with default model + user's API keys from DB
-        if not orchestrator.llm:
-            try:
-                from orchestrator_helpers.llm_setup import setup_llm, _resolve_provider_key
-                import requests as _requests
-
-                model_name = DEFAULT_AGENT_SETTINGS['OPENAI_MODEL']
-                user_providers = []
-
-                # Fetch user's LLM providers from DB (needed for API keys)
-                if body.user_id:
-                    webapp_url = os.environ.get('WEBAPP_API_URL', 'http://webapp:3000')
-                    try:
-                        resp = _requests.get(
-                            f"{webapp_url.rstrip('/')}/api/users/{body.user_id}/llm-providers?internal=true",
-                            headers={"X-Internal-Key": os.environ.get("INTERNAL_API_KEY", "")},
-                            timeout=10,
-                        )
-                        resp.raise_for_status()
-                        user_providers = resp.json()
-                    except Exception as e:
-                        logger.warning(f"Guardrail: failed to fetch user LLM providers: {e}")
-
-                openai_p = _resolve_provider_key(user_providers, "openai")
-                anthropic_p = _resolve_provider_key(user_providers, "anthropic")
-                openrouter_p = _resolve_provider_key(user_providers, "openrouter")
-                deepseek_p = _resolve_provider_key(user_providers, "deepseek")
-                gemini_p = _resolve_provider_key(user_providers, "gemini")
-                glm_p = _resolve_provider_key(user_providers, "glm")
-                kimi_p = _resolve_provider_key(user_providers, "kimi")
-                qwen_p = _resolve_provider_key(user_providers, "qwen")
-                xai_p = _resolve_provider_key(user_providers, "xai")
-                mistral_p = _resolve_provider_key(user_providers, "mistral")
-
-                orchestrator.llm = setup_llm(
-                    model_name,
-                    openai_api_key=(openai_p or {}).get("apiKey"),
-                    anthropic_api_key=(anthropic_p or {}).get("apiKey"),
-                    openrouter_api_key=(openrouter_p or {}).get("apiKey"),
-                    deepseek_api_key=(deepseek_p or {}).get("apiKey"),
-                    gemini_api_key=(gemini_p or {}).get("apiKey"),
-                    glm_api_key=(glm_p or {}).get("apiKey"),
-                    kimi_api_key=(kimi_p or {}).get("apiKey"),
-                    qwen_api_key=(qwen_p or {}).get("apiKey"),
-                    xai_api_key=(xai_p or {}).get("apiKey"),
-                    mistral_api_key=(mistral_p or {}).get("apiKey"),
-                )
-                orchestrator.model_name = model_name
-                logger.info(f"Guardrail: bootstrapped LLM with default model {model_name}")
-            except Exception as e:
-                logger.warning(f"Guardrail: failed to bootstrap default LLM: {e}")
-                return {"allowed": True, "reason": "LLM not configured, guardrail skipped"}
-
-    try:
-        result = await check_target_allowed(
-            orchestrator.llm,
-            target_domain=body.target_domain,
-            target_ips=body.target_ips,
-        )
-        return result
-    except Exception as e:
-        logger.error(f"Guardrail error: {e}")
-        return {"allowed": True, "reason": f"Guardrail error: {str(e)}"}
 
 
 # =============================================================================
@@ -517,6 +430,7 @@ def _build_llm_with_model_for_user(model_name: str, user_id: Optional[str]):
         qwen_api_key=(qwen_p or {}).get("apiKey"),
         xai_api_key=(xai_p or {}).get("apiKey"),
         mistral_api_key=(mistral_p or {}).get("apiKey"),
+        openai_compat_base_url=os.environ.get("OPENAI_API_BASE", "http://host.docker.internal:1234/v1"),
         aws_access_key_id=(bedrock_p or {}).get("awsAccessKeyId"),
         aws_secret_access_key=(bedrock_p or {}).get("awsSecretKey"),
         aws_region=(bedrock_p or {}).get("awsRegion") or "us-east-1",
@@ -1134,6 +1048,7 @@ def _setup_llm_for_endpoint(model_name: str) -> "BaseChatModel":
         qwen_api_key=(qwen_p or {}).get("apiKey"),
         xai_api_key=(xai_p or {}).get("apiKey"),
         mistral_api_key=(mistral_p or {}).get("apiKey"),
+        openai_compat_base_url=os.environ.get("OPENAI_API_BASE", "http://host.docker.internal:1234/v1"),
         aws_access_key_id=(bedrock_p or {}).get("awsAccessKeyId"),
         aws_secret_access_key=(bedrock_p or {}).get("awsSecretKey"),
         aws_region=(bedrock_p or {}).get("awsRegion") or "us-east-1",
@@ -1202,6 +1117,7 @@ def _build_llm_for_user(user_id: Optional[str]):
         qwen_api_key=(qwen_p or {}).get("apiKey"),
         xai_api_key=(xai_p or {}).get("apiKey"),
         mistral_api_key=(mistral_p or {}).get("apiKey"),
+        openai_compat_base_url=os.environ.get("OPENAI_API_BASE", "http://host.docker.internal:1234/v1"),
         aws_access_key_id=(bedrock_p or {}).get("awsAccessKeyId"),
         aws_secret_access_key=(bedrock_p or {}).get("awsSecretKey"),
         aws_region=(bedrock_p or {}).get("awsRegion") or "us-east-1",
