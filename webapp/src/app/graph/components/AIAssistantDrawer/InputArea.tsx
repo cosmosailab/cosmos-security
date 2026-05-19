@@ -1,58 +1,74 @@
-'use client'
+'use client';
 
-import React, { KeyboardEvent, useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Send, Loader2, Square, Play, Zap, X, Download, Upload } from 'lucide-react'
-import { useAlertModal } from '@/components/ui'
-import styles from './AIAssistantDrawer.module.css'
-import type { ActiveSkill } from './hooks/useSendHandlers'
+import React, {
+  KeyboardEvent,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
+import {
+  Send,
+  Loader2,
+  Square,
+  Play,
+  Zap,
+  X,
+  Download,
+  Upload,
+} from 'lucide-react';
+import { useAlertModal } from '@/components/ui';
+import styles from './AIAssistantDrawer.module.css';
+import type { ActiveSkill } from './hooks/useSendHandlers';
 
 interface ChatSkillSummary {
-  id: string
-  name: string
-  description: string | null
-  category: string
+  id: string;
+  name: string;
+  description: string | null;
+  category: string;
 }
 
 interface InputAreaProps {
-  inputRef: React.RefObject<HTMLTextAreaElement | null>
-  inputValue: string
-  handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
-  handleKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void
-  handleSend: () => void
-  handleStop: () => void
-  handleResume: () => void
-  isConnected: boolean
-  isLoading: boolean
-  isStopped: boolean
-  isStopping: boolean
-  awaitingApproval: boolean
-  awaitingQuestion: boolean
-  awaitingToolConfirmation: boolean
-  userId: string
-  setInputValue: (v: string) => void
-  activeSkill: ActiveSkill | null
-  setActiveSkill: (v: ActiveSkill | null) => void
-  onSkillActivate: (skillId: string, skillName?: string) => Promise<any>
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  inputValue: string;
+  handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  handleKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
+  handleSend: () => void;
+  handleStop: () => void;
+  handleResume: () => void;
+  isConnected: boolean;
+  isLoading: boolean;
+  isStopped: boolean;
+  isStopping: boolean;
+  awaitingApproval: boolean;
+  awaitingQuestion: boolean;
+  awaitingToolConfirmation: boolean;
+  userId: string;
+  setInputValue: (v: string) => void;
+  activeSkill: ActiveSkill | null;
+  setActiveSkill: (v: ActiveSkill | null) => void;
+  onSkillActivate: (skillId: string, skillName?: string) => Promise<any>;
   // Set to true when the user drags the native resize grip, so keystroke
   // auto-grow stops fighting the user's chosen height until next send.
-  userResizedRef: React.MutableRefObject<boolean>
+  userResizedRef: React.MutableRefObject<boolean>;
 }
 
 interface GroupedSkill {
-  category: string
-  skills: ChatSkillSummary[]
+  category: string;
+  skills: ChatSkillSummary[];
 }
 
 function groupByCategory(skills: ChatSkillSummary[]): GroupedSkill[] {
-  const map: Record<string, ChatSkillSummary[]> = {}
+  const map: Record<string, ChatSkillSummary[]> = {};
   for (const s of skills) {
-    const cat = s.category || 'general'
-    if (!map[cat]) map[cat] = []
-    map[cat].push(s)
+    const cat = s.category || 'general';
+    if (!map[cat]) map[cat] = [];
+    map[cat].push(s);
   }
   return Object.entries(map)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([category, skills]) => ({ category, skills }))
+    .map(([category, skills]) => ({ category, skills }));
 }
 
 export function InputArea({
@@ -77,217 +93,273 @@ export function InputArea({
   onSkillActivate,
   userResizedRef,
 }: InputAreaProps) {
-  const { alert: showAlert } = useAlertModal()
-  const [skills, setSkills] = useState<ChatSkillSummary[]>([])
-  const [skillsFetched, setSkillsFetched] = useState(false)
-  const [showSkillPicker, setShowSkillPicker] = useState(false)
-  const [showAutocomplete, setShowAutocomplete] = useState(false)
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [importing, setImporting] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const pickerRef = useRef<HTMLDivElement>(null)
+  const { alert: showAlert } = useAlertModal();
+  const [skills, setSkills] = useState<ChatSkillSummary[]>([]);
+  const [skillsFetched, setSkillsFetched] = useState(false);
+  const [showSkillPicker, setShowSkillPicker] = useState(false);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [importing, setImporting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   // Fetch skills on mount
   useEffect(() => {
-    if (!userId || skillsFetched) return
-    let cancelled = false
+    if (!userId || skillsFetched) return;
+    let cancelled = false;
     fetch(`/api/users/${userId}/chat-skills`)
-      .then((res: Response) => res.ok ? res.json() : [])
+      .then((res: Response) => (res.ok ? res.json() : []))
       .then((data: ChatSkillSummary[]) => {
         if (!cancelled) {
-          setSkills(data)
-          setSkillsFetched(true)
+          setSkills(data);
+          setSkillsFetched(true);
         }
       })
       .catch(() => {
-        if (!cancelled) setSkillsFetched(true)
-      })
-    return () => { cancelled = true }
-  }, [userId, skillsFetched])
+        if (!cancelled) setSkillsFetched(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, skillsFetched]);
 
   // Determine if autocomplete should show based on input -- works anywhere in text
-  const autocompleteMatch = useMemo((): { filter: string; start: number; end: number } | null => {
+  const autocompleteMatch = useMemo((): {
+    filter: string;
+    start: number;
+    end: number;
+  } | null => {
     // Find /s, /sk, /ski, /skil, /skill, or /skill <query> anywhere in the input
-    const match = inputValue.match(/\/s(k(i(l(l( +(\S*))?)?)?)?)?/i)
-    if (!match) return null
-    const fullStart = match.index!
-    const fullEnd = fullStart + match[0].length
+    const match = inputValue.match(/\/s(k(i(l(l( +(\S*))?)?)?)?)?/i);
+    if (!match) return null;
+    const fullStart = match.index!;
+    const fullEnd = fullStart + match[0].length;
     // If we have "/skill " with a space and query text, extract the filter
-    const skillMatch = inputValue.slice(fullStart).match(/^\/skill +(\S*)/i)
+    const skillMatch = inputValue.slice(fullStart).match(/^\/skill +(\S*)/i);
     if (skillMatch) {
-      return { filter: skillMatch[1].toLowerCase(), start: fullStart, end: fullEnd }
+      return {
+        filter: skillMatch[1].toLowerCase(),
+        start: fullStart,
+        end: fullEnd,
+      };
     }
     // Otherwise show all (we matched /s, /sk, etc.)
-    return { filter: '', start: fullStart, end: fullEnd }
-  }, [inputValue])
+    return { filter: '', start: fullStart, end: fullEnd };
+  }, [inputValue]);
 
-  const autocompleteFilter = autocompleteMatch?.filter ?? null
+  const autocompleteFilter = autocompleteMatch?.filter ?? null;
 
   // Show/hide autocomplete based on filter
   useEffect(() => {
     if (autocompleteFilter !== null) {
-      setShowAutocomplete(true)
-      setSelectedIndex(0)
+      setShowAutocomplete(true);
+      setSelectedIndex(0);
     } else {
-      setShowAutocomplete(false)
+      setShowAutocomplete(false);
     }
-  }, [autocompleteFilter])
+  }, [autocompleteFilter]);
 
   // Filtered and grouped skills for autocomplete
   const filteredSkills = useMemo(() => {
-    if (autocompleteFilter === null) return []
-    if (autocompleteFilter === '') return skills
-    return skills.filter((s: ChatSkillSummary) =>
-      s.name.toLowerCase().includes(autocompleteFilter) ||
-      s.category.toLowerCase().includes(autocompleteFilter)
-    )
-  }, [skills, autocompleteFilter])
+    if (autocompleteFilter === null) return [];
+    if (autocompleteFilter === '') return skills;
+    return skills.filter(
+      (s: ChatSkillSummary) =>
+        s.name.toLowerCase().includes(autocompleteFilter) ||
+        s.category.toLowerCase().includes(autocompleteFilter),
+    );
+  }, [skills, autocompleteFilter]);
 
-  const groupedFiltered = useMemo(() => groupByCategory(filteredSkills), [filteredSkills])
+  const groupedFiltered = useMemo(
+    () => groupByCategory(filteredSkills),
+    [filteredSkills],
+  );
 
   // Flat list for keyboard navigation
   const flatFiltered = useMemo((): ChatSkillSummary[] => {
-    const flat: ChatSkillSummary[] = []
+    const flat: ChatSkillSummary[] = [];
     for (const g of groupedFiltered) {
-      for (const s of g.skills) flat.push(s)
+      for (const s of g.skills) flat.push(s);
     }
-    return flat
-  }, [groupedFiltered])
+    return flat;
+  }, [groupedFiltered]);
 
   // Skills for the picker button (all, grouped)
-  const groupedAll = useMemo(() => groupByCategory(skills), [skills])
+  const groupedAll = useMemo(() => groupByCategory(skills), [skills]);
   const flatAll = useMemo((): ChatSkillSummary[] => {
-    const flat: ChatSkillSummary[] = []
+    const flat: ChatSkillSummary[] = [];
     for (const g of groupedAll) {
-      for (const s of g.skills) flat.push(s)
+      for (const s of g.skills) flat.push(s);
     }
-    return flat
-  }, [groupedAll])
+    return flat;
+  }, [groupedAll]);
 
   // Import from Community
   const handleImportCommunity = useCallback(async () => {
-    if (importing || !userId) return
-    setImporting(true)
+    if (importing || !userId) return;
+    setImporting(true);
     try {
-      const res = await fetch(`/api/users/${userId}/chat-skills/import-community`, { method: 'POST' })
+      const res = await fetch(
+        `/api/users/${userId}/chat-skills/import-community`,
+        { method: 'POST' },
+      );
       if (res.ok) {
-        const data = await res.json()
+        const data = await res.json();
         // Refresh skills list
-        setSkillsFetched(false)
-        showAlert(`Imported ${data.imported} skill${data.imported !== 1 ? 's' : ''}${data.skipped ? `, ${data.skipped} skipped (already exist)` : ''}`)
+        setSkillsFetched(false);
+        showAlert(
+          `Imported ${data.imported} skill${data.imported !== 1 ? 's' : ''}${data.skipped ? `, ${data.skipped} skipped (already exist)` : ''}`,
+        );
       }
-    } catch { /* silent */ }
-    setImporting(false)
-  }, [userId, importing])
+    } catch {
+      /* silent */
+    }
+    setImporting(false);
+  }, [userId, importing]);
 
   // Upload .md file
-  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !userId) return
-    setUploading(true)
-    const reader = new FileReader()
-    reader.onload = async () => {
-      const content = reader.result as string
-      const name = file.name.replace(/\.md$/i, '').replace(/_/g, ' ')
-      try {
-        const res = await fetch(`/api/users/${userId}/chat-skills`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, content, category: 'general' }),
-        })
-        if (res.ok) {
-          setSkillsFetched(false) // refresh
+  const handleFileUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !userId) return;
+      setUploading(true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const content = reader.result as string;
+        const name = file.name.replace(/\.md$/i, '').replace(/_/g, ' ');
+        try {
+          const res = await fetch(`/api/users/${userId}/chat-skills`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, content, category: 'general' }),
+          });
+          if (res.ok) {
+            setSkillsFetched(false); // refresh
+          }
+        } catch {
+          /* silent */
         }
-      } catch { /* silent */ }
-      setUploading(false)
-    }
-    reader.readAsText(file)
-    e.target.value = '' // reset for re-upload
-  }, [userId])
+        setUploading(false);
+      };
+      reader.readAsText(file);
+      e.target.value = ''; // reset for re-upload
+    },
+    [userId],
+  );
 
   // Select a skill: activate it, and remove the /skill... portion from input (keep surrounding text)
-  const selectSkill = useCallback((skill: ChatSkillSummary) => {
-    setShowAutocomplete(false)
-    setShowSkillPicker(false)
-    // If triggered from autocomplete mid-text, remove the /skill... token and keep the rest
-    if (autocompleteMatch && !showSkillPicker) {
-      const before = inputValue.slice(0, autocompleteMatch.start).trimEnd()
-      const after = inputValue.slice(autocompleteMatch.end).trimStart()
-      const remaining = [before, after].filter(Boolean).join(' ')
-      setInputValue(remaining)
-    } else {
-      setInputValue('')
-    }
-    onSkillActivate(skill.id, skill.name)
-    inputRef.current?.focus()
-  }, [inputRef, setInputValue, onSkillActivate, autocompleteMatch, inputValue, showSkillPicker])
+  const selectSkill = useCallback(
+    (skill: ChatSkillSummary) => {
+      setShowAutocomplete(false);
+      setShowSkillPicker(false);
+      // If triggered from autocomplete mid-text, remove the /skill... token and keep the rest
+      if (autocompleteMatch && !showSkillPicker) {
+        const before = inputValue.slice(0, autocompleteMatch.start).trimEnd();
+        const after = inputValue.slice(autocompleteMatch.end).trimStart();
+        const remaining = [before, after].filter(Boolean).join(' ');
+        setInputValue(remaining);
+      } else {
+        setInputValue('');
+      }
+      onSkillActivate(skill.id, skill.name);
+      inputRef.current?.focus();
+    },
+    [
+      inputRef,
+      setInputValue,
+      onSkillActivate,
+      autocompleteMatch,
+      inputValue,
+      showSkillPicker,
+    ],
+  );
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node
-      const insideDropdown = dropdownRef.current?.contains(target)
-      const insidePicker = pickerRef.current?.contains(target)
+      const target = e.target as Node;
+      const insideDropdown = dropdownRef.current?.contains(target);
+      const insidePicker = pickerRef.current?.contains(target);
       if (!insideDropdown && !insidePicker) {
-        setShowSkillPicker(false)
-        setShowAutocomplete(false)
+        setShowSkillPicker(false);
+        setShowAutocomplete(false);
       }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Keyboard handler that intercepts arrow keys and enter for autocomplete
-  const handleKeyDownInternal = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
-    const isDropdownOpen = showAutocomplete || showSkillPicker
-    const currentFlat = showSkillPicker ? flatAll : flatFiltered
+  const handleKeyDownInternal = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      const isDropdownOpen = showAutocomplete || showSkillPicker;
+      const currentFlat = showSkillPicker ? flatAll : flatFiltered;
 
-    if (isDropdownOpen && currentFlat.length > 0) {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setSelectedIndex((prev: number) => (prev + 1) % currentFlat.length)
-        return
+      if (isDropdownOpen && currentFlat.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setSelectedIndex((prev: number) => (prev + 1) % currentFlat.length);
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setSelectedIndex(
+            (prev: number) =>
+              (prev - 1 + currentFlat.length) % currentFlat.length,
+          );
+          return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          selectSkill(currentFlat[selectedIndex]);
+          return;
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          setShowAutocomplete(false);
+          setShowSkillPicker(false);
+          return;
+        }
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          selectSkill(currentFlat[selectedIndex]);
+          return;
+        }
       }
-      if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setSelectedIndex((prev: number) => (prev - 1 + currentFlat.length) % currentFlat.length)
-        return
-      }
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault()
-        selectSkill(currentFlat[selectedIndex])
-        return
-      }
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        setShowAutocomplete(false)
-        setShowSkillPicker(false)
-        return
-      }
-      if (e.key === 'Tab') {
-        e.preventDefault()
-        selectSkill(currentFlat[selectedIndex])
-        return
-      }
-    }
 
-    // Not intercepted, pass through to parent
-    parentHandleKeyDown(e)
-  }, [showAutocomplete, showSkillPicker, flatFiltered, flatAll, selectedIndex, selectSkill, parentHandleKeyDown])
+      // Not intercepted, pass through to parent
+      parentHandleKeyDown(e);
+    },
+    [
+      showAutocomplete,
+      showSkillPicker,
+      flatFiltered,
+      flatAll,
+      selectedIndex,
+      selectSkill,
+      parentHandleKeyDown,
+    ],
+  );
 
   // Scroll selected item into view
   useEffect(() => {
-    const container = dropdownRef.current || pickerRef.current
-    if (!container) return
-    const activeEl = container.querySelector(`.${styles.skillDropdownItemActive}`)
+    const container = dropdownRef.current || pickerRef.current;
+    if (!container) return;
+    const activeEl = container.querySelector(
+      `.${styles.skillDropdownItemActive}`,
+    );
     if (activeEl) {
-      activeEl.scrollIntoView({ block: 'nearest' })
+      activeEl.scrollIntoView({ block: 'nearest' });
     }
-  }, [selectedIndex])
+  }, [selectedIndex]);
 
-  const renderDropdownContent = (grouped: GroupedSkill[], flat: ChatSkillSummary[], showActions: boolean) => {
+  const renderDropdownContent = (
+    grouped: GroupedSkill[],
+    flat: ChatSkillSummary[],
+    showActions: boolean,
+  ) => {
     return (
       <>
         {/* Action buttons -- always visible at top */}
@@ -296,8 +368,8 @@ export function InputArea({
             <button
               className={styles.skillDropdownActionBtn}
               onMouseDown={(e: React.MouseEvent) => {
-                e.preventDefault()
-                handleImportCommunity()
+                e.preventDefault();
+                handleImportCommunity();
               }}
               disabled={importing}
             >
@@ -307,13 +379,13 @@ export function InputArea({
             <button
               className={styles.skillDropdownActionBtn}
               onMouseDown={(e: React.MouseEvent) => {
-                e.preventDefault()
-                fileInputRef.current?.click()
+                e.preventDefault();
+                fileInputRef.current?.click();
               }}
               disabled={uploading}
             >
               <Upload size={11} />
-              {uploading ? 'Uploading...' : 'Upload .md'}
+              {uploading ? '업로드 중...' : '.md 업로드'}
             </button>
           </div>
         )}
@@ -321,46 +393,58 @@ export function InputArea({
         {flat.length === 0 ? (
           <div className={styles.skillDropdownEmpty}>
             {skills.length === 0
-              ? 'No Chat Skills yet. Import from community or upload a .md file above.'
-              : 'No matching skills'}
+              ? '채팅 스킬이 없습니다. 커뮤니티에서 가져오거나 위에서 .md 파일을 업로드하세요.'
+              : '일치하는 스킬 없음'}
           </div>
         ) : (
           <>
             {(() => {
-              let globalIdx = 0
-              return grouped.map(group => (
+              let globalIdx = 0;
+              return grouped.map((group) => (
                 <div key={group.category}>
-                  <div className={styles.skillCategoryLabel}>{group.category}</div>
-                  {group.skills.map(skill => {
-                    const idx = globalIdx++
+                  <div className={styles.skillCategoryLabel}>
+                    {group.category}
+                  </div>
+                  {group.skills.map((skill) => {
+                    const idx = globalIdx++;
                     return (
                       <div
                         key={skill.id}
                         className={`${styles.skillDropdownItem} ${idx === selectedIndex ? styles.skillDropdownItemActive : ''}`}
                         onMouseDown={(e: React.MouseEvent) => {
-                          e.preventDefault()
-                          selectSkill(skill)
+                          e.preventDefault();
+                          selectSkill(skill);
                         }}
                         onMouseEnter={() => setSelectedIndex(idx)}
                       >
-                        <span className={styles.skillItemName}>{skill.name}</span>
-                        <span className={styles.skillCategoryBadge}>{skill.category}</span>
+                        <span className={styles.skillItemName}>
+                          {skill.name}
+                        </span>
+                        <span className={styles.skillCategoryBadge}>
+                          {skill.category}
+                        </span>
                       </div>
-                    )
+                    );
                   })}
                 </div>
-              ))
+              ));
             })()}
             <div className={styles.skillDropdownHint}>
-              <span><kbd>↑↓</kbd> navigate</span>
-              <span><kbd>Enter</kbd> select</span>
-              <span><kbd>Esc</kbd> close</span>
+              <span>
+                <kbd>↑↓</kbd> 탐색
+              </span>
+              <span>
+                <kbd>Enter</kbd> 선택
+              </span>
+              <span>
+                <kbd>Esc</kbd> 닫기
+              </span>
             </div>
           </>
         )}
       </>
-    )
-  }
+    );
+  };
 
   return (
     <div className={styles.inputContainer}>
@@ -377,7 +461,11 @@ export function InputArea({
 
         {showAutocomplete && !showSkillPicker && (
           <div className={styles.skillDropdown} ref={dropdownRef}>
-            {renderDropdownContent(groupedFiltered, flatFiltered, skills.length === 0)}
+            {renderDropdownContent(
+              groupedFiltered,
+              flatFiltered,
+              skills.length === 0,
+            )}
           </div>
         )}
 
@@ -391,13 +479,17 @@ export function InputArea({
         {activeSkill && (
           <div className={styles.activeSkillBadge}>
             <Zap size={11} />
-            <span className={styles.activeSkillBadgeName}>{activeSkill.name}</span>
-            <span className={styles.activeSkillBadgeCategory}>{activeSkill.category}</span>
+            <span className={styles.activeSkillBadgeName}>
+              {activeSkill.name}
+            </span>
+            <span className={styles.activeSkillBadgeCategory}>
+              {activeSkill.category}
+            </span>
             <button
               className={styles.activeSkillRemove}
               onClick={() => setActiveSkill(null)}
-              aria-label="Remove active skill"
-              title="Remove active skill"
+              aria-label="활성 스킬 제거"
+              title="활성 스킬 제거"
               type="button"
             >
               <X size={10} />
@@ -415,37 +507,46 @@ export function InputArea({
             onMouseDown={(e) => {
               // Native resize grip sits in the bottom-right corner (~16px).
               // Flag the ref so keystroke auto-grow stops overriding the user's drag.
-              const rect = e.currentTarget.getBoundingClientRect()
-              if (e.clientX >= rect.right - 16 && e.clientY >= rect.bottom - 16) {
-                userResizedRef.current = true
+              const rect = e.currentTarget.getBoundingClientRect();
+              if (
+                e.clientX >= rect.right - 16 &&
+                e.clientY >= rect.bottom - 16
+              ) {
+                userResizedRef.current = true;
               }
             }}
             placeholder={
               !isConnected
-                ? 'Connecting to agent...'
+                ? '에이전트에 연결 중...'
                 : awaitingApproval
-                ? 'Respond to the approval request above...'
-                : awaitingQuestion
-                ? 'Answer the question above...'
-                : isStopped
-                ? 'Agent stopped. Click resume to continue...'
-                : isLoading
-                ? 'Send guidance to the agent...'
-                : 'Ask a question or type /skill...'
+                  ? '위의 승인 요청에 응답하세요...'
+                  : awaitingQuestion
+                    ? '위의 질문에 답하세요...'
+                    : isStopped
+                      ? '에이전트 중지됨. 재개를 클릭하여 계속하세요...'
+                      : isLoading
+                        ? '에이전트에 지침을 보내세요...'
+                        : '질문하거나 /skill... 입력'
             }
             rows={2}
-            disabled={awaitingApproval || awaitingQuestion || awaitingToolConfirmation || !isConnected || isStopped}
+            disabled={
+              awaitingApproval ||
+              awaitingQuestion ||
+              awaitingToolConfirmation ||
+              !isConnected ||
+              isStopped
+            }
           />
           <div className={styles.inputActions}>
             <button
               className={styles.skillPickerButton}
               onClick={() => {
-                setShowSkillPicker((prev: boolean) => !prev)
-                setShowAutocomplete(false)
-                setSelectedIndex(0)
+                setShowSkillPicker((prev: boolean) => !prev);
+                setShowAutocomplete(false);
+                setSelectedIndex(0);
               }}
-              aria-label="Browse skills"
-              title="Browse Chat Skills"
+              aria-label="스킬 찾기"
+              title="채팅 스킬 찾기"
               type="button"
             >
               <Zap size={13} />
@@ -455,17 +556,42 @@ export function InputArea({
                 className={`${styles.stopResumeButton} ${isStopped ? styles.resumeButton : styles.stopButton}`}
                 onClick={isStopped ? handleResume : handleStop}
                 disabled={isStopping}
-                aria-label={isStopping ? 'Stopping...' : isStopped ? 'Resume agent' : 'Stop agent'}
-                title={isStopping ? 'Stopping...' : isStopped ? 'Resume execution' : 'Stop execution'}
+                aria-label={
+                  isStopping
+                    ? '정지 중...'
+                    : isStopped
+                      ? '에이전트 재개'
+                      : '에이전트 정지'
+                }
+                title={
+                  isStopping
+                    ? '정지 중...'
+                    : isStopped
+                      ? '실행 재개'
+                      : '실행 정지'
+                }
               >
-                {isStopping ? <Loader2 size={13} className={styles.spinner} /> : isStopped ? <Play size={13} /> : <Square size={13} />}
+                {isStopping ? (
+                  <Loader2 size={13} className={styles.spinner} />
+                ) : isStopped ? (
+                  <Play size={13} />
+                ) : (
+                  <Square size={13} />
+                )}
               </button>
             )}
             <button
               className={styles.sendButton}
               onClick={handleSend}
-              disabled={!inputValue.trim() || awaitingApproval || awaitingQuestion || awaitingToolConfirmation || !isConnected || isStopped}
-              aria-label="Send message"
+              disabled={
+                !inputValue.trim() ||
+                awaitingApproval ||
+                awaitingQuestion ||
+                awaitingToolConfirmation ||
+                !isConnected ||
+                isStopped
+              }
+              aria-label="메시지 전송"
             >
               <Send size={13} />
             </button>
@@ -475,10 +601,10 @@ export function InputArea({
       <span className={styles.inputHint}>
         {isConnected
           ? isLoading
-            ? 'Send guidance or stop the agent'
-            : 'Press Enter to send, Shift+Enter for new line'
-          : 'Waiting for connection...'}
+            ? '지침을 보내거나 에이전트를 중지하세요'
+            : 'Enter로 전송, Shift+Enter로 줄 바꿈'
+          : '연결 대기 중...'}
       </span>
     </div>
-  )
+  );
 }

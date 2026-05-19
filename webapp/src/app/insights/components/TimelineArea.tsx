@@ -15,7 +15,7 @@ interface TimelineAreaProps {
   dataKey?: string
 }
 
-export function TimelineArea({ data, isLoading, title = 'Findings Over Time', color = '#e53935', dataKey = 'count' }: TimelineAreaProps) {
+export function TimelineArea({ data, isLoading, title = '시간 경과에 따른 발견 사항', color = '#e53935', dataKey = 'count' }: TimelineAreaProps) {
   const { theme } = useTheme()
   const chrome = useMemo(() => getChartChrome(), [theme])
   const tooltipStyle = useMemo(() => getTooltipStyle(), [theme])
@@ -23,7 +23,7 @@ export function TimelineArea({ data, isLoading, title = 'Findings Over Time', co
   const tooltipLabelStyle = useMemo(() => getTooltipLabelStyle(), [theme])
 
   return (
-    <ChartCard title={title} subtitle={`${data?.length || 0} days`} isLoading={isLoading} isEmpty={!data?.length}>
+    <ChartCard title={title} subtitle={`${data?.length || 0}일간`} isLoading={isLoading} isEmpty={!data?.length}>
       <ResponsiveContainer width="100%" height={200}>
         <AreaChart data={data || []} margin={{ left: 0, right: 8, top: 8, bottom: 8 }}>
           <defs>

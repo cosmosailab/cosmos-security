@@ -47,7 +47,7 @@ export function ClusterNodeList({ cluster, onSelectChild }: ClusterNodeListProps
           {childType}
         </span>
         <span className={styles.countText}>
-          {children.length} node{children.length === 1 ? '' : 's'} in this cluster
+          이 클러스터에 {children.length}개의 노드가 있습니다.
         </span>
       </div>
 
@@ -56,7 +56,7 @@ export function ClusterNodeList({ cluster, onSelectChild }: ClusterNodeListProps
         <input
           className={styles.search}
           type="text"
-          placeholder="Filter..."
+          placeholder="필터..."
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
@@ -78,7 +78,7 @@ export function ClusterNodeList({ cluster, onSelectChild }: ClusterNodeListProps
           </button>
         ))}
         {filtered.length === 0 && (
-          <p className={styles.empty}>No nodes match the filter</p>
+          <p className={styles.empty}>필터와 일치하는 노드가 없습니다.</p>
         )}
       </div>
     </div>

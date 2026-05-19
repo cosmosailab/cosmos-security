@@ -14,19 +14,19 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    label: 'Projects',
+    label: '프로젝트',
     href: '/projects',
     icon: <FolderOpen size={16} />,
     enabled: true,
   },
   {
-    label: 'Graph Map',
+    label: '그래프 맵',
     href: '/graph',
     icon: <Network size={16} />,
     enabled: true,
   },
   {
-    label: 'Vulnerabilities',
+    label: '취약점',
     href: '/vulnerabilities',
     icon: <ShieldCheck size={16} />,
     enabled: false,
@@ -38,7 +38,7 @@ const navItems: NavItem[] = [
     enabled: false,
   },
   {
-    label: 'Actions Log',
+    label: '작업 로그',
     href: '/actions',
     icon: <ClipboardList size={16} />,
     enabled: false,
@@ -60,7 +60,7 @@ export function NavigationBar() {
                 <span className={`${styles.navItem} ${styles.navItemDisabled}`}>
                   <span className={styles.navIcon}>{item.icon}</span>
                   <span className={styles.navLabel}>{item.label}</span>
-                  <span className={styles.comingSoon}>Soon</span>
+                  <span className={styles.comingSoon}>준비 중</span>
                 </span>
               </li>
             )

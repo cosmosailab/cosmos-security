@@ -5,50 +5,50 @@
  * All state logic lives in hooks/; all JSX sections live in sub-components.
  */
 
-'use client'
+'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-import type { ActiveSkill } from './hooks/useSendHandlers'
-import styles from './AIAssistantDrawer.module.css'
+import { useState, useRef, useEffect, useCallback } from 'react';
+import type { ActiveSkill } from './hooks/useSendHandlers';
+import styles from './AIAssistantDrawer.module.css';
 
 // Hooks
-import { useLoadingWord } from './hooks/useLoadingWord'
-import { useChatState } from './hooks/useChatState'
-import { useInteractionState } from './hooks/useInteractionState'
-import { useScrollBehavior } from './hooks/useScrollBehavior'
-import { useAttackSkillData } from './hooks/useAttackSkillData'
-import { useApiKeyModal, API_KEY_INFO } from './hooks/useApiKeyModal'
-import { useModelPicker } from './hooks/useModelPicker'
-import { useSettingsModal } from './hooks/useSettingsModal'
-import { useWebSocketHandler } from './hooks/useWebSocketHandler'
-import { useConversationRestoration } from './hooks/useConversationRestoration'
-import { useSendHandlers } from './hooks/useSendHandlers'
-import { useDownloadMarkdown } from './hooks/useDownloadMarkdown'
+import { useLoadingWord } from './hooks/useLoadingWord';
+import { useChatState } from './hooks/useChatState';
+import { useInteractionState } from './hooks/useInteractionState';
+import { useScrollBehavior } from './hooks/useScrollBehavior';
+import { useAttackSkillData } from './hooks/useAttackSkillData';
+import { useApiKeyModal, API_KEY_INFO } from './hooks/useApiKeyModal';
+import { useModelPicker } from './hooks/useModelPicker';
+import { useSettingsModal } from './hooks/useSettingsModal';
+import { useWebSocketHandler } from './hooks/useWebSocketHandler';
+import { useConversationRestoration } from './hooks/useConversationRestoration';
+import { useSendHandlers } from './hooks/useSendHandlers';
+import { useDownloadMarkdown } from './hooks/useDownloadMarkdown';
 
 // External hooks
-import { useAgentWebSocket } from '@/hooks/useAgentWebSocket'
-import { useConversations } from '@/hooks/useConversations'
-import { useChatPersistence } from '@/hooks/useChatPersistence'
+import { useAgentWebSocket } from '@/hooks/useAgentWebSocket';
+import { useConversations } from '@/hooks/useConversations';
+import { useChatPersistence } from '@/hooks/useChatPersistence';
 
 // Sub-components
-import { DrawerHeader } from './DrawerHeader'
-import { PhaseIndicatorBar } from './PhaseIndicatorBar'
-import { SettingsModal } from './SettingsModal'
-import { ModelPickerModal } from './ModelPickerModal'
-import { ChatArea } from './ChatArea'
-import { ApprovalDialog } from './ApprovalDialog'
-import { QuestionDialog } from './QuestionDialog'
-import { InputArea } from './InputArea'
-import { ApiKeyModal } from './ApiKeyModal'
+import { DrawerHeader } from './DrawerHeader';
+import { PhaseIndicatorBar } from './PhaseIndicatorBar';
+import { SettingsModal } from './SettingsModal';
+import { ModelPickerModal } from './ModelPickerModal';
+import { ChatArea } from './ChatArea';
+import { ApprovalDialog } from './ApprovalDialog';
+import { QuestionDialog } from './QuestionDialog';
+import { InputArea } from './InputArea';
+import { ApiKeyModal } from './ApiKeyModal';
 
 // Types
-import type { AIAssistantDrawerProps } from './types'
+import type { AIAssistantDrawerProps } from './types';
 
 // Persisted drawer width (per-user via localStorage)
-const WIDTH_STORAGE_KEY = 'redamon-ai-assistant-drawer-width'
-const DEFAULT_WIDTH_PX = 672
-const MIN_WIDTH_PX = 360
-const MAX_WIDTH_PX = 1400
+const WIDTH_STORAGE_KEY = 'redamon-ai-assistant-drawer-width';
+const DEFAULT_WIDTH_PX = 672;
+const MIN_WIDTH_PX = 360;
+const MAX_WIDTH_PX = 1400;
 
 export function AIAssistantDrawer({
   isOpen,
@@ -74,75 +74,114 @@ export function AIAssistantDrawer({
   onOpenFileSystem,
 }: AIAssistantDrawerProps) {
   // ─── State hooks ─────────────────────────────────────────────────────────────
-  const [activeSkill, setActiveSkill] = useState<ActiveSkill | null>(null)
-  const statusWord = useLoadingWord()
+  const [activeSkill, setActiveSkill] = useState<ActiveSkill | null>(null);
+  const [autoAccept, setAutoAccept] = useState(false);
+  const autoAcceptRef = useRef(autoAccept);
+  useEffect(() => {
+    autoAcceptRef.current = autoAccept;
+  }, [autoAccept]);
+  const statusWord = useLoadingWord();
 
   const {
-    chatItems, setChatItems,
-    inputValue, setInputValue,
-    isLoading, setIsLoading,
-    isStopped, setIsStopped,
-    isStopping, setIsStopping,
-    currentPhase, setCurrentPhase,
-    attackPathType, setAttackPathType,
-    iterationCount, setIterationCount,
-    todoList, setTodoList,
+    chatItems,
+    setChatItems,
+    inputValue,
+    setInputValue,
+    isLoading,
+    setIsLoading,
+    isStopped,
+    setIsStopped,
+    isStopping,
+    setIsStopping,
+    currentPhase,
+    setCurrentPhase,
+    attackPathType,
+    setAttackPathType,
+    iterationCount,
+    setIterationCount,
+    todoList,
+    setTodoList,
     isRestoringConversation,
     itemIdCounter,
     groupedChatItems,
     resetChatState,
-  } = useChatState()
+  } = useChatState();
 
   const {
-    awaitingApproval, setAwaitingApproval,
-    approvalRequest, setApprovalRequest,
-    modificationText, setModificationText,
-    awaitingToolConfirmation, setAwaitingToolConfirmation,
+    awaitingApproval,
+    setAwaitingApproval,
+    approvalRequest,
+    setApprovalRequest,
+    modificationText,
+    setModificationText,
+    awaitingToolConfirmation,
+    setAwaitingToolConfirmation,
     setToolConfirmationRequest,
-    awaitingQuestion, setAwaitingQuestion,
-    questionRequest, setQuestionRequest,
-    answerText, setAnswerText,
-    selectedOptions, setSelectedOptions,
-    isProcessingApproval, awaitingApprovalRef,
-    isProcessingQuestion, awaitingQuestionRef,
-    isProcessingToolConfirmation, awaitingToolConfirmationRef,
-    pendingApprovalToolId, pendingApprovalWaveId,
+    awaitingQuestion,
+    setAwaitingQuestion,
+    questionRequest,
+    setQuestionRequest,
+    answerText,
+    setAnswerText,
+    selectedOptions,
+    setSelectedOptions,
+    isProcessingApproval,
+    awaitingApprovalRef,
+    isProcessingQuestion,
+    awaitingQuestionRef,
+    isProcessingToolConfirmation,
+    awaitingToolConfirmationRef,
+    pendingApprovalToolId,
+    pendingApprovalWaveId,
     resetInteractionState,
-  } = useInteractionState()
+  } = useInteractionState();
 
   const {
-    messagesEndRef, messagesContainerRef,
+    messagesEndRef,
+    messagesContainerRef,
     shouldAutoScroll,
-    scrollToBottom, checkIfAtBottom, resetScrollState,
-  } = useScrollBehavior(chatItems)
+    scrollToBottom,
+    checkIfAtBottom,
+    resetScrollState,
+  } = useScrollBehavior(chatItems);
 
-  const { skillData } = useAttackSkillData(userId, projectId)
+  const { skillData } = useAttackSkillData(userId, projectId);
 
   const {
     missingApiKeys,
     apiKeyModal,
-    apiKeyValue, setApiKeyValue,
-    apiKeyVisible, setApiKeyVisible,
+    apiKeyValue,
+    setApiKeyValue,
+    apiKeyVisible,
+    setApiKeyVisible,
     apiKeySaving,
-    openApiKeyModal, closeApiKeyModal, saveApiKey,
+    openApiKeyModal,
+    closeApiKeyModal,
+    saveApiKey,
     fetchApiKeyStatus,
-  } = useApiKeyModal(userId)
+  } = useApiKeyModal(userId);
 
   const {
-    showModelModal, setShowModelModal,
-    modelSearch, setModelSearch,
-    modelsLoading, modelsError,
+    showModelModal,
+    setShowModelModal,
+    modelSearch,
+    setModelSearch,
+    modelsLoading,
+    modelsError,
     filteredModels,
     handleSelectModel,
     modelSearchRef,
-  } = useModelPicker(userId, onModelChange)
+  } = useModelPicker(userId, onModelChange);
 
   const {
-    showSettingsDropdown, setShowSettingsDropdown,
-    settingsModal, setSettingsModal,
-    projectFormData, updateProjectField,
+    showSettingsDropdown,
+    setShowSettingsDropdown,
+    settingsModal,
+    setSettingsModal,
+    projectFormData,
+    updateProjectField,
     settingsDropdownRef,
-  } = useSettingsModal(projectId)
+  } = useSettingsModal(projectId);
 
   // ─── Conversation persistence ─────────────────────────────────────────────
   const {
@@ -151,17 +190,21 @@ export function AIAssistantDrawer({
     createConversation,
     deleteConversation,
     loadConversation,
-  } = useConversations(projectId, userId)
+  } = useConversations(projectId, userId);
 
   // ─── handleNewChat (cross-cutting — touches state from multiple hooks) ─────
   // Defined before useConversationRestoration via a stable ref pattern
-  const handleNewChatRef = useRef<() => void>(() => {})
-  const updateConvMetaRef = useRef<(updates: Record<string, any>) => Promise<void>>(async () => {})
+  const handleNewChatRef = useRef<() => void>(() => {});
+  const updateConvMetaRef = useRef<
+    (updates: Record<string, any>) => Promise<void>
+  >(async () => {});
 
   // ─── Conversation restoration ──────────────────────────────────────────────
   const {
-    conversationId, setConversationId,
-    showHistory, setShowHistory,
+    conversationId,
+    setConversationId,
+    showHistory,
+    setShowHistory,
     handleSelectConversation,
     handleHistoryNewChat,
     handleDeleteConversation,
@@ -194,49 +237,112 @@ export function AIAssistantDrawer({
     pendingApprovalToolId,
     pendingApprovalWaveId,
     setActiveSkill,
-    updateConvMeta: useCallback((updates: Record<string, any>) => updateConvMetaRef.current(updates), []),
+    updateConvMeta: useCallback(
+      (updates: Record<string, any>) => updateConvMetaRef.current(updates),
+      [],
+    ),
     handleNewChat: useCallback(() => handleNewChatRef.current(), []),
-  })
+  });
 
-  const { saveMessage, updateConversation: updateConvMeta } = useChatPersistence(conversationId)
+  const { saveMessage, updateConversation: updateConvMeta } =
+    useChatPersistence(conversationId);
 
   // Keep ref up-to-date for useConversationRestoration
-  useEffect(() => { updateConvMetaRef.current = updateConvMeta }, [updateConvMeta])
+  useEffect(() => {
+    updateConvMetaRef.current = updateConvMeta;
+  }, [updateConvMeta]);
 
   // Now that we have setConversationId and setShowHistory, define handleNewChat
   const handleNewChat = useCallback(() => {
-    resetChatState()
-    resetInteractionState()
-    resetScrollState()
-    setConversationId(null)
-    setShowHistory(false)
-    setActiveSkill(null)
-    onResetSession?.()
-  }, [resetChatState, resetInteractionState, resetScrollState, setConversationId, setShowHistory, setActiveSkill, onResetSession])
+    resetChatState();
+    resetInteractionState();
+    resetScrollState();
+    setConversationId(null);
+    setShowHistory(false);
+    setActiveSkill(null);
+    onResetSession?.();
+  }, [
+    resetChatState,
+    resetInteractionState,
+    resetScrollState,
+    setConversationId,
+    setShowHistory,
+    setActiveSkill,
+    onResetSession,
+  ]);
 
   // Keep ref up-to-date
-  useEffect(() => { handleNewChatRef.current = handleNewChat }, [handleNewChat])
+  useEffect(() => {
+    handleNewChatRef.current = handleNewChat;
+  }, [handleNewChat]);
 
   // ─── WebSocket ────────────────────────────────────────────────────────────
+  // Refs for send functions — filled after useAgentWebSocket returns
+  const sendToolConfirmationRef = useRef<
+    ((decision: 'approve' | 'reject') => void) | null
+  >(null);
+  const sendApprovalRef = useRef<
+    | ((
+        decision: 'approve' | 'modify' | 'abort',
+        modification?: string,
+      ) => void)
+    | null
+  >(null);
+  const sendFireteamMemberConfirmationRef = useRef<
+    | ((
+        fireteamId: string,
+        memberId: string,
+        decision: 'approve' | 'reject',
+      ) => void)
+    | null
+  >(null);
+
   const { handleWebSocketMessage } = useWebSocketHandler({
-    setChatItems, setIsLoading, setIsStopped, setIsStopping,
-    setCurrentPhase, setIterationCount, setAttackPathType, setTodoList,
-    todoList, itemIdCounter,
-    setAwaitingApproval, setApprovalRequest,
-    setAwaitingQuestion, setQuestionRequest,
-    setAwaitingToolConfirmation, setToolConfirmationRequest,
-    awaitingApprovalRef, isProcessingApproval,
-    awaitingQuestionRef, isProcessingQuestion,
-    awaitingToolConfirmationRef, isProcessingToolConfirmation,
-    pendingApprovalToolId, pendingApprovalWaveId,
+    setChatItems,
+    setIsLoading,
+    setIsStopped,
+    setIsStopping,
+    setCurrentPhase,
+    setIterationCount,
+    setAttackPathType,
+    setTodoList,
+    todoList,
+    itemIdCounter,
+    setAwaitingApproval,
+    setApprovalRequest,
+    setAwaitingQuestion,
+    setQuestionRequest,
+    setAwaitingToolConfirmation,
+    setToolConfirmationRequest,
+    awaitingApprovalRef,
+    isProcessingApproval,
+    awaitingQuestionRef,
+    isProcessingQuestion,
+    awaitingToolConfirmationRef,
+    isProcessingToolConfirmation,
+    pendingApprovalToolId,
+    pendingApprovalWaveId,
+    autoAcceptRef,
+    sendToolConfirmationRef,
+    sendApprovalRef,
+    sendFireteamMemberConfirmationRef,
     onGraphMutation: onRefetchGraph,
-  })
+  });
 
   const {
-    status, isConnected, reconnectAttempt,
-    sendQuery, sendGuidance, sendApproval, sendToolConfirmation,
+    status,
+    isConnected,
+    reconnectAttempt,
+    sendQuery,
+    sendGuidance,
+    sendApproval,
+    sendToolConfirmation,
     sendFireteamMemberConfirmation,
-    sendAnswer, sendSkillInject, sendStop, sendResume, sendToolStop,
+    sendAnswer,
+    sendSkillInject,
+    sendStop,
+    sendResume,
+    sendToolStop,
   } = useAgentWebSocket({
     userId,
     projectId,
@@ -244,7 +350,18 @@ export function AIAssistantDrawer({
     graphViewCypher,
     enabled: isOpen,
     onMessage: handleWebSocketMessage,
-  })
+  });
+
+  // Keep send refs up-to-date for auto-accept in the WS handler
+  useEffect(() => {
+    sendToolConfirmationRef.current = sendToolConfirmation;
+  }, [sendToolConfirmation]);
+  useEffect(() => {
+    sendApprovalRef.current = sendApproval;
+  }, [sendApproval]);
+  useEffect(() => {
+    sendFireteamMemberConfirmationRef.current = sendFireteamMemberConfirmation;
+  }, [sendFireteamMemberConfirmation]);
 
   // ─── Send handlers ────────────────────────────────────────────────────────
   const {
@@ -261,22 +378,59 @@ export function AIAssistantDrawer({
     activateSkill,
     userResizedRef,
   } = useSendHandlers({
-    inputValue, setInputValue,
-    isLoading, setIsLoading, setIsStopped, setIsStopping,
-    setChatItems, chatItems,
-    activeSkill, setActiveSkill,
-    awaitingApproval, setAwaitingApproval, setApprovalRequest, modificationText, setModificationText,
-    awaitingQuestion, setAwaitingQuestion, questionRequest, setQuestionRequest,
-    answerText, setAnswerText, selectedOptions, setSelectedOptions,
-    awaitingToolConfirmation, setAwaitingToolConfirmation, setToolConfirmationRequest,
-    isProcessingApproval, awaitingApprovalRef,
-    isProcessingQuestion, awaitingQuestionRef,
-    isProcessingToolConfirmation, awaitingToolConfirmationRef,
-    pendingApprovalToolId, pendingApprovalWaveId,
-    sendQuery, sendGuidance, sendSkillInject, sendApproval, sendToolConfirmation, sendFireteamMemberConfirmation, sendAnswer, sendStop, sendResume, sendToolStop,
-    conversationId, setConversationId, projectId, userId, sessionId,
-    createConversation, saveMessage, updateConvMeta,
-  })
+    inputValue,
+    setInputValue,
+    isLoading,
+    setIsLoading,
+    setIsStopped,
+    setIsStopping,
+    setChatItems,
+    chatItems,
+    activeSkill,
+    setActiveSkill,
+    awaitingApproval,
+    setAwaitingApproval,
+    setApprovalRequest,
+    modificationText,
+    setModificationText,
+    awaitingQuestion,
+    setAwaitingQuestion,
+    questionRequest,
+    setQuestionRequest,
+    answerText,
+    setAnswerText,
+    selectedOptions,
+    setSelectedOptions,
+    awaitingToolConfirmation,
+    setAwaitingToolConfirmation,
+    setToolConfirmationRequest,
+    isProcessingApproval,
+    awaitingApprovalRef,
+    isProcessingQuestion,
+    awaitingQuestionRef,
+    isProcessingToolConfirmation,
+    awaitingToolConfirmationRef,
+    pendingApprovalToolId,
+    pendingApprovalWaveId,
+    sendQuery,
+    sendGuidance,
+    sendSkillInject,
+    sendApproval,
+    sendToolConfirmation,
+    sendFireteamMemberConfirmation,
+    sendAnswer,
+    sendStop,
+    sendResume,
+    sendToolStop,
+    conversationId,
+    setConversationId,
+    projectId,
+    userId,
+    sessionId,
+    createConversation,
+    saveMessage,
+    updateConvMeta,
+  });
 
   // ─── Markdown download ────────────────────────────────────────────────────
   const { handleDownloadMarkdown } = useDownloadMarkdown({
@@ -285,84 +439,87 @@ export function AIAssistantDrawer({
     iterationCount,
     modelName: modelName ?? '',
     todoList,
-  })
+  });
 
   // ─── Side effects ─────────────────────────────────────────────────────────
   // Fetch API key status when connected
   useEffect(() => {
-    if (isConnected) fetchApiKeyStatus()
-  }, [isConnected, fetchApiKeyStatus])
+    if (isConnected) fetchApiKeyStatus();
+  }, [isConnected, fetchApiKeyStatus]);
 
   // Focus input + force scroll when drawer opens
   useEffect(() => {
     if (isOpen && inputRef.current && !awaitingApproval) {
       setTimeout(() => {
-        inputRef.current?.focus()
-        scrollToBottom(true)
-      }, 300)
+        inputRef.current?.focus();
+        scrollToBottom(true);
+      }, 300);
     }
-  }, [isOpen, awaitingApproval, scrollToBottom, inputRef])
+  }, [isOpen, awaitingApproval, scrollToBottom, inputRef]);
 
   // Reset state when session changes (skip when restoring a conversation)
   useEffect(() => {
     if (isRestoringConversation.current) {
-      isRestoringConversation.current = false
-      return
+      isRestoringConversation.current = false;
+      return;
     }
-    resetChatState()
-    resetInteractionState()
-    resetScrollState()
-    setConversationId(null)
-    setActiveSkill(null)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId])
+    resetChatState();
+    resetInteractionState();
+    resetScrollState();
+    setConversationId(null);
+    setActiveSkill(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
   // ─── Drawer width (persisted per-user, drag handle on left edge) ───────────
   const [drawerWidth, setDrawerWidth] = useState<number>(() => {
-    if (typeof window === 'undefined') return DEFAULT_WIDTH_PX
-    const raw = window.localStorage.getItem(WIDTH_STORAGE_KEY)
-    if (!raw) return DEFAULT_WIDTH_PX
-    const n = parseInt(raw, 10)
-    if (!Number.isFinite(n)) return DEFAULT_WIDTH_PX
-    return Math.min(Math.max(n, MIN_WIDTH_PX), MAX_WIDTH_PX)
-  })
-  const [isResizing, setIsResizing] = useState(false)
-  const lastWidthRef = useRef<number>(drawerWidth)
+    if (typeof window === 'undefined') return DEFAULT_WIDTH_PX;
+    const raw = window.localStorage.getItem(WIDTH_STORAGE_KEY);
+    if (!raw) return DEFAULT_WIDTH_PX;
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n)) return DEFAULT_WIDTH_PX;
+    return Math.min(Math.max(n, MIN_WIDTH_PX), MAX_WIDTH_PX);
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const lastWidthRef = useRef<number>(drawerWidth);
 
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    setIsResizing(true)
-  }, [])
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
 
   useEffect(() => {
-    if (!isResizing) return
+    if (!isResizing) return;
     const handleMouseMove = (e: MouseEvent) => {
-      const raw = window.innerWidth - e.clientX
-      const clamped = Math.min(Math.max(raw, MIN_WIDTH_PX), MAX_WIDTH_PX)
-      lastWidthRef.current = clamped
-      setDrawerWidth(clamped)
-    }
+      const raw = window.innerWidth - e.clientX;
+      const clamped = Math.min(Math.max(raw, MIN_WIDTH_PX), MAX_WIDTH_PX);
+      lastWidthRef.current = clamped;
+      setDrawerWidth(clamped);
+    };
     const handleMouseUp = () => {
-      setIsResizing(false)
+      setIsResizing(false);
       try {
-        window.localStorage.setItem(WIDTH_STORAGE_KEY, String(Math.round(lastWidthRef.current)))
+        window.localStorage.setItem(
+          WIDTH_STORAGE_KEY,
+          String(Math.round(lastWidthRef.current)),
+        );
       } catch {
         // localStorage unavailable — width still applies for the session.
       }
-    }
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-    const prevUserSelect = document.body.style.userSelect
-    const prevCursor = document.body.style.cursor
-    document.body.style.userSelect = 'none'
-    document.body.style.cursor = 'col-resize'
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    const prevUserSelect = document.body.style.userSelect;
+    const prevCursor = document.body.style.cursor;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-      document.body.style.userSelect = prevUserSelect
-      document.body.style.cursor = prevCursor
-    }
-  }, [isResizing])
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = prevUserSelect;
+      document.body.style.cursor = prevCursor;
+    };
+  }, [isResizing]);
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -377,7 +534,7 @@ export function AIAssistantDrawer({
           onMouseDown={handleResizeStart}
           role="separator"
           aria-orientation="vertical"
-          aria-label="Resize drawer"
+          aria-label="서랍 크기 조정"
         />
       )}
       <DrawerHeader
@@ -411,6 +568,8 @@ export function AIAssistantDrawer({
         onToggleStealth={onToggleStealth}
         deepThinkEnabled={deepThinkEnabled}
         onToggleDeepThink={onToggleDeepThink}
+        autoAccept={autoAccept}
+        onToggleAutoAccept={setAutoAccept}
         settingsDropdownRef={settingsDropdownRef}
         showSettingsDropdown={showSettingsDropdown}
         setShowSettingsDropdown={setShowSettingsDropdown}
@@ -512,5 +671,5 @@ export function AIAssistantDrawer({
         saveApiKey={saveApiKey}
       />
     </div>
-  )
+  );
 }

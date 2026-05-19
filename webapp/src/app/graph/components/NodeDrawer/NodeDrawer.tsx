@@ -75,7 +75,7 @@ export function NodeDrawer({
     ? isCluster
       ? expandedChild
         ? `${expandedChild.type}: ${expandedChild.name}`
-        : `Cluster: ${node.clusterChildType ?? ''}`
+        : `클러스터: ${node.clusterChildType ?? ''}`
       : `${node.type}: ${node.name}`
     : undefined
 
@@ -102,26 +102,26 @@ export function NodeDrawer({
               onClick={onCollapseChild}
             >
               <ArrowLeft size={14} />
-              Back to list
+              목록으로 돌아가기
             </button>
           )}
 
           <div className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h3 className={styles.sectionTitleBasicInfo}>Basic Info</h3>
+              <h3 className={styles.sectionTitleBasicInfo}>기본 정보</h3>
               {displayNode.type !== 'Domain' && displayNode.type !== 'Subdomain' && onDeleteNode && (
                 <button
                   className={styles.deleteButton}
                   onClick={handleDeleteClick}
                   disabled={isDeleting}
-                  title="Delete node"
+                  title="노드 삭제"
                 >
                   {isDeleting ? '...' : '\uD83D\uDDD1'}
                 </button>
               )}
             </div>
             <div className={styles.propertyRow}>
-              <span className={styles.propertyKey}>Type</span>
+              <span className={styles.propertyKey}>유형</span>
               <span
                 className={styles.propertyBadge}
                 style={{ backgroundColor: getNodeColor(displayNode) }}
@@ -134,7 +134,7 @@ export function NodeDrawer({
               <span className={styles.propertyValue}>{displayNode.id}</span>
             </div>
             <div className={styles.propertyRow}>
-              <span className={styles.propertyKey}>Name</span>
+              <span className={styles.propertyKey}>이름</span>
               <span className={styles.propertyValue}>
                 {(() => {
                   const url = getNodeUrl(displayNode)
@@ -147,7 +147,7 @@ export function NodeDrawer({
           </div>
 
           <div className={styles.section}>
-            <h3 className={styles.sectionTitleProperties}>Properties</h3>
+            <h3 className={styles.sectionTitleProperties}>속성</h3>
             {sortedProperties.map(([key, value]) => {
               const nodeUrl = key === 'name' ? getNodeUrl(displayNode) : null
               return (
@@ -162,7 +162,7 @@ export function NodeDrawer({
               )
             })}
             {sortedProperties.length === 0 && (
-              <p className={styles.emptyProperties}>No additional properties</p>
+              <p className={styles.emptyProperties}>추가 속성 없음</p>
             )}
           </div>
 
@@ -173,28 +173,26 @@ export function NodeDrawer({
                 <div className={styles.confirmIcon}>
                   <AlertTriangle size={28} />
                 </div>
-                <h4 className={styles.confirmTitle}>Delete Node</h4>
+                <h4 className={styles.confirmTitle}>노드 삭제</h4>
                 <p className={styles.confirmText}>
-                  Deleting <strong>{displayNode.type}: {displayNode.name}</strong> will permanently remove
-                  this node and all its relationships from the graph.
+                  <strong>{displayNode.type}: {displayNode.name}</strong>을(를) 삭제하면 해당 노드와 그래프상의 모든 관계가 영구적으로 제거됩니다.
                 </p>
                 <p className={styles.confirmWarning}>
-                  This may break the connectivity of the graph and affect
-                  the agent&apos;s ability to interpret the attack chain context.
+                  이 작업은 그래프의 연결성을 깨뜨릴 수 있으며 에이전트가 공격 체인 컨텍스트를 해석하는 능력에 영향을 줄 수 있습니다.
                 </p>
                 <div className={styles.confirmActions}>
                   <button
                     className={styles.confirmCancelBtn}
                     onClick={handleDeleteCancel}
                   >
-                    Cancel
+                    취소
                   </button>
                   <button
                     className={styles.confirmDeleteBtn}
                     onClick={handleDeleteConfirm}
                     disabled={isDeleting}
                   >
-                    {isDeleting ? 'Deleting...' : 'Delete'}
+                    {isDeleting ? '삭제 중...' : '삭제'}
                   </button>
                 </div>
               </div>

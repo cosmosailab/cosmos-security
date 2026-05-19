@@ -1,36 +1,46 @@
-'use client'
+'use client';
 
-import { Play, Pause, Square, Terminal, Download, Loader2, Github, Search, AlertTriangle } from 'lucide-react'
-import Link from 'next/link'
-import { Modal } from '@/components/ui'
-import type { GithubHuntStatus, TrufflehogStatus } from '@/lib/recon-types'
-import styles from './OtherScansModal.module.css'
+import {
+  Play,
+  Pause,
+  Square,
+  Terminal,
+  Download,
+  Loader2,
+  Github,
+  Search,
+  AlertTriangle,
+} from 'lucide-react';
+import Link from 'next/link';
+import { Modal } from '@/components/ui';
+import type { GithubHuntStatus, TrufflehogStatus } from '@/lib/recon-types';
+import styles from './OtherScansModal.module.css';
 
 interface OtherScansModalProps {
-  isOpen: boolean
-  onClose: () => void
-  hasReconData: boolean
-  hasGithubToken: boolean
+  isOpen: boolean;
+  onClose: () => void;
+  hasReconData: boolean;
+  hasGithubToken: boolean;
   // GitHub Hunt
-  onStartGithubHunt?: () => void
-  onPauseGithubHunt?: () => void
-  onResumeGithubHunt?: () => void
-  onStopGithubHunt?: () => void
-  onDownloadGithubHuntJSON?: () => void
-  onToggleGithubHuntLogs?: () => void
-  githubHuntStatus?: GithubHuntStatus
-  hasGithubHuntData?: boolean
-  isGithubHuntLogsOpen?: boolean
+  onStartGithubHunt?: () => void;
+  onPauseGithubHunt?: () => void;
+  onResumeGithubHunt?: () => void;
+  onStopGithubHunt?: () => void;
+  onDownloadGithubHuntJSON?: () => void;
+  onToggleGithubHuntLogs?: () => void;
+  githubHuntStatus?: GithubHuntStatus;
+  hasGithubHuntData?: boolean;
+  isGithubHuntLogsOpen?: boolean;
   // TruffleHog
-  onStartTrufflehog?: () => void
-  onPauseTrufflehog?: () => void
-  onResumeTrufflehog?: () => void
-  onStopTrufflehog?: () => void
-  onDownloadTrufflehogJSON?: () => void
-  onToggleTrufflehogLogs?: () => void
-  trufflehogStatus?: TrufflehogStatus
-  hasTrufflehogData?: boolean
-  isTrufflehogLogsOpen?: boolean
+  onStartTrufflehog?: () => void;
+  onPauseTrufflehog?: () => void;
+  onResumeTrufflehog?: () => void;
+  onStopTrufflehog?: () => void;
+  onDownloadTrufflehogJSON?: () => void;
+  onToggleTrufflehogLogs?: () => void;
+  trufflehogStatus?: TrufflehogStatus;
+  hasTrufflehogData?: boolean;
+  isTrufflehogLogsOpen?: boolean;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -42,12 +52,14 @@ function StatusBadge({ status }: { status: string }) {
     stopping: styles.statusRunning,
     completed: styles.statusCompleted,
     error: styles.statusError,
-  }
+  };
   return (
-    <span className={`${styles.statusBadge} ${styleMap[status] || styles.statusIdle}`}>
+    <span
+      className={`${styles.statusBadge} ${styleMap[status] || styles.statusIdle}`}
+    >
       {status}
     </span>
-  )
+  );
 }
 
 export function OtherScansModal({
@@ -77,26 +89,23 @@ export function OtherScansModal({
   isTrufflehogLogsOpen = false,
 }: OtherScansModalProps) {
   // GitHub Hunt derived state
-  const isGHBusy = githubHuntStatus === 'running' || githubHuntStatus === 'starting'
-  const isGHStopping = githubHuntStatus === 'stopping'
-  const isGHRunning = isGHBusy || isGHStopping
-  const isGHPaused = githubHuntStatus === 'paused'
-  const isGHActive = isGHRunning || isGHPaused
+  const isGHBusy =
+    githubHuntStatus === 'running' || githubHuntStatus === 'starting';
+  const isGHStopping = githubHuntStatus === 'stopping';
+  const isGHRunning = isGHBusy || isGHStopping;
+  const isGHPaused = githubHuntStatus === 'paused';
+  const isGHActive = isGHRunning || isGHPaused;
 
   // TruffleHog derived state
-  const isTHBusy = trufflehogStatus === 'running' || trufflehogStatus === 'starting'
-  const isTHStopping = trufflehogStatus === 'stopping'
-  const isTHRunning = isTHBusy || isTHStopping
-  const isTHPaused = trufflehogStatus === 'paused'
-  const isTHActive = isTHRunning || isTHPaused
+  const isTHBusy =
+    trufflehogStatus === 'running' || trufflehogStatus === 'starting';
+  const isTHStopping = trufflehogStatus === 'stopping';
+  const isTHRunning = isTHBusy || isTHStopping;
+  const isTHPaused = trufflehogStatus === 'paused';
+  const isTHActive = isTHRunning || isTHPaused;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Other Scans"
-      size="large"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="기타 스캔" size="large">
       <div className={styles.content}>
         {/* GitHub Secret Hunt Card */}
         <div className={styles.card}>
@@ -106,23 +115,34 @@ export function OtherScansModal({
             <StatusBadge status={githubHuntStatus} />
           </div>
           <p className={styles.cardDescription}>
-            Search GitHub repositories for exposed secrets, API keys, and credentials related to your target domain.
+            대상 도메인과 관련된 노출된 시크릿, API 키 및 자격 증명을 GitHub
+            리포지토리에서 검색합니다.
           </p>
           {!hasGithubToken && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 12px',
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
-              borderRadius: '6px',
-            }}>
-              <AlertTriangle size={14} style={{ color: '#f59e0b', flexShrink: 0 }} />
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                GitHub Access Token required.{' '}
-                <Link href="/settings" style={{ color: 'var(--accent-primary)', fontWeight: 500 }}>
-                  Global Settings
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                background: 'rgba(245, 158, 11, 0.1)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: '6px',
+              }}
+            >
+              <AlertTriangle
+                size={14}
+                style={{ color: '#f59e0b', flexShrink: 0 }}
+              />
+              <span
+                style={{ fontSize: '12px', color: 'var(--text-secondary)' }}
+              >
+                GitHub 액세스 토큰이 필요합니다.{' '}
+                <Link
+                  href="/settings"
+                  style={{ color: 'var(--accent-primary)', fontWeight: 500 }}
+                >
+                  전역 설정
                 </Link>
               </span>
             </div>
@@ -133,24 +153,44 @@ export function OtherScansModal({
                 className={styles.resumeButton}
                 onClick={onResumeGithubHunt}
                 disabled={!hasGithubToken}
-                title={!hasGithubToken ? 'GitHub token required' : 'Resume GitHub Hunt'}
+                title={
+                  !hasGithubToken ? 'GitHub 토큰 필요' : 'GitHub Hunt 재개'
+                }
               >
                 <Play size={12} />
-                <span>Resume</span>
+                <span>재개</span>
               </button>
             ) : (
               <button
                 className={styles.startButton}
                 onClick={onStartGithubHunt}
-                disabled={!hasGithubToken || isGHRunning || (!hasReconData && !isGHPaused)}
-                title={!hasGithubToken ? 'GitHub token required' : !hasReconData ? 'Run recon first' : isGHRunning ? 'In progress...' : 'Start GitHub Hunt'}
+                disabled={
+                  !hasGithubToken ||
+                  isGHRunning ||
+                  (!hasReconData && !isGHPaused)
+                }
+                title={
+                  !hasGithubToken
+                    ? 'GitHub 토큰 필요'
+                    : !hasReconData
+                      ? '먼저 정찰 실행'
+                      : isGHRunning
+                        ? '진행 중...'
+                        : 'GitHub Hunt 시작'
+                }
               >
                 {isGHRunning ? (
                   <Loader2 size={12} className={styles.spinner} />
                 ) : (
                   <Play size={12} />
                 )}
-                <span>{isGHBusy ? 'Running...' : isGHStopping ? 'Stopping...' : 'Start'}</span>
+                <span>
+                  {isGHBusy
+                    ? '실행 중...'
+                    : isGHStopping
+                      ? '중지 중...'
+                      : '시작'}
+                </span>
               </button>
             )}
 
@@ -158,10 +198,10 @@ export function OtherScansModal({
               <button
                 className={styles.pauseButton}
                 onClick={onPauseGithubHunt}
-                title="Pause"
+                title="일시 정지"
               >
                 <Pause size={12} />
-                <span>Pause</span>
+                <span>일시 정지</span>
               </button>
             )}
 
@@ -170,10 +210,10 @@ export function OtherScansModal({
                 className={styles.stopButton}
                 onClick={onStopGithubHunt}
                 disabled={isGHStopping}
-                title="Stop"
+                title="중지"
               >
                 <Square size={12} />
-                <span>Stop</span>
+                <span>중지</span>
               </button>
             )}
 
@@ -181,20 +221,20 @@ export function OtherScansModal({
               className={`${styles.logsButton} ${isGithubHuntLogsOpen ? styles.logsButtonActive : ''}`}
               onClick={onToggleGithubHuntLogs}
               disabled={!isGHActive}
-              title="View Logs"
+              title="로그 보기"
             >
               <Terminal size={12} />
-              <span>Logs</span>
+              <span>로그</span>
             </button>
 
             <button
               className={styles.downloadButton}
               onClick={onDownloadGithubHuntJSON}
               disabled={!hasGithubHuntData || isGHActive}
-              title={hasGithubHuntData ? 'Download JSON' : 'No data available'}
+              title={hasGithubHuntData ? 'JSON 다운로드' : '데이터 없음'}
             >
               <Download size={12} />
-              <span>Download</span>
+              <span>다운로드</span>
             </button>
           </div>
         </div>
@@ -207,23 +247,34 @@ export function OtherScansModal({
             <StatusBadge status={trufflehogStatus} />
           </div>
           <p className={styles.cardDescription}>
-            Deep secret scanning with 700+ detectors and optional verification against live APIs.
+            700개 이상의 감지기와 라이브 API 검증을 통한 심층 시크릿
+            스캐닝입니다.
           </p>
           {!hasGithubToken && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 12px',
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
-              borderRadius: '6px',
-            }}>
-              <AlertTriangle size={14} style={{ color: '#f59e0b', flexShrink: 0 }} />
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                GitHub Access Token required.{' '}
-                <Link href="/settings" style={{ color: 'var(--accent-primary)', fontWeight: 500 }}>
-                  Global Settings
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                background: 'rgba(245, 158, 11, 0.1)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: '6px',
+              }}
+            >
+              <AlertTriangle
+                size={14}
+                style={{ color: '#f59e0b', flexShrink: 0 }}
+              />
+              <span
+                style={{ fontSize: '12px', color: 'var(--text-secondary)' }}
+              >
+                GitHub 액세스 토큰이 필요합니다.{' '}
+                <Link
+                  href="/settings"
+                  style={{ color: 'var(--accent-primary)', fontWeight: 500 }}
+                >
+                  전역 설정
                 </Link>
               </span>
             </div>
@@ -234,24 +285,42 @@ export function OtherScansModal({
                 className={styles.resumeButton}
                 onClick={onResumeTrufflehog}
                 disabled={!hasGithubToken}
-                title={!hasGithubToken ? 'GitHub token required' : 'Resume TruffleHog'}
+                title={!hasGithubToken ? 'GitHub 토큰 필요' : 'TruffleHog 재개'}
               >
                 <Play size={12} />
-                <span>Resume</span>
+                <span>재개</span>
               </button>
             ) : (
               <button
                 className={styles.startButton}
                 onClick={onStartTrufflehog}
-                disabled={!hasGithubToken || isTHRunning || (!hasReconData && !isTHPaused)}
-                title={!hasGithubToken ? 'GitHub token required' : !hasReconData ? 'Run recon first' : isTHRunning ? 'In progress...' : 'Start TruffleHog'}
+                disabled={
+                  !hasGithubToken ||
+                  isTHRunning ||
+                  (!hasReconData && !isTHPaused)
+                }
+                title={
+                  !hasGithubToken
+                    ? 'GitHub 토큰 필요'
+                    : !hasReconData
+                      ? '먼저 정찰 실행'
+                      : isTHRunning
+                        ? '진행 중...'
+                        : 'TruffleHog 시작'
+                }
               >
                 {isTHRunning ? (
                   <Loader2 size={12} className={styles.spinner} />
                 ) : (
                   <Play size={12} />
                 )}
-                <span>{isTHBusy ? 'Running...' : isTHStopping ? 'Stopping...' : 'Start'}</span>
+                <span>
+                  {isTHBusy
+                    ? '실행 중...'
+                    : isTHStopping
+                      ? '중지 중...'
+                      : '시작'}
+                </span>
               </button>
             )}
 
@@ -259,10 +328,10 @@ export function OtherScansModal({
               <button
                 className={styles.pauseButton}
                 onClick={onPauseTrufflehog}
-                title="Pause"
+                title="일시 정지"
               >
                 <Pause size={12} />
-                <span>Pause</span>
+                <span>일시 정지</span>
               </button>
             )}
 
@@ -271,10 +340,10 @@ export function OtherScansModal({
                 className={styles.stopButton}
                 onClick={onStopTrufflehog}
                 disabled={isTHStopping}
-                title="Stop"
+                title="중지"
               >
                 <Square size={12} />
-                <span>Stop</span>
+                <span>중지</span>
               </button>
             )}
 
@@ -282,26 +351,26 @@ export function OtherScansModal({
               className={`${styles.logsButton} ${isTrufflehogLogsOpen ? styles.logsButtonActive : ''}`}
               onClick={onToggleTrufflehogLogs}
               disabled={!isTHActive}
-              title="View Logs"
+              title="로그 보기"
             >
               <Terminal size={12} />
-              <span>Logs</span>
+              <span>로그</span>
             </button>
 
             <button
               className={styles.downloadButton}
               onClick={onDownloadTrufflehogJSON}
               disabled={!hasTrufflehogData || isTHActive}
-              title={hasTrufflehogData ? 'Download JSON' : 'No data available'}
+              title={hasTrufflehogData ? 'JSON 다운로드' : '데이터 없음'}
             >
               <Download size={12} />
-              <span>Download</span>
+              <span>다운로드</span>
             </button>
           </div>
         </div>
       </div>
     </Modal>
-  )
+  );
 }
 
-export default OtherScansModal
+export default OtherScansModal;

@@ -1,22 +1,30 @@
-'use client'
+'use client';
 
-import { useState, useCallback, memo } from 'react'
-import { Terminal } from 'lucide-react'
-import type { MsfSession, MsfJob, NonMsfSession, SessionInteractResult } from '@/lib/websocket-types'
-import { SessionCard, NonMsfCard, JobCard } from './SessionCard'
-import { SessionTerminal } from './SessionTerminal'
-import styles from './ActiveSessions.module.css'
+import { useState, useCallback, memo } from 'react';
+import { Terminal } from 'lucide-react';
+import type {
+  MsfSession,
+  MsfJob,
+  NonMsfSession,
+  SessionInteractResult,
+} from '@/lib/websocket-types';
+import { SessionCard, NonMsfCard, JobCard } from './SessionCard';
+import { SessionTerminal } from './SessionTerminal';
+import styles from './ActiveSessions.module.css';
 
 interface ActiveSessionsProps {
-  sessions: MsfSession[]
-  jobs: MsfJob[]
-  nonMsfSessions: NonMsfSession[]
-  agentBusy: boolean
-  isLoading: boolean
-  projectId: string
-  onInteract: (sessionId: number, command: string) => Promise<SessionInteractResult>
-  onKillSession: (sessionId: number) => Promise<void>
-  onKillJob: (jobId: number) => Promise<void>
+  sessions: MsfSession[];
+  jobs: MsfJob[];
+  nonMsfSessions: NonMsfSession[];
+  agentBusy: boolean;
+  isLoading: boolean;
+  projectId: string;
+  onInteract: (
+    sessionId: number,
+    command: string,
+  ) => Promise<SessionInteractResult>;
+  onKillSession: (sessionId: number) => Promise<void>;
+  onKillJob: (jobId: number) => Promise<void>;
 }
 
 export const ActiveSessions = memo(function ActiveSessions({
@@ -30,26 +38,31 @@ export const ActiveSessions = memo(function ActiveSessions({
   onKillSession,
   onKillJob,
 }: ActiveSessionsProps) {
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
+    null,
+  );
 
-  const selectedSession = sessions.find(s => s.id === selectedSessionId)
-  const totalSessions = sessions.length + nonMsfSessions.length
+  const selectedSession = sessions.find((s) => s.id === selectedSessionId);
+  const totalSessions = sessions.length + nonMsfSessions.length;
 
-  const handleKill = useCallback(async (id: number) => {
-    await onKillSession(id)
-    if (selectedSessionId === id) {
-      setSelectedSessionId(null)
-    }
-  }, [onKillSession, selectedSessionId])
+  const handleKill = useCallback(
+    async (id: number) => {
+      await onKillSession(id);
+      if (selectedSessionId === id) {
+        setSelectedSessionId(null);
+      }
+    },
+    [onKillSession, selectedSessionId],
+  );
 
   // Loading state
   if (isLoading) {
     return (
       <div className={styles.loading}>
         <div className={styles.spinner} />
-        Loading sessions...
+        세션 로딩 중...
       </div>
-    )
+    );
   }
 
   // Empty state — no sessions at all
@@ -57,13 +70,13 @@ export const ActiveSessions = memo(function ActiveSessions({
     return (
       <div className={styles.emptyState}>
         <Terminal size={40} className={styles.emptyIcon} />
-        <p className={styles.emptyTitle}>No Reverse Shells</p>
+        <p className={styles.emptyTitle}>리버스 쉘이 없음</p>
         <p className={styles.emptyText}>
-          Sessions appear here when the agent establishes connections —
-          reverse shells, meterpreter sessions, bind shells, and listeners.
+          에이전트가 연결을 수립하면 세션이 여기 표시됩니다 — 리버스 쉘,
+          미터프리터 세션, 바인드 쉘, 리스너.
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -72,7 +85,7 @@ export const ActiveSessions = memo(function ActiveSessions({
       <div className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <span className={styles.sidebarTitle}>
-            Sessions
+            세션
             <span className={styles.count}>{totalSessions}</span>
           </span>
         </div>
@@ -82,7 +95,7 @@ export const ActiveSessions = memo(function ActiveSessions({
           {sessions.length > 0 && (
             <>
               <p className={styles.sectionLabel}>Metasploit</p>
-              {sessions.map(s => (
+              {sessions.map((s) => (
                 <SessionCard
                   key={s.id}
                   session={s}
@@ -98,8 +111,8 @@ export const ActiveSessions = memo(function ActiveSessions({
           {nonMsfSessions.length > 0 && (
             <>
               {sessions.length > 0 && <div className={styles.divider} />}
-              <p className={styles.sectionLabel}>Other</p>
-              {nonMsfSessions.map(s => (
+              <p className={styles.sectionLabel}>기타</p>
+              {nonMsfSessions.map((s) => (
                 <NonMsfCard
                   key={s.id}
                   session={s}
@@ -115,14 +128,10 @@ export const ActiveSessions = memo(function ActiveSessions({
             <>
               <div className={styles.divider} />
               <p className={styles.sectionLabel}>
-                Background Jobs ({jobs.length})
+                백그라운드 작업 ({jobs.length})
               </p>
-              {jobs.map(j => (
-                <JobCard
-                  key={j.id}
-                  job={j}
-                  onKill={() => onKillJob(j.id)}
-                />
+              {jobs.map((j) => (
+                <JobCard key={j.id} job={j} onKill={() => onKillJob(j.id)} />
               ))}
             </>
           )}
@@ -140,5 +149,5 @@ export const ActiveSessions = memo(function ActiveSessions({
         />
       </div>
     </div>
-  )
-})
+  );
+});

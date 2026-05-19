@@ -1,29 +1,36 @@
-'use client'
+'use client';
 
-import { useMemo } from 'react'
-import { useTheme } from '@/hooks/useTheme'
-import { getChartPalette } from '../utils/chartTheme'
-import { ChartCard } from './ChartCard'
-import styles from './TechnologyTreemap.module.css'
+import { useMemo } from 'react';
+import { useTheme } from '@/hooks/useTheme';
+import { getChartPalette } from '../utils/chartTheme';
+import { ChartCard } from './ChartCard';
+import styles from './TechnologyTreemap.module.css';
 
 interface TechnologyTreemapProps {
-  data: { name: string; version: string | null; cveCount: number }[] | undefined
-  isLoading: boolean
+  data:
+    | { name: string; version: string | null; cveCount: number }[]
+    | undefined;
+  isLoading: boolean;
 }
 
 export function TechnologyTreemap({ data, isLoading }: TechnologyTreemapProps) {
-  const { theme } = useTheme()
-  const palette = useMemo(() => getChartPalette(), [theme])
+  const { theme } = useTheme();
+  const palette = useMemo(() => getChartPalette(), [theme]);
 
   const items = useMemo(() => {
-    if (!data || !data.length) return []
-    return data.slice(0, 20)
-  }, [data])
+    if (!data || !data.length) return [];
+    return data.slice(0, 20);
+  }, [data]);
 
-  const maxCve = Math.max(...items.map(i => i.cveCount), 1)
+  const maxCve = Math.max(...items.map((i) => i.cveCount), 1);
 
   return (
-    <ChartCard title="Technology Stack" subtitle={`${data?.length || 0} detected`} isLoading={isLoading} isEmpty={!items.length}>
+    <ChartCard
+      title="기술 스택"
+      subtitle={`${data?.length || 0}개 탐지`}
+      isLoading={isLoading}
+      isEmpty={!items.length}
+    >
       <div className={styles.grid}>
         {items.map((tech, i) => (
           <div
@@ -36,10 +43,12 @@ export function TechnologyTreemap({ data, isLoading }: TechnologyTreemapProps) {
             title={`${tech.name}${tech.version ? ` v${tech.version}` : ''} — ${tech.cveCount} CVEs`}
           >
             <span className={styles.name}>{tech.name}</span>
-            {tech.cveCount > 0 && <span className={styles.badge}>{tech.cveCount}</span>}
+            {tech.cveCount > 0 && (
+              <span className={styles.badge}>{tech.cveCount}</span>
+            )}
           </div>
         ))}
       </div>
     </ChartCard>
-  )
+  );
 }

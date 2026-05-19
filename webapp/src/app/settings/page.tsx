@@ -1,51 +1,75 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Plus, Pencil, Trash2, Loader2, Eye, EyeOff, Upload, Download, Swords, RotateCw, Copy, Check, ExternalLink, ChevronDown, ChevronRight, Info, BookOpen, Server } from 'lucide-react'
-import { useProject } from '@/providers/ProjectProvider'
-import { useVersionCheck } from '@/hooks/useVersionCheck'
-import { LlmProviderForm } from '@/components/settings/LlmProviderForm'
-import McpServersTab from '@/components/settings/mcp/McpServersTab'
-import type { ProviderData } from '@/components/settings/LlmProviderForm'
-import { TradecraftResourceForm } from '@/components/settings/TradecraftResourceForm'
-import { TradecraftResourceList } from '@/components/settings/TradecraftResourceList'
-import { PROVIDER_TYPES } from '@/lib/llmProviderPresets'
-import { Modal } from '@/components/ui/Modal/Modal'
-import { useAlertModal, useToast, WikiInfoButton } from '@/components/ui'
-import styles from '@/components/settings/Settings.module.css'
-import { buildTemplate, templateToJson, validateAndParse, isValidationError } from '@/lib/apiKeysTemplate'
-import type { ParsedImport } from '@/lib/apiKeysTemplate'
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+  Eye,
+  EyeOff,
+  Upload,
+  Download,
+  Swords,
+  RotateCw,
+  Copy,
+  Check,
+  ExternalLink,
+  ChevronDown,
+  ChevronRight,
+  Info,
+  BookOpen,
+  Server,
+} from 'lucide-react';
+import { useProject } from '@/providers/ProjectProvider';
+import { useVersionCheck } from '@/hooks/useVersionCheck';
+import { LlmProviderForm } from '@/components/settings/LlmProviderForm';
+import McpServersTab from '@/components/settings/mcp/McpServersTab';
+import type { ProviderData } from '@/components/settings/LlmProviderForm';
+import { TradecraftResourceForm } from '@/components/settings/TradecraftResourceForm';
+import { TradecraftResourceList } from '@/components/settings/TradecraftResourceList';
+import { PROVIDER_TYPES } from '@/lib/llmProviderPresets';
+import { Modal } from '@/components/ui/Modal/Modal';
+import { useAlertModal, useToast, WikiInfoButton } from '@/components/ui';
+import styles from '@/components/settings/Settings.module.css';
+import {
+  buildTemplate,
+  templateToJson,
+  validateAndParse,
+  isValidationError,
+} from '@/lib/apiKeysTemplate';
+import type { ParsedImport } from '@/lib/apiKeysTemplate';
 
 interface UserSettings {
-  githubAccessToken: string
-  tavilyApiKey: string
-  shodanApiKey: string
-  serpApiKey: string
-  nvdApiKey: string
-  vulnersApiKey: string
-  urlscanApiKey: string
-  censysApiToken: string
-  censysOrgId: string
-  fofaApiKey: string
-  otxApiKey: string
-  netlasApiKey: string
-  virusTotalApiKey: string
-  zoomEyeApiKey: string
-  criminalIpApiKey: string
-  quakeApiKey: string
-  hunterApiKey: string
-  publicWwwApiKey: string
-  hunterHowApiKey: string
-  googleApiKey: string
-  googleApiCx: string
-  onypheApiKey: string
-  driftnetApiKey: string
-  wpscanApiToken: string
-  pdcpApiKey: string
-  ngrokAuthtoken: string
-  chiselServerUrl: string
-  chiselAuth: string
+  githubAccessToken: string;
+  tavilyApiKey: string;
+  shodanApiKey: string;
+  serpApiKey: string;
+  nvdApiKey: string;
+  vulnersApiKey: string;
+  urlscanApiKey: string;
+  censysApiToken: string;
+  censysOrgId: string;
+  fofaApiKey: string;
+  otxApiKey: string;
+  netlasApiKey: string;
+  virusTotalApiKey: string;
+  zoomEyeApiKey: string;
+  criminalIpApiKey: string;
+  quakeApiKey: string;
+  hunterApiKey: string;
+  publicWwwApiKey: string;
+  hunterHowApiKey: string;
+  googleApiKey: string;
+  googleApiCx: string;
+  onypheApiKey: string;
+  driftnetApiKey: string;
+  wpscanApiToken: string;
+  pdcpApiKey: string;
+  ngrokAuthtoken: string;
+  chiselServerUrl: string;
+  chiselAuth: string;
 }
 
 const EMPTY_SETTINGS: UserSettings = {
@@ -77,11 +101,11 @@ const EMPTY_SETTINGS: UserSettings = {
   ngrokAuthtoken: '',
   chiselServerUrl: '',
   chiselAuth: '',
-}
+};
 
 interface RotationInfo {
-  extraKeyCount: number
-  rotateEveryN: number
+  extraKeyCount: number;
+  rotateEveryN: number;
 }
 
 /** Maps settings field name → rotation tool name */
@@ -106,262 +130,342 @@ const TOOL_NAME_MAP: Record<string, string> = {
   driftnetApiKey: 'driftnet',
   wpscanApiToken: 'wpscan',
   pdcpApiKey: 'pdcp',
-}
+};
 
 function getProviderIconComponent(providerType: string) {
-  return PROVIDER_TYPES.find(p => p.id === providerType)?.Icon ?? null
+  return PROVIDER_TYPES.find((p) => p.id === providerType)?.Icon ?? null;
 }
 
 function getProviderLabel(providerType: string): string {
-  return PROVIDER_TYPES.find(p => p.id === providerType)?.name || providerType
+  return (
+    PROVIDER_TYPES.find((p) => p.id === providerType)?.name || providerType
+  );
 }
 
 export default function SettingsPage() {
-  const { userId } = useProject()
-  const { alertError, alert: showAlert, confirm: showConfirm } = useAlertModal()
-  const toast = useToast()
+  const { userId } = useProject();
+  const {
+    alertError,
+    alert: showAlert,
+    confirm: showConfirm,
+  } = useAlertModal();
+  const toast = useToast();
 
   // LLM Providers
-  const [providers, setProviders] = useState<ProviderData[]>([])
-  const [providersLoading, setProvidersLoading] = useState(true)
-  const [showProviderForm, setShowProviderForm] = useState(false)
-  const [editingProvider, setEditingProvider] = useState<ProviderData | null>(null)
+  const [providers, setProviders] = useState<ProviderData[]>([]);
+  const [providersLoading, setProvidersLoading] = useState(true);
+  const [showProviderForm, setShowProviderForm] = useState(false);
+  const [editingProvider, setEditingProvider] = useState<ProviderData | null>(
+    null,
+  );
 
   // User Settings
-  const [settings, setSettings] = useState<UserSettings>(EMPTY_SETTINGS)
-  const [settingsLoading, setSettingsLoading] = useState(true)
-  const [settingsDirty, setSettingsDirty] = useState(false)
-  const [settingsSaving, setSettingsSaving] = useState(false)
-  const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>({})
+  const [settings, setSettings] = useState<UserSettings>(EMPTY_SETTINGS);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsDirty, setSettingsDirty] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>(
+    {},
+  );
 
   // Key Rotation
-  const [rotationConfigs, setRotationConfigs] = useState<Record<string, RotationInfo>>({})
-  const [rotationModal, setRotationModal] = useState<string | null>(null) // toolName or null
-  const [rotationDraft, setRotationDraft] = useState({ extraKeys: '', rotateEveryN: 10 })
-  const [rotationDraftDirty, setRotationDraftDirty] = useState(false) // true = user typed new keys
+  const [rotationConfigs, setRotationConfigs] = useState<
+    Record<string, RotationInfo>
+  >({});
+  const [rotationModal, setRotationModal] = useState<string | null>(null); // toolName or null
+  const [rotationDraft, setRotationDraft] = useState({
+    extraKeys: '',
+    rotateEveryN: 10,
+  });
+  const [rotationDraftDirty, setRotationDraftDirty] = useState(false); // true = user typed new keys
 
   // API Keys Import
-  const [pendingImport, setPendingImport] = useState<ParsedImport | null>(null)
-  const importFileRef = useRef<HTMLInputElement>(null)
+  const [pendingImport, setPendingImport] = useState<ParsedImport | null>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
 
   // Attack Skills
-  const [attackSkills, setAttackSkills] = useState<{ id: string; name: string; description?: string | null; createdAt: string }[]>([])
-  const [skillsLoading, setSkillsLoading] = useState(true)
-  const [skillNameModal, setSkillNameModal] = useState(false)
-  const [pendingSkillContent, setPendingSkillContent] = useState('')
-  const [pendingSkillName, setPendingSkillName] = useState('')
-  const [pendingSkillDescription, setPendingSkillDescription] = useState('')
-  const [skillUploading, setSkillUploading] = useState(false)
+  const [attackSkills, setAttackSkills] = useState<
+    {
+      id: string;
+      name: string;
+      description?: string | null;
+      createdAt: string;
+    }[]
+  >([]);
+  const [skillsLoading, setSkillsLoading] = useState(true);
+  const [skillNameModal, setSkillNameModal] = useState(false);
+  const [pendingSkillContent, setPendingSkillContent] = useState('');
+  const [pendingSkillName, setPendingSkillName] = useState('');
+  const [pendingSkillDescription, setPendingSkillDescription] = useState('');
+  const [skillUploading, setSkillUploading] = useState(false);
   // Edit description modal
-  const [editDescModal, setEditDescModal] = useState(false)
-  const [editingSkillId, setEditingSkillId] = useState('')
-  const [editingSkillDescription, setEditingSkillDescription] = useState('')
-  const [editDescSaving, setEditDescSaving] = useState(false)
+  const [editDescModal, setEditDescModal] = useState(false);
+  const [editingSkillId, setEditingSkillId] = useState('');
+  const [editingSkillDescription, setEditingSkillDescription] = useState('');
+  const [editDescSaving, setEditDescSaving] = useState(false);
   // Import from Community (Agent Skills)
-  const [importingAgentSkills, setImportingAgentSkills] = useState(false)
+  const [importingAgentSkills, setImportingAgentSkills] = useState(false);
 
   // Chat Skills
-  const [chatSkills, setChatSkills] = useState<{ id: string; name: string; description?: string | null; category?: string | null; createdAt: string }[]>([])
-  const [chatSkillsLoading, setChatSkillsLoading] = useState(true)
-  const [chatSkillNameModal, setChatSkillNameModal] = useState(false)
-  const [pendingChatSkillContent, setPendingChatSkillContent] = useState('')
-  const [pendingChatSkillName, setPendingChatSkillName] = useState('')
-  const [pendingChatSkillDescription, setPendingChatSkillDescription] = useState('')
-  const [pendingChatSkillCategory, setPendingChatSkillCategory] = useState('general')
-  const [chatSkillUploading, setChatSkillUploading] = useState(false)
+  const [chatSkills, setChatSkills] = useState<
+    {
+      id: string;
+      name: string;
+      description?: string | null;
+      category?: string | null;
+      createdAt: string;
+    }[]
+  >([]);
+  const [chatSkillsLoading, setChatSkillsLoading] = useState(true);
+  const [chatSkillNameModal, setChatSkillNameModal] = useState(false);
+  const [pendingChatSkillContent, setPendingChatSkillContent] = useState('');
+  const [pendingChatSkillName, setPendingChatSkillName] = useState('');
+  const [pendingChatSkillDescription, setPendingChatSkillDescription] =
+    useState('');
+  const [pendingChatSkillCategory, setPendingChatSkillCategory] =
+    useState('general');
+  const [chatSkillUploading, setChatSkillUploading] = useState(false);
   // Chat skill edit description modal
-  const [editChatDescModal, setEditChatDescModal] = useState(false)
-  const [editingChatSkillId, setEditingChatSkillId] = useState('')
-  const [editingChatSkillDescription, setEditingChatSkillDescription] = useState('')
-  const [editChatDescSaving, setEditChatDescSaving] = useState(false)
+  const [editChatDescModal, setEditChatDescModal] = useState(false);
+  const [editingChatSkillId, setEditingChatSkillId] = useState('');
+  const [editingChatSkillDescription, setEditingChatSkillDescription] =
+    useState('');
+  const [editChatDescSaving, setEditChatDescSaving] = useState(false);
   // Import from Community (Chat Skills)
-  const [importingChatSkills, setImportingChatSkills] = useState(false)
+  const [importingChatSkills, setImportingChatSkills] = useState(false);
   // Fetch attack skills
   const fetchSkills = useCallback(async () => {
-    if (!userId) return
+    if (!userId) return;
     try {
-      const resp = await fetch(`/api/users/${userId}/attack-skills`)
-      if (resp.ok) setAttackSkills(await resp.json())
+      const resp = await fetch(`/api/users/${userId}/attack-skills`);
+      if (resp.ok) setAttackSkills(await resp.json());
     } catch (err) {
-      console.error('Failed to fetch attack skills:', err)
+      console.error('Failed to fetch attack skills:', err);
     } finally {
-      setSkillsLoading(false)
+      setSkillsLoading(false);
     }
-  }, [userId])
+  }, [userId]);
 
   // Upload skill from .md file — read file then open name modal
-  const handleSkillUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !userId) return
+  const handleSkillUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !userId) return;
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      setPendingSkillContent(reader.result as string)
-      setPendingSkillName(file.name.replace(/\.md$/i, ''))
-      setSkillNameModal(true)
-    }
-    reader.readAsText(file)
-    e.target.value = '' // Reset input
-  }, [userId])
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPendingSkillContent(reader.result as string);
+        setPendingSkillName(file.name.replace(/\.md$/i, ''));
+        setSkillNameModal(true);
+      };
+      reader.readAsText(file);
+      e.target.value = ''; // Reset input
+    },
+    [userId],
+  );
 
   // Confirm skill upload from modal
   const confirmSkillUpload = useCallback(async () => {
-    if (!userId || !pendingSkillName.trim()) return
-    setSkillUploading(true)
+    if (!userId || !pendingSkillName.trim()) return;
+    setSkillUploading(true);
     try {
       const resp = await fetch(`/api/users/${userId}/attack-skills`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: pendingSkillName.trim(), description: pendingSkillDescription.trim() || null, content: pendingSkillContent }),
-      })
+        body: JSON.stringify({
+          name: pendingSkillName.trim(),
+          description: pendingSkillDescription.trim() || null,
+          content: pendingSkillContent,
+        }),
+      });
       if (resp.ok) {
-        fetchSkills()
-        setSkillNameModal(false)
-        setPendingSkillContent('')
-        setPendingSkillName('')
-        setPendingSkillDescription('')
-        toast.success('Attack skill uploaded')
+        fetchSkills();
+        setSkillNameModal(false);
+        setPendingSkillContent('');
+        setPendingSkillName('');
+        setPendingSkillDescription('');
+        toast.success('Attack skill uploaded');
       } else {
-        const err = await resp.json()
-        alertError(err.error || 'Failed to upload skill')
+        const err = await resp.json();
+        alertError(err.error || 'Failed to upload skill');
       }
     } catch (err) {
-      console.error('Failed to upload skill:', err)
-      toast.error('Failed to upload skill')
+      console.error('Failed to upload skill:', err);
+      toast.error('Failed to upload skill');
     } finally {
-      setSkillUploading(false)
+      setSkillUploading(false);
     }
-  }, [userId, pendingSkillName, pendingSkillDescription, pendingSkillContent, fetchSkills])
+  }, [
+    userId,
+    pendingSkillName,
+    pendingSkillDescription,
+    pendingSkillContent,
+    fetchSkills,
+  ]);
 
   // Download skill as .md
-  const downloadSkill = useCallback(async (skillId: string, skillName: string) => {
-    if (!userId) return
-    try {
-      const resp = await fetch(`/api/users/${userId}/attack-skills/${skillId}`)
-      if (resp.ok) {
-        const skill = await resp.json()
-        const blob = new Blob([skill.content], { type: 'text/markdown' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${skillName}.md`
-        a.click()
-        URL.revokeObjectURL(url)
+  const downloadSkill = useCallback(
+    async (skillId: string, skillName: string) => {
+      if (!userId) return;
+      try {
+        const resp = await fetch(
+          `/api/users/${userId}/attack-skills/${skillId}`,
+        );
+        if (resp.ok) {
+          const skill = await resp.json();
+          const blob = new Blob([skill.content], { type: 'text/markdown' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${skillName}.md`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } catch (err) {
+        console.error('Failed to download skill:', err);
       }
-    } catch (err) {
-      console.error('Failed to download skill:', err)
-    }
-  }, [userId])
+    },
+    [userId],
+  );
 
   // Delete skill
-  const deleteSkill = useCallback(async (skillId: string) => {
-    if (!userId || !(await showConfirm('Delete this skill? It will be removed from all projects.'))) return
-    try {
-      await fetch(`/api/users/${userId}/attack-skills/${skillId}`, { method: 'DELETE' })
-      fetchSkills()
-      toast.success('Attack skill deleted')
-    } catch (err) {
-      console.error('Failed to delete skill:', err)
-      toast.error('Failed to delete skill')
-    }
-  }, [userId, fetchSkills])
+  const deleteSkill = useCallback(
+    async (skillId: string) => {
+      if (
+        !userId ||
+        !(await showConfirm(
+          'Delete this skill? It will be removed from all projects.',
+        ))
+      )
+        return;
+      try {
+        await fetch(`/api/users/${userId}/attack-skills/${skillId}`, {
+          method: 'DELETE',
+        });
+        fetchSkills();
+        toast.success('Attack skill deleted');
+      } catch (err) {
+        console.error('Failed to delete skill:', err);
+        toast.error('Failed to delete skill');
+      }
+    },
+    [userId, fetchSkills],
+  );
 
   // Open edit description modal
-  const openEditDescription = useCallback(async (skillId: string) => {
-    if (!userId) return
-    try {
-      const resp = await fetch(`/api/users/${userId}/attack-skills/${skillId}`)
-      if (resp.ok) {
-        const skill = await resp.json()
-        setEditingSkillId(skillId)
-        setEditingSkillDescription(skill.description || '')
-        setEditDescModal(true)
+  const openEditDescription = useCallback(
+    async (skillId: string) => {
+      if (!userId) return;
+      try {
+        const resp = await fetch(
+          `/api/users/${userId}/attack-skills/${skillId}`,
+        );
+        if (resp.ok) {
+          const skill = await resp.json();
+          setEditingSkillId(skillId);
+          setEditingSkillDescription(skill.description || '');
+          setEditDescModal(true);
+        }
+      } catch (err) {
+        console.error('Failed to fetch skill:', err);
       }
-    } catch (err) {
-      console.error('Failed to fetch skill:', err)
-    }
-  }, [userId])
+    },
+    [userId],
+  );
 
   // Save edited description
   const saveEditDescription = useCallback(async () => {
-    if (!userId || !editingSkillId) return
-    setEditDescSaving(true)
+    if (!userId || !editingSkillId) return;
+    setEditDescSaving(true);
     try {
-      const resp = await fetch(`/api/users/${userId}/attack-skills/${editingSkillId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: editingSkillDescription.trim() || null }),
-      })
+      const resp = await fetch(
+        `/api/users/${userId}/attack-skills/${editingSkillId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            description: editingSkillDescription.trim() || null,
+          }),
+        },
+      );
       if (resp.ok) {
-        fetchSkills()
-        setEditDescModal(false)
-        setEditingSkillId('')
-        setEditingSkillDescription('')
-        toast.success('Skill description updated')
+        fetchSkills();
+        setEditDescModal(false);
+        setEditingSkillId('');
+        setEditingSkillDescription('');
+        toast.success('Skill description updated');
       } else {
-        const err = await resp.json()
-        alertError(err.error || 'Failed to update description')
+        const err = await resp.json();
+        alertError(err.error || 'Failed to update description');
       }
     } catch (err) {
-      console.error('Failed to update skill description:', err)
-      toast.error('Failed to update description')
+      console.error('Failed to update skill description:', err);
+      toast.error('Failed to update description');
     } finally {
-      setEditDescSaving(false)
+      setEditDescSaving(false);
     }
-  }, [userId, editingSkillId, editingSkillDescription, fetchSkills])
+  }, [userId, editingSkillId, editingSkillDescription, fetchSkills]);
 
   // Import community agent skills
   const importCommunityAgentSkills = useCallback(async () => {
-    if (!userId) return
-    setImportingAgentSkills(true)
+    if (!userId) return;
+    setImportingAgentSkills(true);
     try {
-      const resp = await fetch(`/api/users/${userId}/attack-skills/import-community`, { method: 'POST' })
-      const data = await resp.json()
+      const resp = await fetch(
+        `/api/users/${userId}/attack-skills/import-community`,
+        { method: 'POST' },
+      );
+      const data = await resp.json();
       if (resp.ok) {
-        fetchSkills()
-        showAlert(data.message || `Imported ${data.imported ?? 0} community skill(s).`)
+        fetchSkills();
+        showAlert(
+          data.message || `Imported ${data.imported ?? 0} community skill(s).`,
+        );
       } else {
-        alertError(data.error || 'Failed to import community skills')
+        alertError(data.error || 'Failed to import community skills');
       }
     } catch (err) {
-      console.error('Failed to import community skills:', err)
+      console.error('Failed to import community skills:', err);
     } finally {
-      setImportingAgentSkills(false)
+      setImportingAgentSkills(false);
     }
-  }, [userId, fetchSkills])
+  }, [userId, fetchSkills]);
 
   // Fetch chat skills
   const fetchChatSkills = useCallback(async () => {
-    if (!userId) return
+    if (!userId) return;
     try {
-      const resp = await fetch(`/api/users/${userId}/chat-skills`)
-      if (resp.ok) setChatSkills(await resp.json())
+      const resp = await fetch(`/api/users/${userId}/chat-skills`);
+      if (resp.ok) setChatSkills(await resp.json());
     } catch (err) {
-      console.error('Failed to fetch chat skills:', err)
+      console.error('Failed to fetch chat skills:', err);
     } finally {
-      setChatSkillsLoading(false)
+      setChatSkillsLoading(false);
     }
-  }, [userId])
+  }, [userId]);
 
   // Upload chat skill from .md file
-  const handleChatSkillUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !userId) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      setPendingChatSkillContent(reader.result as string)
-      setPendingChatSkillName(file.name.replace(/\.md$/i, ''))
-      setPendingChatSkillCategory('general')
-      setChatSkillNameModal(true)
-    }
-    reader.readAsText(file)
-    e.target.value = ''
-  }, [userId])
+  const handleChatSkillUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !userId) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPendingChatSkillContent(reader.result as string);
+        setPendingChatSkillName(file.name.replace(/\.md$/i, ''));
+        setPendingChatSkillCategory('general');
+        setChatSkillNameModal(true);
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    },
+    [userId],
+  );
 
   // Confirm chat skill upload
   const confirmChatSkillUpload = useCallback(async () => {
-    if (!userId || !pendingChatSkillName.trim()) return
-    setChatSkillUploading(true)
+    if (!userId || !pendingChatSkillName.trim()) return;
+    setChatSkillUploading(true);
     try {
       const resp = await fetch(`/api/users/${userId}/chat-skills`, {
         method: 'POST',
@@ -372,144 +476,178 @@ export default function SettingsPage() {
           category: pendingChatSkillCategory,
           content: pendingChatSkillContent,
         }),
-      })
+      });
       if (resp.ok) {
-        fetchChatSkills()
-        setChatSkillNameModal(false)
-        setPendingChatSkillContent('')
-        setPendingChatSkillName('')
-        setPendingChatSkillDescription('')
-        setPendingChatSkillCategory('general')
-        toast.success('Chat skill uploaded')
+        fetchChatSkills();
+        setChatSkillNameModal(false);
+        setPendingChatSkillContent('');
+        setPendingChatSkillName('');
+        setPendingChatSkillDescription('');
+        setPendingChatSkillCategory('general');
+        toast.success('Chat skill uploaded');
       } else {
-        const err = await resp.json()
-        alertError(err.error || 'Failed to upload chat skill')
+        const err = await resp.json();
+        alertError(err.error || 'Failed to upload chat skill');
       }
     } catch (err) {
-      console.error('Failed to upload chat skill:', err)
-      toast.error('Failed to upload chat skill')
+      console.error('Failed to upload chat skill:', err);
+      toast.error('Failed to upload chat skill');
     } finally {
-      setChatSkillUploading(false)
+      setChatSkillUploading(false);
     }
-  }, [userId, pendingChatSkillName, pendingChatSkillDescription, pendingChatSkillCategory, pendingChatSkillContent, fetchChatSkills])
+  }, [
+    userId,
+    pendingChatSkillName,
+    pendingChatSkillDescription,
+    pendingChatSkillCategory,
+    pendingChatSkillContent,
+    fetchChatSkills,
+  ]);
 
   // Download chat skill as .md
-  const downloadChatSkill = useCallback(async (skillId: string, skillName: string) => {
-    if (!userId) return
-    try {
-      const resp = await fetch(`/api/users/${userId}/chat-skills/${skillId}`)
-      if (resp.ok) {
-        const skill = await resp.json()
-        const blob = new Blob([skill.content], { type: 'text/markdown' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${skillName}.md`
-        a.click()
-        URL.revokeObjectURL(url)
+  const downloadChatSkill = useCallback(
+    async (skillId: string, skillName: string) => {
+      if (!userId) return;
+      try {
+        const resp = await fetch(`/api/users/${userId}/chat-skills/${skillId}`);
+        if (resp.ok) {
+          const skill = await resp.json();
+          const blob = new Blob([skill.content], { type: 'text/markdown' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${skillName}.md`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } catch (err) {
+        console.error('Failed to download chat skill:', err);
       }
-    } catch (err) {
-      console.error('Failed to download chat skill:', err)
-    }
-  }, [userId])
+    },
+    [userId],
+  );
 
   // Delete chat skill
-  const deleteChatSkill = useCallback(async (skillId: string) => {
-    if (!userId || !(await showConfirm('Delete this chat skill?'))) return
-    try {
-      await fetch(`/api/users/${userId}/chat-skills/${skillId}`, { method: 'DELETE' })
-      fetchChatSkills()
-      toast.success('Chat skill deleted')
-    } catch (err) {
-      console.error('Failed to delete chat skill:', err)
-      toast.error('Failed to delete chat skill')
-    }
-  }, [userId, fetchChatSkills])
+  const deleteChatSkill = useCallback(
+    async (skillId: string) => {
+      if (!userId || !(await showConfirm('Delete this chat skill?'))) return;
+      try {
+        await fetch(`/api/users/${userId}/chat-skills/${skillId}`, {
+          method: 'DELETE',
+        });
+        fetchChatSkills();
+        toast.success('Chat skill deleted');
+      } catch (err) {
+        console.error('Failed to delete chat skill:', err);
+        toast.error('Failed to delete chat skill');
+      }
+    },
+    [userId, fetchChatSkills],
+  );
 
   // Open chat skill edit description modal
-  const openEditChatDescription = useCallback(async (skillId: string) => {
-    if (!userId) return
-    try {
-      const resp = await fetch(`/api/users/${userId}/chat-skills/${skillId}`)
-      if (resp.ok) {
-        const skill = await resp.json()
-        setEditingChatSkillId(skillId)
-        setEditingChatSkillDescription(skill.description || '')
-        setEditChatDescModal(true)
+  const openEditChatDescription = useCallback(
+    async (skillId: string) => {
+      if (!userId) return;
+      try {
+        const resp = await fetch(`/api/users/${userId}/chat-skills/${skillId}`);
+        if (resp.ok) {
+          const skill = await resp.json();
+          setEditingChatSkillId(skillId);
+          setEditingChatSkillDescription(skill.description || '');
+          setEditChatDescModal(true);
+        }
+      } catch (err) {
+        console.error('Failed to fetch chat skill:', err);
       }
-    } catch (err) {
-      console.error('Failed to fetch chat skill:', err)
-    }
-  }, [userId])
+    },
+    [userId],
+  );
 
   // Save edited chat skill description
   const saveEditChatDescription = useCallback(async () => {
-    if (!userId || !editingChatSkillId) return
-    setEditChatDescSaving(true)
+    if (!userId || !editingChatSkillId) return;
+    setEditChatDescSaving(true);
     try {
-      const resp = await fetch(`/api/users/${userId}/chat-skills/${editingChatSkillId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: editingChatSkillDescription.trim() || null }),
-      })
+      const resp = await fetch(
+        `/api/users/${userId}/chat-skills/${editingChatSkillId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            description: editingChatSkillDescription.trim() || null,
+          }),
+        },
+      );
       if (resp.ok) {
-        fetchChatSkills()
-        setEditChatDescModal(false)
-        setEditingChatSkillId('')
-        setEditingChatSkillDescription('')
-        toast.success('Chat skill description updated')
+        fetchChatSkills();
+        setEditChatDescModal(false);
+        setEditingChatSkillId('');
+        setEditingChatSkillDescription('');
+        toast.success('Chat skill description updated');
       } else {
-        const err = await resp.json()
-        alertError(err.error || 'Failed to update description')
+        const err = await resp.json();
+        alertError(err.error || 'Failed to update description');
       }
     } catch (err) {
-      console.error('Failed to update chat skill description:', err)
-      toast.error('Failed to update description')
+      console.error('Failed to update chat skill description:', err);
+      toast.error('Failed to update description');
     } finally {
-      setEditChatDescSaving(false)
+      setEditChatDescSaving(false);
     }
-  }, [userId, editingChatSkillId, editingChatSkillDescription, fetchChatSkills])
+  }, [
+    userId,
+    editingChatSkillId,
+    editingChatSkillDescription,
+    fetchChatSkills,
+  ]);
 
   // Import community chat skills
   const importCommunityChatSkills = useCallback(async () => {
-    if (!userId) return
-    setImportingChatSkills(true)
+    if (!userId) return;
+    setImportingChatSkills(true);
     try {
-      const resp = await fetch(`/api/users/${userId}/chat-skills/import-community`, { method: 'POST' })
-      const data = await resp.json()
+      const resp = await fetch(
+        `/api/users/${userId}/chat-skills/import-community`,
+        { method: 'POST' },
+      );
+      const data = await resp.json();
       if (resp.ok) {
-        fetchChatSkills()
-        showAlert(data.message || `Imported ${data.imported ?? 0} community chat skill(s).`)
+        fetchChatSkills();
+        showAlert(
+          data.message ||
+            `Imported ${data.imported ?? 0} community chat skill(s).`,
+        );
       } else {
-        alertError(data.error || 'Failed to import community chat skills')
+        alertError(data.error || 'Failed to import community chat skills');
       }
     } catch (err) {
-      console.error('Failed to import community chat skills:', err)
+      console.error('Failed to import community chat skills:', err);
     } finally {
-      setImportingChatSkills(false)
+      setImportingChatSkills(false);
     }
-  }, [userId, fetchChatSkills])
+  }, [userId, fetchChatSkills]);
 
   // Fetch providers
   const fetchProviders = useCallback(async () => {
-    if (!userId) return
+    if (!userId) return;
     try {
-      const resp = await fetch(`/api/users/${userId}/llm-providers`)
-      if (resp.ok) setProviders(await resp.json())
+      const resp = await fetch(`/api/users/${userId}/llm-providers`);
+      if (resp.ok) setProviders(await resp.json());
     } catch (err) {
-      console.error('Failed to fetch providers:', err)
+      console.error('Failed to fetch providers:', err);
     } finally {
-      setProvidersLoading(false)
+      setProvidersLoading(false);
     }
-  }, [userId])
+  }, [userId]);
 
   // Fetch user settings
   const fetchSettings = useCallback(async () => {
-    if (!userId) return
+    if (!userId) return;
     try {
-      const resp = await fetch(`/api/users/${userId}/settings`)
+      const resp = await fetch(`/api/users/${userId}/settings`);
       if (resp.ok) {
-        const data = await resp.json()
+        const data = await resp.json();
         setSettings({
           githubAccessToken: data.githubAccessToken || '',
           tavilyApiKey: data.tavilyApiKey || '',
@@ -539,59 +677,78 @@ export default function SettingsPage() {
           ngrokAuthtoken: data.ngrokAuthtoken || '',
           chiselServerUrl: data.chiselServerUrl || '',
           chiselAuth: data.chiselAuth || '',
-        })
+        });
         if (data.rotationConfigs) {
-          setRotationConfigs(data.rotationConfigs)
+          setRotationConfigs(data.rotationConfigs);
         }
       }
     } catch (err) {
-      console.error('Failed to fetch settings:', err)
+      console.error('Failed to fetch settings:', err);
     } finally {
-      setSettingsLoading(false)
+      setSettingsLoading(false);
     }
-  }, [userId])
+  }, [userId]);
 
   useEffect(() => {
-    fetchProviders()
-    fetchSettings()
-    fetchSkills()
-    fetchChatSkills()
-  }, [fetchProviders, fetchSettings, fetchSkills, fetchChatSkills])
+    fetchProviders();
+    fetchSettings();
+    fetchSkills();
+    fetchChatSkills();
+  }, [fetchProviders, fetchSettings, fetchSkills, fetchChatSkills]);
 
   // Delete provider
-  const deleteProvider = useCallback(async (providerId: string) => {
-    if (!userId || !(await showConfirm('Delete this provider? Models from it will no longer be available.'))) return
-    try {
-      await fetch(`/api/users/${userId}/llm-providers/${providerId}`, { method: 'DELETE' })
-      fetchProviders()
-      toast.success('Provider deleted')
-    } catch (err) {
-      console.error('Failed to delete provider:', err)
-      toast.error('Failed to delete provider')
-    }
-  }, [userId, fetchProviders])
+  const deleteProvider = useCallback(
+    async (providerId: string) => {
+      if (
+        !userId ||
+        !(await showConfirm(
+          'Delete this provider? Models from it will no longer be available.',
+        ))
+      )
+        return;
+      try {
+        await fetch(`/api/users/${userId}/llm-providers/${providerId}`, {
+          method: 'DELETE',
+        });
+        fetchProviders();
+        toast.success('Provider deleted');
+      } catch (err) {
+        console.error('Failed to delete provider:', err);
+        toast.error('Failed to delete provider');
+      }
+    },
+    [userId, fetchProviders],
+  );
 
   // Save user settings
   const saveSettings = useCallback(async () => {
-    if (!userId) return
-    setSettingsSaving(true)
+    if (!userId) return;
+    setSettingsSaving(true);
     try {
       // Build rotation configs payload from pending state
-      const rotPayload: Record<string, { extraKeys: string; rotateEveryN: number }> = {}
+      const rotPayload: Record<
+        string,
+        { extraKeys: string; rotateEveryN: number }
+      > = {};
       for (const [, toolName] of Object.entries(TOOL_NAME_MAP)) {
-        const info = rotationConfigs[toolName]
-        if (info && (info as RotationInfo & { _extraKeys?: string })._extraKeys !== undefined) {
+        const info = rotationConfigs[toolName];
+        if (
+          info &&
+          (info as RotationInfo & { _extraKeys?: string })._extraKeys !==
+            undefined
+        ) {
           // New keys were set via the modal — send them
           rotPayload[toolName] = {
-            extraKeys: (info as RotationInfo & { _extraKeys?: string })._extraKeys!,
+            extraKeys: (info as RotationInfo & { _extraKeys?: string })
+              ._extraKeys!,
             rotateEveryN: info.rotateEveryN,
-          }
+          };
         } else if (info && info.extraKeyCount > 0) {
           // Existing keys not modified — send masked marker to preserve
           rotPayload[toolName] = {
             extraKeys: '••••',
             rotateEveryN: info.rotateEveryN,
-          }
+          };
         }
       }
 
@@ -599,9 +756,9 @@ export default function SettingsPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...settings, rotationConfigs: rotPayload }),
-      })
+      });
       if (resp.ok) {
-        const data = await resp.json()
+        const data = await resp.json();
         setSettings({
           githubAccessToken: data.githubAccessToken || '',
           tavilyApiKey: data.tavilyApiKey || '',
@@ -631,958 +788,1313 @@ export default function SettingsPage() {
           ngrokAuthtoken: data.ngrokAuthtoken || '',
           chiselServerUrl: data.chiselServerUrl || '',
           chiselAuth: data.chiselAuth || '',
-        })
+        });
         if (data.rotationConfigs) {
-          setRotationConfigs(data.rotationConfigs)
+          setRotationConfigs(data.rotationConfigs);
         }
-        setSettingsDirty(false)
-        toast.success('Settings saved')
+        setSettingsDirty(false);
+        toast.success('Settings saved');
       }
     } catch (err) {
-      console.error('Failed to save settings:', err)
-      toast.error('Failed to save settings')
+      console.error('Failed to save settings:', err);
+      toast.error('Failed to save settings');
     } finally {
-      setSettingsSaving(false)
+      setSettingsSaving(false);
     }
-  }, [userId, settings, rotationConfigs])
+  }, [userId, settings, rotationConfigs]);
 
-  const updateSetting = useCallback(<K extends keyof UserSettings>(field: K, value: string) => {
-    setSettings(prev => ({ ...prev, [field]: value }))
-    setSettingsDirty(true)
-  }, [])
+  const updateSetting = useCallback(
+    <K extends keyof UserSettings>(field: K, value: string) => {
+      setSettings((prev) => ({ ...prev, [field]: value }));
+      setSettingsDirty(true);
+    },
+    [],
+  );
 
   const toggleFieldVisibility = useCallback((field: string) => {
-    setVisibleFields(prev => ({ ...prev, [field]: !prev[field] }))
-  }, [])
+    setVisibleFields((prev) => ({ ...prev, [field]: !prev[field] }));
+  }, []);
 
-  const openRotationModal = useCallback((settingsField: string) => {
-    const toolName = TOOL_NAME_MAP[settingsField]
-    if (!toolName) return
-    const existing = rotationConfigs[toolName]
-    setRotationModal(toolName)
-    setRotationDraft({
-      extraKeys: '',
-      rotateEveryN: existing?.rotateEveryN ?? 10,
-    })
-    setRotationDraftDirty(false)
-  }, [rotationConfigs])
+  const openRotationModal = useCallback(
+    (settingsField: string) => {
+      const toolName = TOOL_NAME_MAP[settingsField];
+      if (!toolName) return;
+      const existing = rotationConfigs[toolName];
+      setRotationModal(toolName);
+      setRotationDraft({
+        extraKeys: '',
+        rotateEveryN: existing?.rotateEveryN ?? 10,
+      });
+      setRotationDraftDirty(false);
+    },
+    [rotationConfigs],
+  );
 
   const closeRotationModal = useCallback(() => {
-    setRotationModal(null)
-    setRotationDraft({ extraKeys: '', rotateEveryN: 10 })
-    setRotationDraftDirty(false)
-  }, [])
+    setRotationModal(null);
+    setRotationDraft({ extraKeys: '', rotateEveryN: 10 });
+    setRotationDraftDirty(false);
+  }, []);
 
   const saveRotationDraft = useCallback(() => {
-    if (!rotationModal) return
-    const existing = rotationConfigs[rotationModal]
+    if (!rotationModal) return;
+    const existing = rotationConfigs[rotationModal];
     if (rotationDraftDirty) {
       // User typed new keys — send them (may be empty to clear)
-      const keys = rotationDraft.extraKeys.split('\n').filter(k => k.trim())
-      setRotationConfigs(prev => ({
+      const keys = rotationDraft.extraKeys.split('\n').filter((k) => k.trim());
+      setRotationConfigs((prev) => ({
         ...prev,
         [rotationModal]: {
           extraKeyCount: keys.length,
           rotateEveryN: Math.max(1, rotationDraft.rotateEveryN),
           _extraKeys: rotationDraft.extraKeys,
         } as RotationInfo & { _extraKeys: string },
-      }))
+      }));
     } else {
       // Only rotateEveryN changed — preserve existing keys
-      setRotationConfigs(prev => ({
+      setRotationConfigs((prev) => ({
         ...prev,
         [rotationModal]: {
           extraKeyCount: existing?.extraKeyCount ?? 0,
           rotateEveryN: Math.max(1, rotationDraft.rotateEveryN),
         },
-      }))
+      }));
     }
-    setSettingsDirty(true)
-    closeRotationModal()
-  }, [rotationModal, rotationDraft, rotationDraftDirty, rotationConfigs, closeRotationModal])
+    setSettingsDirty(true);
+    closeRotationModal();
+  }, [
+    rotationModal,
+    rotationDraft,
+    rotationDraftDirty,
+    rotationConfigs,
+    closeRotationModal,
+  ]);
 
   const clearRotationConfig = useCallback(() => {
-    if (!rotationModal) return
-    setRotationConfigs(prev => ({
+    if (!rotationModal) return;
+    setRotationConfigs((prev) => ({
       ...prev,
       [rotationModal]: {
         extraKeyCount: 0,
         rotateEveryN: 10,
         _extraKeys: '',
       } as RotationInfo & { _extraKeys: string },
-    }))
-    setSettingsDirty(true)
-    closeRotationModal()
-  }, [rotationModal, closeRotationModal])
+    }));
+    setSettingsDirty(true);
+    closeRotationModal();
+  }, [rotationModal, closeRotationModal]);
 
   // --- API Keys Import / Export ---------------------------------------------------
 
   const downloadKeysTemplate = useCallback(() => {
-    const keyFields: Record<string, string> = {}
-    const tunnelFields: Record<string, string> = {}
+    const keyFields: Record<string, string> = {};
+    const tunnelFields: Record<string, string> = {};
     for (const [k, v] of Object.entries(settings)) {
       if (['ngrokAuthtoken', 'chiselServerUrl', 'chiselAuth'].includes(k)) {
-        tunnelFields[k] = v
+        tunnelFields[k] = v;
       } else {
-        keyFields[k] = v
+        keyFields[k] = v;
       }
     }
-    const template = buildTemplate(keyFields, tunnelFields)
-    const json = templateToJson(template)
-    const blob = new Blob([json], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'redamon-api-keys-template.json'
-    a.click()
-    URL.revokeObjectURL(url)
-    toast.success('Template downloaded')
-  }, [settings])
+    const template = buildTemplate(keyFields, tunnelFields);
+    const json = templateToJson(template);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'redamon-api-keys-template.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Template downloaded');
+  }, [settings]);
 
-  const handleKeysFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (importFileRef.current) importFileRef.current.value = ''
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      const raw = reader.result as string
-      const result = validateAndParse(raw, file.size)
-      if (isValidationError(result)) {
-        toast.error(result.message)
-        return
-      }
-      if (result.keyCount === 0 && result.rotationCount === 0 && result.tunnelingCount === 0) {
-        toast.error('No keys to import — all values are empty or masked.')
-        return
-      }
-      setPendingImport(result)
-    }
-    reader.onerror = () => toast.error('Failed to read file.')
-    reader.readAsText(file)
-  }, [])
+  const handleKeysFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (importFileRef.current) importFileRef.current.value = '';
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const raw = reader.result as string;
+        const result = validateAndParse(raw, file.size);
+        if (isValidationError(result)) {
+          toast.error(result.message);
+          return;
+        }
+        if (
+          result.keyCount === 0 &&
+          result.rotationCount === 0 &&
+          result.tunnelingCount === 0
+        ) {
+          toast.error('No keys to import — all values are empty or masked.');
+          return;
+        }
+        setPendingImport(result);
+      };
+      reader.onerror = () => toast.error('Failed to read file.');
+      reader.readAsText(file);
+    },
+    [],
+  );
 
   const confirmImport = useCallback(() => {
-    if (!pendingImport) return
-    setSettings(prev => ({ ...prev, ...pendingImport.keys, ...pendingImport.tunneling }))
+    if (!pendingImport) return;
+    setSettings((prev) => ({
+      ...prev,
+      ...pendingImport.keys,
+      ...pendingImport.tunneling,
+    }));
     for (const [tool, cfg] of Object.entries(pendingImport.rotation)) {
-      setRotationConfigs(prev => ({
+      setRotationConfigs((prev) => ({
         ...prev,
         [tool]: {
           extraKeyCount: cfg.extraKeys.length,
           rotateEveryN: cfg.rotateEveryN,
           _extraKeys: cfg.extraKeys.join('\n'),
         } as RotationInfo & { _extraKeys: string },
-      }))
+      }));
     }
-    setSettingsDirty(true)
-    setPendingImport(null)
-    toast.success('Keys imported — click "Save Settings" to persist.')
-  }, [pendingImport])
+    setSettingsDirty(true);
+    setPendingImport(null);
+    toast.success('Keys imported — click "Save Settings" to persist.');
+  }, [pendingImport]);
 
-  const searchParams = useSearchParams()
-  const validTabs = ['providers', 'skills', 'chat-skills', 'tradecraft', 'keys', 'mcp', 'system']
-  const initialTab = searchParams.get('tab') || 'providers'
-  const [activeTab, setActiveTab] = useState(validTabs.includes(initialTab) ? initialTab : 'providers')
+  const searchParams = useSearchParams();
+  const validTabs = [
+    'providers',
+    'skills',
+    'chat-skills',
+    'tradecraft',
+    'keys',
+    'mcp',
+    'system',
+  ];
+  const initialTab = searchParams.get('tab') || 'providers';
+  const [activeTab, setActiveTab] = useState(
+    validTabs.includes(initialTab) ? initialTab : 'providers',
+  );
 
   // Tradecraft Resources state
-  type TcResource = import('@/components/settings/TradecraftResourceForm').TradecraftResource & {
-    crawlStoppedBecause?: string
-    crawlStats?: { pages_fetched?: number; llm_calls?: number; elapsed_sec?: number }
-    sitemap?: { nav?: unknown[]; tree?: unknown[]; pages?: unknown[]; links?: unknown[] }
-  }
-  const [tcResources, setTcResources] = useState<TcResource[]>([])
-  const [tcLoading, setTcLoading] = useState(false)
-  const [tcShowForm, setTcShowForm] = useState(false)
-  const [tcEditing, setTcEditing] = useState<TcResource | null>(null)
-  const [tcRefreshingId, setTcRefreshingId] = useState<string | null>(null)
-  const tcPollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  type TcResource =
+    import('@/components/settings/TradecraftResourceForm').TradecraftResource & {
+      crawlStoppedBecause?: string;
+      crawlStats?: {
+        pages_fetched?: number;
+        llm_calls?: number;
+        elapsed_sec?: number;
+      };
+      sitemap?: {
+        nav?: unknown[];
+        tree?: unknown[];
+        pages?: unknown[];
+        links?: unknown[];
+      };
+    };
+  const [tcResources, setTcResources] = useState<TcResource[]>([]);
+  const [tcLoading, setTcLoading] = useState(false);
+  const [tcShowForm, setTcShowForm] = useState(false);
+  const [tcEditing, setTcEditing] = useState<TcResource | null>(null);
+  const [tcRefreshingId, setTcRefreshingId] = useState<string | null>(null);
+  const tcPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchTcResources = useCallback(async () => {
-    if (!userId) return
-    setTcLoading(true)
+    if (!userId) return;
+    setTcLoading(true);
     try {
-      const r = await fetch(`/api/users/${userId}/tradecraft-resources`)
-      if (r.ok) setTcResources(await r.json())
-    } catch (e) { console.error('fetchTcResources', e) }
-    finally { setTcLoading(false) }
-  }, [userId])
+      const r = await fetch(`/api/users/${userId}/tradecraft-resources`);
+      if (r.ok) setTcResources(await r.json());
+    } catch (e) {
+      console.error('fetchTcResources', e);
+    } finally {
+      setTcLoading(false);
+    }
+  }, [userId]);
 
   useEffect(() => {
     if (activeTab === 'tradecraft' && userId) {
-      fetchTcResources()
+      fetchTcResources();
     }
-  }, [activeTab, userId, fetchTcResources])
+  }, [activeTab, userId, fetchTcResources]);
 
   // Light polling while a resource has not yet been verified (lastVerifiedAt null)
   useEffect(() => {
     if (activeTab !== 'tradecraft' || !userId) {
-      if (tcPollingRef.current) { clearInterval(tcPollingRef.current); tcPollingRef.current = null }
-      return
+      if (tcPollingRef.current) {
+        clearInterval(tcPollingRef.current);
+        tcPollingRef.current = null;
+      }
+      return;
     }
-    const anyPending = tcResources.some(r => !r.lastVerifiedAt)
+    const anyPending = tcResources.some((r) => !r.lastVerifiedAt);
     if (anyPending && !tcPollingRef.current) {
-      tcPollingRef.current = setInterval(fetchTcResources, 5000)
+      tcPollingRef.current = setInterval(fetchTcResources, 5000);
     } else if (!anyPending && tcPollingRef.current) {
-      clearInterval(tcPollingRef.current); tcPollingRef.current = null
+      clearInterval(tcPollingRef.current);
+      tcPollingRef.current = null;
     }
     return () => {
-      if (tcPollingRef.current) { clearInterval(tcPollingRef.current); tcPollingRef.current = null }
-    }
-  }, [activeTab, userId, tcResources, fetchTcResources])
+      if (tcPollingRef.current) {
+        clearInterval(tcPollingRef.current);
+        tcPollingRef.current = null;
+      }
+    };
+  }, [activeTab, userId, tcResources, fetchTcResources]);
 
   const tcHandleSave = useCallback(() => {
-    setTcShowForm(false); setTcEditing(null); fetchTcResources(); toast.success('Saved')
-  }, [fetchTcResources, toast])
+    setTcShowForm(false);
+    setTcEditing(null);
+    fetchTcResources();
+    toast.success('Saved');
+  }, [fetchTcResources, toast]);
 
-  const tcHandleCancel = useCallback(() => { setTcShowForm(false); setTcEditing(null) }, [])
+  const tcHandleCancel = useCallback(() => {
+    setTcShowForm(false);
+    setTcEditing(null);
+  }, []);
 
-  const tcHandleDelete = useCallback(async (r: TcResource) => {
-    if (!userId || !r.id) return
-    const ok = await showConfirm(
-      `Delete "${r.name}"? This removes the catalog entry and disk cache.`,
-      'Delete tradecraft resource',
-    )
-    if (!ok) return
-    try {
-      const resp = await fetch(`/api/users/${userId}/tradecraft-resources/${r.id}`, { method: 'DELETE' })
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-      toast.success('Deleted')
-      fetchTcResources()
-    } catch (e) { toast.error(`Delete failed: ${e instanceof Error ? e.message : String(e)}`) }
-  }, [userId, showConfirm, toast, fetchTcResources])
-
-  const tcHandleRefresh = useCallback(async (r: TcResource) => {
-    if (!userId || !r.id) return
-    setTcRefreshingId(r.id)
-    try {
-      const resp = await fetch(`/api/users/${userId}/tradecraft-resources/${r.id}/refresh`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
-      })
-      if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}))
-        throw new Error(data.error || `HTTP ${resp.status}`)
+  const tcHandleDelete = useCallback(
+    async (r: TcResource) => {
+      if (!userId || !r.id) return;
+      const ok = await showConfirm(
+        `Delete "${r.name}"? This removes the catalog entry and disk cache.`,
+        'Delete tradecraft resource',
+      );
+      if (!ok) return;
+      try {
+        const resp = await fetch(
+          `/api/users/${userId}/tradecraft-resources/${r.id}`,
+          { method: 'DELETE' },
+        );
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        toast.success('Deleted');
+        fetchTcResources();
+      } catch (e) {
+        toast.error(
+          `Delete failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
       }
-      toast.success('Refreshed')
-      fetchTcResources()
-    } catch (e) { toast.error(`Refresh failed: ${e instanceof Error ? e.message : String(e)}`) }
-    finally { setTcRefreshingId(null) }
-  }, [userId, toast, fetchTcResources])
+    },
+    [userId, showConfirm, toast, fetchTcResources],
+  );
 
-  const tcHandleToggleEnabled = useCallback(async (r: TcResource, next: boolean) => {
-    if (!userId || !r.id) return
-    // Optimistic update
-    setTcResources(prev => prev.map(x => x.id === r.id ? { ...x, enabled: next } : x))
-    try {
-      const resp = await fetch(`/api/users/${userId}/tradecraft-resources/${r.id}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: next }),
-      })
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-    } catch (e) {
-      toast.error(`Toggle failed: ${e instanceof Error ? e.message : String(e)}`)
-      fetchTcResources()
-    }
-  }, [userId, toast, fetchTcResources])
+  const tcHandleRefresh = useCallback(
+    async (r: TcResource) => {
+      if (!userId || !r.id) return;
+      setTcRefreshingId(r.id);
+      try {
+        const resp = await fetch(
+          `/api/users/${userId}/tradecraft-resources/${r.id}/refresh`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: '{}',
+          },
+        );
+        if (!resp.ok) {
+          const data = await resp.json().catch(() => ({}));
+          throw new Error(data.error || `HTTP ${resp.status}`);
+        }
+        toast.success('Refreshed');
+        fetchTcResources();
+      } catch (e) {
+        toast.error(
+          `Refresh failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      } finally {
+        setTcRefreshingId(null);
+      }
+    },
+    [userId, toast, fetchTcResources],
+  );
+
+  const tcHandleToggleEnabled = useCallback(
+    async (r: TcResource, next: boolean) => {
+      if (!userId || !r.id) return;
+      // Optimistic update
+      setTcResources((prev) =>
+        prev.map((x) => (x.id === r.id ? { ...x, enabled: next } : x)),
+      );
+      try {
+        const resp = await fetch(
+          `/api/users/${userId}/tradecraft-resources/${r.id}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled: next }),
+          },
+        );
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      } catch (e) {
+        toast.error(
+          `Toggle failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
+        fetchTcResources();
+      }
+    },
+    [userId, toast, fetchTcResources],
+  );
 
   if (!userId) {
     return (
       <div className={styles.page}>
-        <h1 className={styles.pageTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '12px' }}>
-          <span>Global Settings <span style={{ fontSize: '0.55em', fontWeight: 400, opacity: 0.5 }}>(User-Scoped)</span></span>
-          <WikiInfoButton target="settings" title="Open Global Settings wiki page" />
+        <h1
+          className={styles.pageTitle}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '12px' }}
+        >
+          <span>
+            전역 설정{' '}
+            <span style={{ fontSize: '0.55em', fontWeight: 400, opacity: 0.5 }}>
+              (사용자 범위)
+            </span>
+          </span>
+          <WikiInfoButton
+            target="settings"
+            title="전역 설정 위키 페이지 열기"
+          />
         </h1>
-        <div className={styles.emptyState}>Select a user to configure settings.</div>
+        <div className={styles.emptyState}>
+          설정을 구성할 사용자를 선택하세요.
+        </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.pageTitle}>Global Settings <span style={{ fontSize: '0.55em', fontWeight: 400, opacity: 0.5 }}>(User-Scoped)</span></h1>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 var(--space-4)' }}>
-        Personal configuration for the current user. These settings apply across all projects.
+      <h1 className={styles.pageTitle}>
+        전역 설정{' '}
+        <span style={{ fontSize: '0.55em', fontWeight: 400, opacity: 0.5 }}>
+          (사용자 범위)
+        </span>
+      </h1>
+      <p
+        style={{
+          color: 'var(--text-secondary)',
+          fontSize: '13px',
+          margin: '0 0 var(--space-4)',
+        }}
+      >
+        현재 사용자의 개인 설정입니다. 이 설정은 모든 프로젝트에 적용됩니다.
       </p>
 
       <div className={styles.tabBar}>
-        <button className={`${styles.tab} ${activeTab === 'providers' ? styles.tabActive : ''}`} onClick={() => setActiveTab('providers')}>
-          LLM Providers
+        <button
+          className={`${styles.tab} ${activeTab === 'providers' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('providers')}
+        >
+          LLM API
         </button>
-        <button className={`${styles.tab} ${activeTab === 'skills' ? styles.tabActive : ''}`} onClick={() => setActiveTab('skills')}>
-          <Swords size={14} /> Agent Skills
+        <button
+          className={`${styles.tab} ${activeTab === 'skills' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('skills')}
+        >
+          <Swords size={14} /> 에이전트 스킬
         </button>
-        <button className={`${styles.tab} ${activeTab === 'chat-skills' ? styles.tabActive : ''}`} onClick={() => setActiveTab('chat-skills')}>
-          <BookOpen size={14} /> Chat Skills
+        <button
+          className={`${styles.tab} ${activeTab === 'chat-skills' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('chat-skills')}
+        >
+          <BookOpen size={14} /> 채팅 스킬
         </button>
-        <button className={`${styles.tab} ${activeTab === 'tradecraft' ? styles.tabActive : ''}`} onClick={() => setActiveTab('tradecraft')}>
-          <BookOpen size={14} /> Tradecraft
+        <button
+          className={`${styles.tab} ${activeTab === 'tradecraft' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('tradecraft')}
+        >
+          <BookOpen size={14} /> 공격 기법
         </button>
-        <button className={`${styles.tab} ${activeTab === 'keys' ? styles.tabActive : ''}`} onClick={() => setActiveTab('keys')}>
-          API Keys & Tunneling
+        <button
+          className={`${styles.tab} ${activeTab === 'keys' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('keys')}
+        >
+          API 키 및 터널링
         </button>
-        <button className={`${styles.tab} ${activeTab === 'mcp' ? styles.tabActive : ''}`} onClick={() => setActiveTab('mcp')}>
-          <Server size={14} /> MCP Tool Plugins
+        <button
+          className={`${styles.tab} ${activeTab === 'mcp' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('mcp')}
+        >
+          <Server size={14} /> MCP 도구 플러그인
         </button>
-        <button className={`${styles.tab} ${activeTab === 'system' ? styles.tabActive : ''}`} onClick={() => setActiveTab('system')}>
-          <Info size={14} /> System
+        <button
+          className={`${styles.tab} ${activeTab === 'system' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('system')}
+        >
+          <Info size={14} /> 시스템
         </button>
       </div>
 
       {/* Tab: LLM Providers */}
-      {activeTab === 'providers' && <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <span>LLM Providers</span>
-            <WikiInfoButton target="https://github.com/samugit83/redamon/wiki/AI-Model-Providers" title="Open AI Model Providers wiki page" />
-          </h2>
-          {!showProviderForm && !editingProvider && (
-            <button className="primaryButton" onClick={() => setShowProviderForm(true)}>
-              <Plus size={14} /> Add Provider
-            </button>
+      {activeTab === 'providers' && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2
+              className={styles.sectionTitle}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <span>LLM API</span>
+              <WikiInfoButton
+                target="https://github.com/samugit83/redamon/wiki/AI-Model-Providers"
+                title="AI 모델 API 위키 페이지 열기"
+              />
+            </h2>
+            {!showProviderForm && !editingProvider && (
+              <button
+                className="primaryButton"
+                onClick={() => setShowProviderForm(true)}
+              >
+                <Plus size={14} /> API 추가
+              </button>
+            )}
+          </div>
+          <p className={styles.sectionHint}>
+            모든 API의 모델이 각 프로젝트의 LLM 선택기에 표시됩니다. 키 기반
+            API는 사용 가능한 모델을 자동으로 탐색합니다.
+          </p>
+
+          {/* Provider form */}
+          {(showProviderForm || editingProvider) && (
+            <LlmProviderForm
+              userId={userId}
+              provider={editingProvider}
+              existingProviderTypes={providers.map((p) => p.providerType)}
+              onSave={() => {
+                setShowProviderForm(false);
+                setEditingProvider(null);
+                fetchProviders();
+              }}
+              onCancel={() => {
+                setShowProviderForm(false);
+                setEditingProvider(null);
+              }}
+            />
           )}
+
+          {/* Provider list */}
+          {!showProviderForm &&
+            !editingProvider &&
+            (providersLoading ? (
+              <div className={styles.emptyState}>
+                <Loader2 size={16} className={styles.spin} /> 로딩 중...
+              </div>
+            ) : providers.length === 0 ? (
+              <div className={styles.emptyState}>
+                구성된 API가 없습니다. 시작하려면 추가하세요.
+              </div>
+            ) : (
+              <div className={styles.providerList}>
+                {providers.map((p: ProviderData) => {
+                  const Icon = getProviderIconComponent(p.providerType);
+                  return (
+                    <div key={p.id} className={styles.providerCard}>
+                      <span
+                        className={styles.providerIcon}
+                        aria-label={getProviderLabel(p.providerType)}
+                      >
+                        {Icon ? <Icon size={28} /> : null}
+                      </span>
+                      <div className={styles.providerInfo}>
+                        <div className={styles.providerName}>{p.name}</div>
+                        <div className={styles.providerMeta}>
+                          {getProviderLabel(p.providerType)}
+                          {p.providerType === 'openai_compatible' &&
+                            p.modelIdentifier &&
+                            ` — ${p.modelIdentifier}`}
+                        </div>
+                      </div>
+                      <div className={styles.providerActions}>
+                        <button
+                          className="iconButton"
+                          title="편집"
+                          onClick={() => setEditingProvider(p)}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          className="iconButton"
+                          title="삭제"
+                          onClick={() => deleteProvider(p.id!)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
         </div>
-        <p className={styles.sectionHint}>
-          Models from all providers appear in every project&apos;s LLM selector. Key-based providers auto-discover available models.
-        </p>
+      )}
 
-        {/* Provider form */}
-        {(showProviderForm || editingProvider) && (
-          <LlmProviderForm
-            userId={userId}
-            provider={editingProvider}
-            existingProviderTypes={providers.map(p => p.providerType)}
-            onSave={() => {
-              setShowProviderForm(false)
-              setEditingProvider(null)
-              fetchProviders()
-            }}
-            onCancel={() => {
-              setShowProviderForm(false)
-              setEditingProvider(null)
-            }}
-          />
-        )}
+      {/* Tab: Agent Skills */}
+      {activeTab === 'skills' && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2
+              className={styles.sectionTitle}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <Swords size={16} /> 에이전트 스킬
+              <WikiInfoButton
+                target="https://github.com/samugit83/redamon/wiki/Agent-Skills"
+                title="에이전트 스킬 위키 페이지 열기"
+              />
+            </h2>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                className="secondaryButton"
+                onClick={importCommunityAgentSkills}
+                disabled={importingAgentSkills}
+              >
+                {importingAgentSkills ? (
+                  <Loader2 size={14} className={styles.spin} />
+                ) : (
+                  <Download size={14} />
+                )}
+                커뮤니티에서 가져오기
+              </button>
+              <label className="primaryButton" style={{ cursor: 'pointer' }}>
+                <Upload size={14} /> 스킬 업로드
+                <input
+                  type="file"
+                  accept=".md"
+                  style={{ display: 'none' }}
+                  onChange={handleSkillUpload}
+                />
+              </label>
+            </div>
+          </div>
+          <p className={styles.sectionHint}>
+            사용자 정의 공격 스킬 워크플로우를 정의하는 .md 파일을 업로드하세요.
+            업로드된 스킬은 모든 프로젝트 설정에서 활성화/비활성화할 수
+            있습니다. 준비된 템플릿은{' '}
+            <a
+              href="https://github.com/samugit83/redamon/wiki/Agent-Skills#community-skills"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: 'var(--accent-primary)',
+                textDecoration: 'underline',
+              }}
+            >
+              커뮤니티 스킬
+            </a>
+            에서 찾아보세요.
+          </p>
 
-        {/* Provider list */}
-        {!showProviderForm && !editingProvider && (
-          providersLoading ? (
-            <div className={styles.emptyState}><Loader2 size={16} className={styles.spin} /> Loading...</div>
-          ) : providers.length === 0 ? (
-            <div className={styles.emptyState}>No providers configured. Add one to get started.</div>
+          {skillsLoading ? (
+            <div className={styles.emptyState}>
+              <Loader2 size={16} className={styles.spin} /> 로딩 중...
+            </div>
+          ) : attackSkills.length === 0 ? (
+            <div className={styles.emptyState}>
+              아직 업로드된 사용자 정의 스킬이 없습니다. .md 파일을 업로드하여
+              시작하세요.
+            </div>
           ) : (
             <div className={styles.providerList}>
-              {providers.map((p: ProviderData) => {
-                const Icon = getProviderIconComponent(p.providerType)
-                return (
-                <div key={p.id} className={styles.providerCard}>
-                  <span className={styles.providerIcon} aria-label={getProviderLabel(p.providerType)}>
-                    {Icon ? <Icon size={28} /> : null}
+              {attackSkills.map((skill) => (
+                <div key={skill.id} className={styles.providerCard}>
+                  <span className={styles.providerIcon}>
+                    <Swords size={16} />
                   </span>
                   <div className={styles.providerInfo}>
-                    <div className={styles.providerName}>{p.name}</div>
+                    <div className={styles.providerName}>{skill.name}</div>
                     <div className={styles.providerMeta}>
-                      {getProviderLabel(p.providerType)}
-                      {p.providerType === 'openai_compatible' && p.modelIdentifier && ` — ${p.modelIdentifier}`}
+                      {skill.description || (
+                        <span style={{ opacity: 0.5, fontStyle: 'italic' }}>
+                          설명 없음
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.providerMeta}>
+                      업로드됨: {new Date(skill.createdAt).toLocaleDateString()}
                     </div>
                   </div>
                   <div className={styles.providerActions}>
-                    <button className="iconButton" title="Edit" onClick={() => setEditingProvider(p)}>
+                    <button
+                      className="iconButton"
+                      title="설명 편집"
+                      onClick={() => openEditDescription(skill.id)}
+                    >
                       <Pencil size={14} />
                     </button>
-                    <button className="iconButton" title="Delete" onClick={() => deleteProvider(p.id!)}>
+                    <button
+                      className="iconButton"
+                      title="다운로드"
+                      onClick={() => downloadSkill(skill.id, skill.name)}
+                    >
+                      <Download size={14} />
+                    </button>
+                    <button
+                      className="iconButton"
+                      title="삭제"
+                      onClick={() => deleteSkill(skill.id)}
+                    >
                       <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
-                )
-              })}
+              ))}
             </div>
-          )
-        )}
-      </div>}
-
-      {/* Tab: Agent Skills */}
-      {activeTab === 'skills' && <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <Swords size={16} /> Agent Skills
-            <WikiInfoButton target="https://github.com/samugit83/redamon/wiki/Agent-Skills" title="Open Agent Skills wiki page" />
-          </h2>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button
-              className="secondaryButton"
-              onClick={importCommunityAgentSkills}
-              disabled={importingAgentSkills}
-            >
-              {importingAgentSkills ? <Loader2 size={14} className={styles.spin} /> : <Download size={14} />}
-              Import from Community
-            </button>
-            <label className="primaryButton" style={{ cursor: 'pointer' }}>
-              <Upload size={14} /> Upload Skill
-              <input
-                type="file"
-                accept=".md"
-                style={{ display: 'none' }}
-                onChange={handleSkillUpload}
-              />
-            </label>
-          </div>
-        </div>
-        <p className={styles.sectionHint}>
-          Upload .md files defining custom attack skill workflows. Skills become available as toggles in all project settings.
-          {' '}Browse <a href="https://github.com/samugit83/redamon/wiki/Agent-Skills#community-skills" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', textDecoration: 'underline' }}>community skills</a> for ready-to-use templates.
-        </p>
-
-        {skillsLoading ? (
-          <div className={styles.emptyState}><Loader2 size={16} className={styles.spin} /> Loading...</div>
-        ) : attackSkills.length === 0 ? (
-          <div className={styles.emptyState}>No custom skills uploaded yet. Upload a .md file to get started.</div>
-        ) : (
-          <div className={styles.providerList}>
-            {attackSkills.map(skill => (
-              <div key={skill.id} className={styles.providerCard}>
-                <span className={styles.providerIcon}><Swords size={16} /></span>
-                <div className={styles.providerInfo}>
-                  <div className={styles.providerName}>{skill.name}</div>
-                  <div className={styles.providerMeta}>
-                    {skill.description || <span style={{ opacity: 0.5, fontStyle: 'italic' }}>No description</span>}
-                  </div>
-                  <div className={styles.providerMeta}>
-                    Uploaded {new Date(skill.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-                <div className={styles.providerActions}>
-                  <button className="iconButton" title="Edit description" onClick={() => openEditDescription(skill.id)}>
-                    <Pencil size={14} />
-                  </button>
-                  <button className="iconButton" title="Download" onClick={() => downloadSkill(skill.id, skill.name)}>
-                    <Download size={14} />
-                  </button>
-                  <button className="iconButton" title="Delete" onClick={() => deleteSkill(skill.id)}>
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>}
-
-      {/* Tab: Chat Skills */}
-      {activeTab === 'chat-skills' && <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <BookOpen size={16} /> Chat Skills
-            <WikiInfoButton target="https://github.com/samugit83/redamon/wiki/Chat-Skills" title="Open Chat Skills wiki page" />
-          </h2>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button
-              className="secondaryButton"
-              onClick={importCommunityChatSkills}
-              disabled={importingChatSkills}
-            >
-              {importingChatSkills ? <Loader2 size={14} className={styles.spin} /> : <Download size={14} />}
-              Import from Community
-            </button>
-            <label className="primaryButton" style={{ cursor: 'pointer' }}>
-              <Upload size={14} /> Upload Skill (.md)
-              <input
-                type="file"
-                accept=".md"
-                style={{ display: 'none' }}
-                onChange={handleChatSkillUpload}
-              />
-            </label>
-          </div>
-        </div>
-        <p className={styles.sectionHint}>
-          Upload and manage on-demand reference skills for the AI agent chat. Unlike Agent Skills (which drive attack classification and phase-aware workflows), Chat Skills are tactical reference docs that you inject into the agent&apos;s context on the fly using <code>/skill &lt;name&gt;</code> in the chat.
-        </p>
-
-        {chatSkillsLoading ? (
-          <div className={styles.emptyState}><Loader2 size={16} className={styles.spin} /> Loading...</div>
-        ) : chatSkills.length === 0 ? (
-          <div className={styles.emptyState}>No Chat Skills yet. Click Import from Community to add ready-to-use reference skills, or upload your own .md files.</div>
-        ) : (
-          <div className={styles.providerList}>
-            {chatSkills.map(skill => (
-              <div key={skill.id} className={styles.providerCard}>
-                <span className={styles.providerIcon}><BookOpen size={16} /></span>
-                <div className={styles.providerInfo}>
-                  <div className={styles.providerName}>
-                    {skill.name}
-                    {skill.category && (
-                      <span style={{
-                        marginLeft: '8px',
-                        fontSize: '10px',
-                        fontWeight: 500,
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        background: 'var(--bg-tertiary)',
-                        color: 'var(--text-secondary)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.03em',
-                      }}>
-                        {skill.category}
-                      </span>
-                    )}
-                  </div>
-                  <div className={styles.providerMeta}>
-                    {skill.description || <span style={{ opacity: 0.5, fontStyle: 'italic' }}>No description</span>}
-                  </div>
-                  <div className={styles.providerMeta}>
-                    Uploaded {new Date(skill.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-                <div className={styles.providerActions}>
-                  <button className="iconButton" title="Edit description" onClick={() => openEditChatDescription(skill.id)}>
-                    <Pencil size={14} />
-                  </button>
-                  <button className="iconButton" title="Download" onClick={() => downloadChatSkill(skill.id, skill.name)}>
-                    <Download size={14} />
-                  </button>
-                  <button className="iconButton" title="Delete" onClick={() => deleteChatSkill(skill.id)}>
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>}
-
-      {/* Tab: Tradecraft Resources */}
-      {activeTab === 'tradecraft' && <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>
-            Tradecraft Resources
-            <WikiInfoButton target="https://github.com/samugit83/redamon/wiki/Tradecraft-Lookup" title="Open Tradecraft Lookup wiki page" />
-          </h2>
-          {!tcShowForm && !tcEditing && (
-            <button className="primaryButton" onClick={() => setTcShowForm(true)}>
-              <Plus size={14} /> Add Resource
-            </button>
           )}
         </div>
-        <p className={styles.sectionHint}>
-          Curated knowledge sites the agent consults during exploitation
-          (HackTricks, PayloadsAllTheThings, CVE PoC repos, ...). On add, the
-          agent fetches the homepage, builds a sitemap, and writes a short
-          summary that becomes the tool&apos;s catalog entry. The agent only sees
-          enabled resources.
-        </p>
-        {(tcShowForm || tcEditing) && (
-          <TradecraftResourceForm
-            userId={userId!}
-            resource={tcEditing}
-            onSave={tcHandleSave}
-            onCancel={tcHandleCancel}
+      )}
+
+      {/* Tab: Chat Skills */}
+      {activeTab === 'chat-skills' && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2
+              className={styles.sectionTitle}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <BookOpen size={16} /> 채팅 스킬
+              <WikiInfoButton
+                target="https://github.com/samugit83/redamon/wiki/Chat-Skills"
+                title="채팅 스킬 위키 페이지 열기"
+              />
+            </h2>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                className="secondaryButton"
+                onClick={importCommunityChatSkills}
+                disabled={importingChatSkills}
+              >
+                {importingChatSkills ? (
+                  <Loader2 size={14} className={styles.spin} />
+                ) : (
+                  <Download size={14} />
+                )}
+                커뮤니티에서 가져오기
+              </button>
+              <label className="primaryButton" style={{ cursor: 'pointer' }}>
+                <Upload size={14} /> 스킬 업로드 (.md)
+                <input
+                  type="file"
+                  accept=".md"
+                  style={{ display: 'none' }}
+                  onChange={handleChatSkillUpload}
+                />
+              </label>
+            </div>
+          </div>
+          <p className={styles.sectionHint}>
+            AI 에이전트 채팅을 위한 온디맨드 참조 스킬을 업로드하고 관리하세요.
+            에이전트 스킬(공격 분류 및 단계 인식 워크플로우를 구동함)과 달리,
+            채팅 스킬은 채팅 중 <code>/skill &lt;이름&gt;</code> 명령을 사용하여
+            에이전트의 컨텍스트에 즉석에서 삽입할 수 있는 전술적 참조
+            문서입니다.
+          </p>
+
+          {chatSkillsLoading ? (
+            <div className={styles.emptyState}>
+              <Loader2 size={16} className={styles.spin} /> 로딩 중...
+            </div>
+          ) : chatSkills.length === 0 ? (
+            <div className={styles.emptyState}>
+              아직 채팅 스킬이 없습니다. 커뮤니티에서 가져오기를 클릭하여 참조
+              스킬을 추가하거나 직접 .md 파일을 업로드하세요.
+            </div>
+          ) : (
+            <div className={styles.providerList}>
+              {chatSkills.map((skill) => (
+                <div key={skill.id} className={styles.providerCard}>
+                  <span className={styles.providerIcon}>
+                    <BookOpen size={16} />
+                  </span>
+                  <div className={styles.providerInfo}>
+                    <div className={styles.providerName}>
+                      {skill.name}
+                      {skill.category && (
+                        <span
+                          style={{
+                            marginLeft: '8px',
+                            fontSize: '10px',
+                            fontWeight: 500,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            background: 'var(--bg-tertiary)',
+                            color: 'var(--text-secondary)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.03em',
+                          }}
+                        >
+                          {skill.category}
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.providerMeta}>
+                      {skill.description || (
+                        <span style={{ opacity: 0.5, fontStyle: 'italic' }}>
+                          설명 없음
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.providerMeta}>
+                      업로드됨: {new Date(skill.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className={styles.providerActions}>
+                    <button
+                      className="iconButton"
+                      title="설명 편집"
+                      onClick={() => openEditChatDescription(skill.id)}
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      className="iconButton"
+                      title="다운로드"
+                      onClick={() => downloadChatSkill(skill.id, skill.name)}
+                    >
+                      <Download size={14} />
+                    </button>
+                    <button
+                      className="iconButton"
+                      title="삭제"
+                      onClick={() => deleteChatSkill(skill.id)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab: Tradecraft Resources */}
+      {activeTab === 'tradecraft' && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>
+              공격 기법 리소스
+              <WikiInfoButton
+                target="https://github.com/samugit83/redamon/wiki/Tradecraft-Lookup"
+                title="공격 기법(Tradecraft) 검색 위키 페이지 열기"
+              />
+            </h2>
+            {!tcShowForm && !tcEditing && (
+              <button
+                className="primaryButton"
+                onClick={() => setTcShowForm(true)}
+              >
+                <Plus size={14} /> 리소스 추가
+              </button>
+            )}
+          </div>
+          <p className={styles.sectionHint}>
+            에이전트가 공격 과정에서 참고하는 선별된 지식 사이트(HackTricks,
+            PayloadsAllTheThings, CVE PoC 저장소 등)입니다. 리소스를 추가하면
+            에이전트가 홈페이지를 분석하고 사이트맵을 구축하며 요약을 작성하여
+            카탈로그 항목을 생성합니다. 에이전트는 활성화된 리소스만 참조합니다.
+          </p>
+          {(tcShowForm || tcEditing) && (
+            <TradecraftResourceForm
+              userId={userId!}
+              resource={tcEditing}
+              onSave={tcHandleSave}
+              onCancel={tcHandleCancel}
+            />
+          )}
+          <TradecraftResourceList
+            resources={tcResources}
+            loading={tcLoading}
+            refreshingId={tcRefreshingId}
+            onEdit={(r) => setTcEditing(r)}
+            onDelete={tcHandleDelete}
+            onRefresh={tcHandleRefresh}
+            onToggleEnabled={tcHandleToggleEnabled}
           />
-        )}
-        <TradecraftResourceList
-          resources={tcResources}
-          loading={tcLoading}
-          refreshingId={tcRefreshingId}
-          onEdit={(r) => setTcEditing(r)}
-          onDelete={tcHandleDelete}
-          onRefresh={tcHandleRefresh}
-          onToggleEnabled={tcHandleToggleEnabled}
-        />
-      </div>}
+        </div>
+      )}
 
       {/* Tab: API Keys & Tunneling */}
-      {activeTab === 'keys' && <><div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <span>API Keys</span>
-            <WikiInfoButton target="settings" title="Open Global Settings wiki page" />
-          </h2>
-          <div className={styles.sectionHeaderActions}>
-            <button className={styles.sectionHeaderBtn} onClick={downloadKeysTemplate} title="Download a JSON template to fill in your API keys offline">
-              <Download size={13} /> Download Template
-            </button>
-            <button className={styles.sectionHeaderBtn} onClick={() => importFileRef.current?.click()} title="Import API keys from a JSON template file">
-              <Upload size={13} /> Import Keys
-            </button>
-            <input
-              ref={importFileRef}
-              type="file"
-              accept=".json"
-              style={{ display: 'none' }}
-              onChange={handleKeysFileSelect}
-            />
-          </div>
-        </div>
-        {settingsLoading ? (
-          <div className={styles.emptyState}><Loader2 size={16} className={styles.spin} /> Loading...</div>
-        ) : (
-          <div className={styles.settingsGrid}>
-            <SecretField
-              label="GitHub Access Token"
-              hint="Required for GitHub Secret Hunt and TruffleHog scanners. Use repo scope for private repos, or a fine-grained token for specific repos only"
-              signupUrl="https://github.com/settings/tokens"
-              badges={['GitHub Secret Hunt', 'TruffleHog']}
-              value={settings.githubAccessToken}
-              visible={!!visibleFields.githubAccessToken}
-              onToggle={() => toggleFieldVisibility('githubAccessToken')}
-              onChange={v => updateSetting('githubAccessToken', v)}
-            />
-            <SecretField
-              label="Tavily API Key"
-              hint="Enables web_search tool for CVE research and exploit lookups"
-              signupUrl="https://app.tavily.com/home"
-              badges={['AI Agent']}
-              value={settings.tavilyApiKey}
-              visible={!!visibleFields.tavilyApiKey}
-              onToggle={() => toggleFieldVisibility('tavilyApiKey')}
-              onChange={v => updateSetting('tavilyApiKey', v)}
-              onConfigureRotation={() => openRotationModal('tavilyApiKey')}
-              rotationInfo={rotationConfigs.tavily || null}
-            />
-            <SecretField
-              label="Shodan API Key"
-              hint="Enables the shodan tool for internet-wide OSINT (search, host info, DNS, count)"
-              signupUrl="https://account.shodan.io/"
-              badges={['AI Agent', 'Recon Pipeline', 'Standalone + Uncover']}
-              value={settings.shodanApiKey}
-              visible={!!visibleFields.shodanApiKey}
-              onToggle={() => toggleFieldVisibility('shodanApiKey')}
-              onChange={v => updateSetting('shodanApiKey', v)}
-              onConfigureRotation={() => openRotationModal('shodanApiKey')}
-              rotationInfo={rotationConfigs.shodan || null}
-            />
-            <SecretField
-              label="SerpAPI Key"
-              hint="Enables google_dork tool for Google dorking OSINT (site:, inurl:, filetype:). Free: 250 searches/month"
-              signupUrl="https://serpapi.com/manage-api-key"
-              badges={['AI Agent']}
-              value={settings.serpApiKey}
-              visible={!!visibleFields.serpApiKey}
-              onToggle={() => toggleFieldVisibility('serpApiKey')}
-              onChange={v => updateSetting('serpApiKey', v)}
-              onConfigureRotation={() => openRotationModal('serpApiKey')}
-              rotationInfo={rotationConfigs.serp || null}
-            />
-            <SecretField
-              label="WPScan API Token"
-              hint="Enriches execute_wpscan results with vulnerability data from the WPScan database. Free: 25 requests/day"
-              signupUrl="https://wpscan.com/register"
-              badges={['AI Agent']}
-              value={settings.wpscanApiToken}
-              visible={!!visibleFields.wpscanApiToken}
-              onToggle={() => toggleFieldVisibility('wpscanApiToken')}
-              onChange={v => updateSetting('wpscanApiToken', v)}
-              onConfigureRotation={() => openRotationModal('wpscanApiToken')}
-              rotationInfo={rotationConfigs.wpscan || null}
-            />
-            <SecretField
-              label="PDCP API Key"
-              hint="Optional. Enriches the cve_intel tool by lifting the 10 req/min anonymous rate limit on ProjectDiscovery's CVE database (vulnx)."
-              signupUrl="https://cloud.projectdiscovery.io"
-              badges={['AI Agent']}
-              value={settings.pdcpApiKey}
-              visible={!!visibleFields.pdcpApiKey}
-              onToggle={() => toggleFieldVisibility('pdcpApiKey')}
-              onChange={v => updateSetting('pdcpApiKey', v)}
-              onConfigureRotation={() => openRotationModal('pdcpApiKey')}
-              rotationInfo={rotationConfigs.pdcp || null}
-            />
-            <SecretField
-              label="NVD API Key"
-              hint="NIST NVD API key — increases CVE lookup rate limit from 5 to 120 requests/30s"
-              signupUrl="https://nvd.nist.gov/developers/request-an-api-key"
-              badges={['Recon Pipeline']}
-              value={settings.nvdApiKey}
-              visible={!!visibleFields.nvdApiKey}
-              onToggle={() => toggleFieldVisibility('nvdApiKey')}
-              onChange={v => updateSetting('nvdApiKey', v)}
-              onConfigureRotation={() => openRotationModal('nvdApiKey')}
-              rotationInfo={rotationConfigs.nvd || null}
-            />
-            <SecretField
-              label="Vulners API Key"
-              hint="Vulners CVE database — alternative to NVD for vulnerability lookups with richer exploit data"
-              signupUrl="https://vulners.com/#register"
-              badges={['Recon Pipeline']}
-              value={settings.vulnersApiKey}
-              visible={!!visibleFields.vulnersApiKey}
-              onToggle={() => toggleFieldVisibility('vulnersApiKey')}
-              onChange={v => updateSetting('vulnersApiKey', v)}
-              onConfigureRotation={() => openRotationModal('vulnersApiKey')}
-              rotationInfo={rotationConfigs.vulners || null}
-            />
-            <SecretField
-              label="URLScan API Key"
-              hint="Optional — used by URLScan.io OSINT enrichment for higher rate limits. Works without key (public results only)"
-              signupUrl="https://urlscan.io/user/signup"
-              badges={['Recon Pipeline']}
-              value={settings.urlscanApiKey}
-              visible={!!visibleFields.urlscanApiKey}
-              onToggle={() => toggleFieldVisibility('urlscanApiKey')}
-              onChange={v => updateSetting('urlscanApiKey', v)}
-              onConfigureRotation={() => openRotationModal('urlscanApiKey')}
-              rotationInfo={rotationConfigs.urlscan || null}
-            />
-
-            <SecretField
-              label="Censys API Token"
-              hint="Censys Platform personal access token — used by Recon Pipeline and Uncover engine"
-              signupUrl="https://accounts.censys.io/settings/personal-access-tokens"
-              badges={['Recon Pipeline', 'Standalone + Uncover']}
-              value={settings.censysApiToken}
-              visible={!!visibleFields.censysApiToken}
-              onToggle={() => toggleFieldVisibility('censysApiToken')}
-              onChange={v => updateSetting('censysApiToken', v)}
-            />
-            <SecretField
-              label="Censys Organization ID"
-              hint="Censys Organization ID — paired with API Token above. Found on your Censys account page"
-              signupUrl="https://accounts.censys.io/settings/personal-access-tokens"
-              badges={['Recon Pipeline', 'Standalone + Uncover']}
-              value={settings.censysOrgId}
-              visible={!!visibleFields.censysOrgId}
-              onToggle={() => toggleFieldVisibility('censysOrgId')}
-              onChange={v => updateSetting('censysOrgId', v)}
-            />
-            <SecretField
-              label="Censys Personal API Token"
-              hint="Personal Access Token from your Censys account — alternative to API ID + Secret. Takes precedence when both are set."
-              signupUrl="https://accounts.censys.io/settings/personal-access-tokens"
-              badges={['Recon Pipeline']}
-              value={settings.censysApiToken}
-              visible={!!visibleFields.censysApiToken}
-              onToggle={() => toggleFieldVisibility('censysApiToken')}
-              onChange={v => updateSetting('censysApiToken', v)}
-            />
-            <SecretField
-              label="FOFA API Key"
-              hint="FOFA cyberspace search — asset discovery by banner, certificate, domain. Key format: email:key"
-              signupUrl="https://en.fofa.info/"
-              badges={['Recon Pipeline', 'Standalone + Uncover']}
-              value={settings.fofaApiKey}
-              visible={!!visibleFields.fofaApiKey}
-              onToggle={() => toggleFieldVisibility('fofaApiKey')}
-              onChange={v => updateSetting('fofaApiKey', v)}
-              onConfigureRotation={() => openRotationModal('fofaApiKey')}
-              rotationInfo={rotationConfigs.fofa || null}
-            />
-            <SecretField
-              label="AlienVault OTX Key"
-              hint="Open Threat Exchange — threat intelligence pulses, malware indicators, passive DNS, reputation scoring"
-              signupUrl="https://otx.alienvault.com/settings"
-              badges={['Recon Pipeline']}
-              value={settings.otxApiKey}
-              visible={!!visibleFields.otxApiKey}
-              onToggle={() => toggleFieldVisibility('otxApiKey')}
-              onChange={v => updateSetting('otxApiKey', v)}
-              onConfigureRotation={() => openRotationModal('otxApiKey')}
-              rotationInfo={rotationConfigs.otx || null}
-            />
-            <SecretField
-              label="Netlas API Key"
-              hint="Netlas.io — internet-wide scan data with banners, certificates, and WHOIS info"
-              signupUrl="https://app.netlas.io/profile/"
-              badges={['Recon Pipeline', 'Standalone + Uncover']}
-              value={settings.netlasApiKey}
-              visible={!!visibleFields.netlasApiKey}
-              onToggle={() => toggleFieldVisibility('netlasApiKey')}
-              onChange={v => updateSetting('netlasApiKey', v)}
-              onConfigureRotation={() => openRotationModal('netlasApiKey')}
-              rotationInfo={rotationConfigs.netlas || null}
-            />
-            <SecretField
-              label="VirusTotal API Key"
-              hint="Multi-engine reputation for IPs and domains. Free tier: 4 lookups/min, 500/day"
-              signupUrl="https://www.virustotal.com/gui/my-apikey"
-              badges={['Recon Pipeline']}
-              value={settings.virusTotalApiKey}
-              visible={!!visibleFields.virusTotalApiKey}
-              onToggle={() => toggleFieldVisibility('virusTotalApiKey')}
-              onChange={v => updateSetting('virusTotalApiKey', v)}
-              onConfigureRotation={() => openRotationModal('virusTotalApiKey')}
-              rotationInfo={rotationConfigs.virustotal || null}
-            />
-            <SecretField
-              label="ZoomEye API Key"
-              hint="ZoomEye cyberspace search — host/device discovery with port, banner, and geo data"
-              signupUrl="https://www.zoomeye.ai/profile"
-              badges={['Recon Pipeline', 'Standalone + Uncover']}
-              value={settings.zoomEyeApiKey}
-              visible={!!visibleFields.zoomEyeApiKey}
-              onToggle={() => toggleFieldVisibility('zoomEyeApiKey')}
-              onChange={v => updateSetting('zoomEyeApiKey', v)}
-              onConfigureRotation={() => openRotationModal('zoomEyeApiKey')}
-              rotationInfo={rotationConfigs.zoomeye || null}
-            />
-            <SecretField
-              label="Criminal IP API Key"
-              hint="AI-powered threat intelligence — IP/domain risk scoring, vulnerability detection, proxy/VPN/Tor identification"
-              signupUrl="https://search.criminalip.io/mypage/information"
-              badges={['Recon Pipeline', 'Standalone + Uncover']}
-              value={settings.criminalIpApiKey}
-              visible={!!visibleFields.criminalIpApiKey}
-              onToggle={() => toggleFieldVisibility('criminalIpApiKey')}
-              onChange={v => updateSetting('criminalIpApiKey', v)}
-              onConfigureRotation={() => openRotationModal('criminalIpApiKey')}
-              rotationInfo={rotationConfigs.criminalip || null}
-            />
-
-            {/* Uncover group */}
-            <div style={{ borderTop: '1px solid var(--border-secondary)', marginTop: '0.75rem', paddingTop: '0.75rem' }}>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-                Uncover (Multi-Engine Search)
-              </p>
+      {activeTab === 'keys' && (
+        <>
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2
+                className={styles.sectionTitle}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span>API 키</span>
+                <WikiInfoButton
+                  target="settings"
+                  title="전역 설정 위키 페이지 열기"
+                />
+              </h2>
+              <div className={styles.sectionHeaderActions}>
+                <button
+                  className={styles.sectionHeaderBtn}
+                  onClick={downloadKeysTemplate}
+                  title="API 키를 오프라인에서 입력할 JSON 템플릿 다운로드"
+                >
+                  <Download size={13} /> 템플릿 다운로드
+                </button>
+                <button
+                  className={styles.sectionHeaderBtn}
+                  onClick={() => importFileRef.current?.click()}
+                  title="JSON 템플릿 파일에서 API 키 가져오기"
+                >
+                  <Upload size={13} /> 키 가져오기
+                </button>
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  accept=".json"
+                  style={{ display: 'none' }}
+                  onChange={handleKeysFileSelect}
+                />
+              </div>
             </div>
-            <SecretField
-              label="Quake API Key"
-              hint="360 Quake cyberspace search — asset discovery by service, certificate, and banner"
-              signupUrl="https://quake.360.net/quake/#/index"
-              badges={['Uncover', 'Recon Pipeline']}
-              value={settings.quakeApiKey}
-              visible={!!visibleFields.quakeApiKey}
-              onToggle={() => toggleFieldVisibility('quakeApiKey')}
-              onChange={v => updateSetting('quakeApiKey', v)}
-              onConfigureRotation={() => openRotationModal('quakeApiKey')}
-              rotationInfo={rotationConfigs.quake || null}
-            />
-            <SecretField
-              label="Hunter API Key"
-              hint="Qianxin Hunter cyberspace search — Chinese threat intelligence platform"
-              signupUrl="https://hunter.qianxin.com/"
-              badges={['Uncover', 'Recon Pipeline']}
-              value={settings.hunterApiKey}
-              visible={!!visibleFields.hunterApiKey}
-              onToggle={() => toggleFieldVisibility('hunterApiKey')}
-              onChange={v => updateSetting('hunterApiKey', v)}
-              onConfigureRotation={() => openRotationModal('hunterApiKey')}
-              rotationInfo={rotationConfigs.hunter || null}
-            />
-            <SecretField
-              label="PublicWWW API Key"
-              hint="Search engine for source code — find websites using specific technologies, scripts, or snippets"
-              signupUrl="https://publicwww.com/profile/signup.html"
-              badges={['Uncover', 'Recon Pipeline']}
-              value={settings.publicWwwApiKey}
-              visible={!!visibleFields.publicWwwApiKey}
-              onToggle={() => toggleFieldVisibility('publicWwwApiKey')}
-              onChange={v => updateSetting('publicWwwApiKey', v)}
-              onConfigureRotation={() => openRotationModal('publicWwwApiKey')}
-              rotationInfo={rotationConfigs.publicwww || null}
-            />
-            <SecretField
-              label="HunterHow API Key"
-              hint="hunter.how internet search — asset discovery and reconnaissance"
-              signupUrl="https://hunter.how/"
-              badges={['Uncover', 'Recon Pipeline']}
-              value={settings.hunterHowApiKey}
-              visible={!!visibleFields.hunterHowApiKey}
-              onToggle={() => toggleFieldVisibility('hunterHowApiKey')}
-              onChange={v => updateSetting('hunterHowApiKey', v)}
-              onConfigureRotation={() => openRotationModal('hunterHowApiKey')}
-              rotationInfo={rotationConfigs.hunterhow || null}
-            />
-            <SecretField
-              label="Google Custom Search API Key"
-              hint="Google Custom Search JSON API — for Uncover Google search engine (different from SerpAPI)"
-              signupUrl="https://developers.google.com/custom-search/v1/introduction"
-              badges={['Uncover', 'Recon Pipeline']}
-              value={settings.googleApiKey}
-              visible={!!visibleFields.googleApiKey}
-              onToggle={() => toggleFieldVisibility('googleApiKey')}
-              onChange={v => updateSetting('googleApiKey', v)}
-            />
-            <SecretField
-              label="Google Custom Search CX"
-              hint="Programmable Search Engine ID — paired with Google API Key above"
-              signupUrl="https://programmablesearchengine.google.com/controlpanel/create"
-              badges={['Uncover', 'Recon Pipeline']}
-              value={settings.googleApiCx}
-              visible={!!visibleFields.googleApiCx}
-              onToggle={() => toggleFieldVisibility('googleApiCx')}
-              onChange={v => updateSetting('googleApiCx', v)}
-            />
-            <SecretField
-              label="Onyphe API Key"
-              hint="Onyphe — cyber defense search engine for exposed assets, threat detection, and attack surface management"
-              signupUrl="https://search.onyphe.io/signup"
-              badges={['Uncover', 'Recon Pipeline']}
-              value={settings.onypheApiKey}
-              visible={!!visibleFields.onypheApiKey}
-              onToggle={() => toggleFieldVisibility('onypheApiKey')}
-              onChange={v => updateSetting('onypheApiKey', v)}
-              onConfigureRotation={() => openRotationModal('onypheApiKey')}
-              rotationInfo={rotationConfigs.onyphe || null}
-            />
-            <SecretField
-              label="Driftnet API Key"
-              hint="Driftnet — fast internet-wide port and service discovery"
-              signupUrl="https://driftnet.io/auth?state=signup"
-              badges={['Uncover', 'Recon Pipeline']}
-              value={settings.driftnetApiKey}
-              visible={!!visibleFields.driftnetApiKey}
-              onToggle={() => toggleFieldVisibility('driftnetApiKey')}
-              onChange={v => updateSetting('driftnetApiKey', v)}
-              onConfigureRotation={() => openRotationModal('driftnetApiKey')}
-              rotationInfo={rotationConfigs.driftnet || null}
-            />
-          </div>
-        )}
-      </div>
+            {settingsLoading ? (
+              <div className={styles.emptyState}>
+                <Loader2 size={16} className={styles.spin} /> 로딩 중...
+              </div>
+            ) : (
+              <div className={styles.settingsGrid}>
+                <SecretField
+                  label="GitHub Access Token"
+                  hint="Required for GitHub Secret Hunt and TruffleHog scanners. Use repo scope for private repos, or a fine-grained token for specific repos only"
+                  signupUrl="https://github.com/settings/tokens"
+                  badges={['GitHub Secret Hunt', 'TruffleHog']}
+                  value={settings.githubAccessToken}
+                  visible={!!visibleFields.githubAccessToken}
+                  onToggle={() => toggleFieldVisibility('githubAccessToken')}
+                  onChange={(v) => updateSetting('githubAccessToken', v)}
+                />
+                <SecretField
+                  label="Tavily API Key"
+                  hint="Enables web_search tool for CVE research and exploit lookups"
+                  signupUrl="https://app.tavily.com/home"
+                  badges={['AI Agent']}
+                  value={settings.tavilyApiKey}
+                  visible={!!visibleFields.tavilyApiKey}
+                  onToggle={() => toggleFieldVisibility('tavilyApiKey')}
+                  onChange={(v) => updateSetting('tavilyApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('tavilyApiKey')}
+                  rotationInfo={rotationConfigs.tavily || null}
+                />
+                <SecretField
+                  label="Shodan API Key"
+                  hint="Enables the shodan tool for internet-wide OSINT (search, host info, DNS, count)"
+                  signupUrl="https://account.shodan.io/"
+                  badges={[
+                    'AI Agent',
+                    'Recon Pipeline',
+                    'Standalone + Uncover',
+                  ]}
+                  value={settings.shodanApiKey}
+                  visible={!!visibleFields.shodanApiKey}
+                  onToggle={() => toggleFieldVisibility('shodanApiKey')}
+                  onChange={(v) => updateSetting('shodanApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('shodanApiKey')}
+                  rotationInfo={rotationConfigs.shodan || null}
+                />
+                <SecretField
+                  label="SerpAPI Key"
+                  hint="Enables google_dork tool for Google dorking OSINT (site:, inurl:, filetype:). Free: 250 searches/month"
+                  signupUrl="https://serpapi.com/manage-api-key"
+                  badges={['AI Agent']}
+                  value={settings.serpApiKey}
+                  visible={!!visibleFields.serpApiKey}
+                  onToggle={() => toggleFieldVisibility('serpApiKey')}
+                  onChange={(v) => updateSetting('serpApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('serpApiKey')}
+                  rotationInfo={rotationConfigs.serp || null}
+                />
+                <SecretField
+                  label="WPScan API Token"
+                  hint="Enriches execute_wpscan results with vulnerability data from the WPScan database. Free: 25 requests/day"
+                  signupUrl="https://wpscan.com/register"
+                  badges={['AI Agent']}
+                  value={settings.wpscanApiToken}
+                  visible={!!visibleFields.wpscanApiToken}
+                  onToggle={() => toggleFieldVisibility('wpscanApiToken')}
+                  onChange={(v) => updateSetting('wpscanApiToken', v)}
+                  onConfigureRotation={() =>
+                    openRotationModal('wpscanApiToken')
+                  }
+                  rotationInfo={rotationConfigs.wpscan || null}
+                />
+                <SecretField
+                  label="PDCP API Key"
+                  hint="Optional. Enriches the cve_intel tool by lifting the 10 req/min anonymous rate limit on ProjectDiscovery's CVE database (vulnx)."
+                  signupUrl="https://cloud.projectdiscovery.io"
+                  badges={['AI Agent']}
+                  value={settings.pdcpApiKey}
+                  visible={!!visibleFields.pdcpApiKey}
+                  onToggle={() => toggleFieldVisibility('pdcpApiKey')}
+                  onChange={(v) => updateSetting('pdcpApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('pdcpApiKey')}
+                  rotationInfo={rotationConfigs.pdcp || null}
+                />
+                <SecretField
+                  label="NVD API Key"
+                  hint="NIST NVD API key — increases CVE lookup rate limit from 5 to 120 requests/30s"
+                  signupUrl="https://nvd.nist.gov/developers/request-an-api-key"
+                  badges={['Recon Pipeline']}
+                  value={settings.nvdApiKey}
+                  visible={!!visibleFields.nvdApiKey}
+                  onToggle={() => toggleFieldVisibility('nvdApiKey')}
+                  onChange={(v) => updateSetting('nvdApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('nvdApiKey')}
+                  rotationInfo={rotationConfigs.nvd || null}
+                />
+                <SecretField
+                  label="Vulners API Key"
+                  hint="Vulners CVE database — alternative to NVD for vulnerability lookups with richer exploit data"
+                  signupUrl="https://vulners.com/#register"
+                  badges={['Recon Pipeline']}
+                  value={settings.vulnersApiKey}
+                  visible={!!visibleFields.vulnersApiKey}
+                  onToggle={() => toggleFieldVisibility('vulnersApiKey')}
+                  onChange={(v) => updateSetting('vulnersApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('vulnersApiKey')}
+                  rotationInfo={rotationConfigs.vulners || null}
+                />
+                <SecretField
+                  label="URLScan API Key"
+                  hint="Optional — used by URLScan.io OSINT enrichment for higher rate limits. Works without key (public results only)"
+                  signupUrl="https://urlscan.io/user/signup"
+                  badges={['Recon Pipeline']}
+                  value={settings.urlscanApiKey}
+                  visible={!!visibleFields.urlscanApiKey}
+                  onToggle={() => toggleFieldVisibility('urlscanApiKey')}
+                  onChange={(v) => updateSetting('urlscanApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('urlscanApiKey')}
+                  rotationInfo={rotationConfigs.urlscan || null}
+                />
 
-      {/* Tunneling sub-section */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <span>Tunneling</span>
-            <WikiInfoButton target="https://github.com/samugit83/redamon/wiki/Reverse-Shells" title="Open Reverse Shells wiki page" />
-          </h2>
-        </div>
-        <p className={styles.sectionHint}>
-          Configure reverse shell tunneling. Choose ngrok (free, single port) or chisel (multi-port, requires VPS). Changes apply immediately.
-        </p>
-        {settingsLoading ? (
-          <div className={styles.emptyState}><Loader2 size={16} className={styles.spin} /> Loading...</div>
-        ) : (
-          <div className={styles.settingsGrid}>
-            <SecretField
-              label="ngrok Auth Token"
-              hint="Enables ngrok TCP tunnel for reverse shells on port 4444. Stageless payloads only."
-              signupUrl="https://dashboard.ngrok.com/get-started/your-authtoken"
-              value={settings.ngrokAuthtoken}
-              visible={!!visibleFields.ngrokAuthtoken}
-              onToggle={() => toggleFieldVisibility('ngrokAuthtoken')}
-              onChange={v => updateSetting('ngrokAuthtoken', v)}
-            />
-            <div className="formGroup">
-              <label className="formLabel">Chisel Server URL</label>
-              <input
-                className="textInput"
-                type="text"
-                value={settings.chiselServerUrl}
-                onChange={e => updateSetting('chiselServerUrl', e.target.value)}
-                placeholder="e.g. http://your-vps.com:9090"
-              />
-              <span className="formHint">
-                Your VPS chisel server URL. Run on VPS: <code>chisel server -p 9090 --reverse</code>. Tunnels ports 4444 (handler) + 8080 (web delivery).
-              </span>
+                <SecretField
+                  label="Censys API Token"
+                  hint="Censys Platform personal access token — used by Recon Pipeline and Uncover engine"
+                  signupUrl="https://accounts.censys.io/settings/personal-access-tokens"
+                  badges={['Recon Pipeline', 'Standalone + Uncover']}
+                  value={settings.censysApiToken}
+                  visible={!!visibleFields.censysApiToken}
+                  onToggle={() => toggleFieldVisibility('censysApiToken')}
+                  onChange={(v) => updateSetting('censysApiToken', v)}
+                />
+                <SecretField
+                  label="Censys Organization ID"
+                  hint="Censys Organization ID — paired with API Token above. Found on your Censys account page"
+                  signupUrl="https://accounts.censys.io/settings/personal-access-tokens"
+                  badges={['Recon Pipeline', 'Standalone + Uncover']}
+                  value={settings.censysOrgId}
+                  visible={!!visibleFields.censysOrgId}
+                  onToggle={() => toggleFieldVisibility('censysOrgId')}
+                  onChange={(v) => updateSetting('censysOrgId', v)}
+                />
+                <SecretField
+                  label="Censys Personal API Token"
+                  hint="Personal Access Token from your Censys account — alternative to API ID + Secret. Takes precedence when both are set."
+                  signupUrl="https://accounts.censys.io/settings/personal-access-tokens"
+                  badges={['Recon Pipeline']}
+                  value={settings.censysApiToken}
+                  visible={!!visibleFields.censysApiToken}
+                  onToggle={() => toggleFieldVisibility('censysApiToken')}
+                  onChange={(v) => updateSetting('censysApiToken', v)}
+                />
+                <SecretField
+                  label="FOFA API Key"
+                  hint="FOFA cyberspace search — asset discovery by banner, certificate, domain. Key format: email:key"
+                  signupUrl="https://en.fofa.info/"
+                  badges={['Recon Pipeline', 'Standalone + Uncover']}
+                  value={settings.fofaApiKey}
+                  visible={!!visibleFields.fofaApiKey}
+                  onToggle={() => toggleFieldVisibility('fofaApiKey')}
+                  onChange={(v) => updateSetting('fofaApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('fofaApiKey')}
+                  rotationInfo={rotationConfigs.fofa || null}
+                />
+                <SecretField
+                  label="AlienVault OTX Key"
+                  hint="Open Threat Exchange — threat intelligence pulses, malware indicators, passive DNS, reputation scoring"
+                  signupUrl="https://otx.alienvault.com/settings"
+                  badges={['Recon Pipeline']}
+                  value={settings.otxApiKey}
+                  visible={!!visibleFields.otxApiKey}
+                  onToggle={() => toggleFieldVisibility('otxApiKey')}
+                  onChange={(v) => updateSetting('otxApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('otxApiKey')}
+                  rotationInfo={rotationConfigs.otx || null}
+                />
+                <SecretField
+                  label="Netlas API Key"
+                  hint="Netlas.io — internet-wide scan data with banners, certificates, and WHOIS info"
+                  signupUrl="https://app.netlas.io/profile/"
+                  badges={['Recon Pipeline', 'Standalone + Uncover']}
+                  value={settings.netlasApiKey}
+                  visible={!!visibleFields.netlasApiKey}
+                  onToggle={() => toggleFieldVisibility('netlasApiKey')}
+                  onChange={(v) => updateSetting('netlasApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('netlasApiKey')}
+                  rotationInfo={rotationConfigs.netlas || null}
+                />
+                <SecretField
+                  label="VirusTotal API Key"
+                  hint="Multi-engine reputation for IPs and domains. Free tier: 4 lookups/min, 500/day"
+                  signupUrl="https://www.virustotal.com/gui/my-apikey"
+                  badges={['Recon Pipeline']}
+                  value={settings.virusTotalApiKey}
+                  visible={!!visibleFields.virusTotalApiKey}
+                  onToggle={() => toggleFieldVisibility('virusTotalApiKey')}
+                  onChange={(v) => updateSetting('virusTotalApiKey', v)}
+                  onConfigureRotation={() =>
+                    openRotationModal('virusTotalApiKey')
+                  }
+                  rotationInfo={rotationConfigs.virustotal || null}
+                />
+                <SecretField
+                  label="ZoomEye API Key"
+                  hint="ZoomEye cyberspace search — host/device discovery with port, banner, and geo data"
+                  signupUrl="https://www.zoomeye.ai/profile"
+                  badges={['Recon Pipeline', 'Standalone + Uncover']}
+                  value={settings.zoomEyeApiKey}
+                  visible={!!visibleFields.zoomEyeApiKey}
+                  onToggle={() => toggleFieldVisibility('zoomEyeApiKey')}
+                  onChange={(v) => updateSetting('zoomEyeApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('zoomEyeApiKey')}
+                  rotationInfo={rotationConfigs.zoomeye || null}
+                />
+                <SecretField
+                  label="Criminal IP API Key"
+                  hint="AI-powered threat intelligence — IP/domain risk scoring, vulnerability detection, proxy/VPN/Tor identification"
+                  signupUrl="https://search.criminalip.io/mypage/information"
+                  badges={['Recon Pipeline', 'Standalone + Uncover']}
+                  value={settings.criminalIpApiKey}
+                  visible={!!visibleFields.criminalIpApiKey}
+                  onToggle={() => toggleFieldVisibility('criminalIpApiKey')}
+                  onChange={(v) => updateSetting('criminalIpApiKey', v)}
+                  onConfigureRotation={() =>
+                    openRotationModal('criminalIpApiKey')
+                  }
+                  rotationInfo={rotationConfigs.criminalip || null}
+                />
+
+                {/* Uncover group */}
+                <div
+                  style={{
+                    borderTop: '1px solid var(--border-secondary)',
+                    marginTop: '0.75rem',
+                    paddingTop: '0.75rem',
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--text-tertiary)',
+                      marginBottom: '0.5rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Uncover (멀티 엔진 검색)
+                  </p>
+                </div>
+                <SecretField
+                  label="Quake API Key"
+                  hint="360 Quake cyberspace search — asset discovery by service, certificate, and banner"
+                  signupUrl="https://quake.360.net/quake/#/index"
+                  badges={['Uncover', 'Recon Pipeline']}
+                  value={settings.quakeApiKey}
+                  visible={!!visibleFields.quakeApiKey}
+                  onToggle={() => toggleFieldVisibility('quakeApiKey')}
+                  onChange={(v) => updateSetting('quakeApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('quakeApiKey')}
+                  rotationInfo={rotationConfigs.quake || null}
+                />
+                <SecretField
+                  label="Hunter API Key"
+                  hint="Qianxin Hunter cyberspace search — Chinese threat intelligence platform"
+                  signupUrl="https://hunter.qianxin.com/"
+                  badges={['Uncover', 'Recon Pipeline']}
+                  value={settings.hunterApiKey}
+                  visible={!!visibleFields.hunterApiKey}
+                  onToggle={() => toggleFieldVisibility('hunterApiKey')}
+                  onChange={(v) => updateSetting('hunterApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('hunterApiKey')}
+                  rotationInfo={rotationConfigs.hunter || null}
+                />
+                <SecretField
+                  label="PublicWWW API Key"
+                  hint="Search engine for source code — find websites using specific technologies, scripts, or snippets"
+                  signupUrl="https://publicwww.com/profile/signup.html"
+                  badges={['Uncover', 'Recon Pipeline']}
+                  value={settings.publicWwwApiKey}
+                  visible={!!visibleFields.publicWwwApiKey}
+                  onToggle={() => toggleFieldVisibility('publicWwwApiKey')}
+                  onChange={(v) => updateSetting('publicWwwApiKey', v)}
+                  onConfigureRotation={() =>
+                    openRotationModal('publicWwwApiKey')
+                  }
+                  rotationInfo={rotationConfigs.publicwww || null}
+                />
+                <SecretField
+                  label="HunterHow API Key"
+                  hint="hunter.how internet search — asset discovery and reconnaissance"
+                  signupUrl="https://hunter.how/"
+                  badges={['Uncover', 'Recon Pipeline']}
+                  value={settings.hunterHowApiKey}
+                  visible={!!visibleFields.hunterHowApiKey}
+                  onToggle={() => toggleFieldVisibility('hunterHowApiKey')}
+                  onChange={(v) => updateSetting('hunterHowApiKey', v)}
+                  onConfigureRotation={() =>
+                    openRotationModal('hunterHowApiKey')
+                  }
+                  rotationInfo={rotationConfigs.hunterhow || null}
+                />
+                <SecretField
+                  label="Google Custom Search API Key"
+                  hint="Google Custom Search JSON API — for Uncover Google search engine (different from SerpAPI)"
+                  signupUrl="https://developers.google.com/custom-search/v1/introduction"
+                  badges={['Uncover', 'Recon Pipeline']}
+                  value={settings.googleApiKey}
+                  visible={!!visibleFields.googleApiKey}
+                  onToggle={() => toggleFieldVisibility('googleApiKey')}
+                  onChange={(v) => updateSetting('googleApiKey', v)}
+                />
+                <SecretField
+                  label="Google Custom Search CX"
+                  hint="Programmable Search Engine ID — paired with Google API Key above"
+                  signupUrl="https://programmablesearchengine.google.com/controlpanel/create"
+                  badges={['Uncover', 'Recon Pipeline']}
+                  value={settings.googleApiCx}
+                  visible={!!visibleFields.googleApiCx}
+                  onToggle={() => toggleFieldVisibility('googleApiCx')}
+                  onChange={(v) => updateSetting('googleApiCx', v)}
+                />
+                <SecretField
+                  label="Onyphe API Key"
+                  hint="Onyphe — cyber defense search engine for exposed assets, threat detection, and attack surface management"
+                  signupUrl="https://search.onyphe.io/signup"
+                  badges={['Uncover', 'Recon Pipeline']}
+                  value={settings.onypheApiKey}
+                  visible={!!visibleFields.onypheApiKey}
+                  onToggle={() => toggleFieldVisibility('onypheApiKey')}
+                  onChange={(v) => updateSetting('onypheApiKey', v)}
+                  onConfigureRotation={() => openRotationModal('onypheApiKey')}
+                  rotationInfo={rotationConfigs.onyphe || null}
+                />
+                <SecretField
+                  label="Driftnet API Key"
+                  hint="Driftnet — fast internet-wide port and service discovery"
+                  signupUrl="https://driftnet.io/auth?state=signup"
+                  badges={['Uncover', 'Recon Pipeline']}
+                  value={settings.driftnetApiKey}
+                  visible={!!visibleFields.driftnetApiKey}
+                  onToggle={() => toggleFieldVisibility('driftnetApiKey')}
+                  onChange={(v) => updateSetting('driftnetApiKey', v)}
+                  onConfigureRotation={() =>
+                    openRotationModal('driftnetApiKey')
+                  }
+                  rotationInfo={rotationConfigs.driftnet || null}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Tunneling sub-section */}
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2
+                className={styles.sectionTitle}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span>터널링</span>
+                <WikiInfoButton
+                  target="https://github.com/samugit83/redamon/wiki/Reverse-Shells"
+                  title="리버스 쉘 위키 페이지 열기"
+                />
+              </h2>
             </div>
-            <SecretField
-              label="Chisel Auth"
-              hint="user:pass for chisel server authentication (optional — only if your chisel server requires auth)"
-              value={settings.chiselAuth}
-              visible={!!visibleFields.chiselAuth}
-              onToggle={() => toggleFieldVisibility('chiselAuth')}
-              onChange={v => updateSetting('chiselAuth', v)}
-            />
+            <p className={styles.sectionHint}>
+              리버스 쉘 터널링을 설정합니다. ngrok(무료, 단일 포트) 또는
+              chisel(멀티 포트, VPS 필요)을 선택하세요. 변경사항은 즉시
+              적용됩니다.
+            </p>
+            {settingsLoading ? (
+              <div className={styles.emptyState}>
+                <Loader2 size={16} className={styles.spin} /> 로딩 중...
+              </div>
+            ) : (
+              <div className={styles.settingsGrid}>
+                <SecretField
+                  label="ngrok Auth Token"
+                  hint="Enables ngrok TCP tunnel for reverse shells on port 4444. Stageless payloads only."
+                  signupUrl="https://dashboard.ngrok.com/get-started/your-authtoken"
+                  value={settings.ngrokAuthtoken}
+                  visible={!!visibleFields.ngrokAuthtoken}
+                  onToggle={() => toggleFieldVisibility('ngrokAuthtoken')}
+                  onChange={(v) => updateSetting('ngrokAuthtoken', v)}
+                />
+                <div className="formGroup">
+                  <label className="formLabel">Chisel Server URL</label>
+                  <input
+                    className="textInput"
+                    type="text"
+                    value={settings.chiselServerUrl}
+                    onChange={(e) =>
+                      updateSetting('chiselServerUrl', e.target.value)
+                    }
+                    placeholder="e.g. http://your-vps.com:9090"
+                  />
+                  <span className="formHint">
+                    VPS chisel 서버 URL입니다. VPS에서 실행:{' '}
+                    <code>chisel server -p 9090 --reverse</code>. 포트
+                    4444(핸들러) + 8080(웹 전달)을 터널링합니다.
+                  </span>
+                </div>
+                <SecretField
+                  label="Chisel Auth"
+                  hint="user:pass for chisel server authentication (optional — only if your chisel server requires auth)"
+                  value={settings.chiselAuth}
+                  visible={!!visibleFields.chiselAuth}
+                  onToggle={() => toggleFieldVisibility('chiselAuth')}
+                  onChange={(v) => updateSetting('chiselAuth', v)}
+                />
+              </div>
+            )}
+            {settingsDirty && !settingsSaving && (
+              <div
+                className={styles.formActions}
+                style={{ justifyContent: 'flex-end', marginTop: '12px' }}
+              >
+                <button
+                  className="primaryButton"
+                  onClick={saveSettings}
+                  disabled={settingsSaving}
+                >
+                  설정 저장
+                </button>
+              </div>
+            )}
           </div>
-        )}
-        {settingsDirty && !settingsSaving && (
-          <div className={styles.formActions} style={{ justifyContent: 'flex-end', marginTop: '12px' }}>
-            <button className="primaryButton" onClick={saveSettings} disabled={settingsSaving}>
-              Save Settings
-            </button>
-          </div>
-        )}
-      </div></>}
+        </>
+      )}
 
       {/* Tab: System */}
       {activeTab === 'mcp' && userId && <McpServersTab userId={userId} />}
@@ -1592,54 +2104,70 @@ export default function SettingsPage() {
       {/* Skill upload modal */}
       <Modal
         isOpen={skillNameModal}
-        onClose={() => { setSkillNameModal(false); setPendingSkillContent(''); setPendingSkillName(''); setPendingSkillDescription('') }}
-        title="Upload Attack Skill"
+        onClose={() => {
+          setSkillNameModal(false);
+          setPendingSkillContent('');
+          setPendingSkillName('');
+          setPendingSkillDescription('');
+        }}
+        title="공격 스킬 업로드"
         size="small"
         footer={
           <>
             <button
               className="secondaryButton"
-              onClick={() => { setSkillNameModal(false); setPendingSkillContent(''); setPendingSkillName(''); setPendingSkillDescription('') }}
+              onClick={() => {
+                setSkillNameModal(false);
+                setPendingSkillContent('');
+                setPendingSkillName('');
+                setPendingSkillDescription('');
+              }}
             >
-              Cancel
+              취소
             </button>
             <button
               className="primaryButton"
               disabled={!pendingSkillName.trim() || skillUploading}
               onClick={confirmSkillUpload}
             >
-              {skillUploading ? <Loader2 size={14} className={styles.spin} /> : <Upload size={14} />}
-              Upload
+              {skillUploading ? (
+                <Loader2 size={14} className={styles.spin} />
+              ) : (
+                <Upload size={14} />
+              )}
+              업로드
             </button>
           </>
         }
       >
         <div className="formGroup">
-          <label className="formLabel">Skill Name</label>
+          <label className="formLabel">스킬 이름</label>
           <input
             className="textInput"
             type="text"
             value={pendingSkillName}
             onChange={(e) => setPendingSkillName(e.target.value)}
-            placeholder="e.g. SQL Injection Workflow"
+            placeholder="예: SQL 인젝션 워크플로우"
             autoFocus
           />
           <span className="formHint">
-            This name appears in project settings and classification badges.
+            이 이름은 프로젝트 설정과 분류 배지에 표시됩니다.
           </span>
         </div>
         <div className="formGroup" style={{ marginTop: '12px' }}>
-          <label className="formLabel">Description</label>
+          <label className="formLabel">설명</label>
           <textarea
             className="textInput"
             rows={3}
             value={pendingSkillDescription}
             onChange={(e) => setPendingSkillDescription(e.target.value)}
-            placeholder="e.g. SQL injection testing against web app parameters using sqlmap"
+            placeholder="예: sqlmap을 이용한 웹 앱 파라미터 대상 SQL 인젝션 테스트"
             maxLength={500}
           />
           <span className="formHint">
-            Helps the agent understand when to use this skill. Without a description, the first 500 characters of the markdown are used instead &mdash; a good description improves classification accuracy.
+            에이전트가 이 스킬을 언제 사용해야 할지 이해하도록 돕습니다. 설명이
+            없으면 마크다운의 처음 500자가 대신 사용됩니다. 좋은 설명은 분류
+            정확도를 높입니다.
           </span>
         </div>
       </Modal>
@@ -1647,41 +2175,55 @@ export default function SettingsPage() {
       {/* Edit description modal */}
       <Modal
         isOpen={editDescModal}
-        onClose={() => { setEditDescModal(false); setEditingSkillId(''); setEditingSkillDescription('') }}
-        title="Edit Skill Description"
+        onClose={() => {
+          setEditDescModal(false);
+          setEditingSkillId('');
+          setEditingSkillDescription('');
+        }}
+        title="스킬 설명 편집"
         size="small"
         footer={
           <>
             <button
               className="secondaryButton"
-              onClick={() => { setEditDescModal(false); setEditingSkillId(''); setEditingSkillDescription('') }}
+              onClick={() => {
+                setEditDescModal(false);
+                setEditingSkillId('');
+                setEditingSkillDescription('');
+              }}
             >
-              Cancel
+              취소
             </button>
             <button
               className="primaryButton"
               disabled={editDescSaving}
               onClick={saveEditDescription}
             >
-              {editDescSaving ? <Loader2 size={14} className={styles.spin} /> : <Pencil size={14} />}
-              Save
+              {editDescSaving ? (
+                <Loader2 size={14} className={styles.spin} />
+              ) : (
+                <Pencil size={14} />
+              )}
+              저장
             </button>
           </>
         }
       >
         <div className="formGroup">
-          <label className="formLabel">Description</label>
+          <label className="formLabel">설명</label>
           <textarea
             className="textInput"
             rows={3}
             value={editingSkillDescription}
             onChange={(e) => setEditingSkillDescription(e.target.value)}
-            placeholder="e.g. SQL injection testing against web app parameters using sqlmap"
+            placeholder="예: sqlmap을 이용한 웹 앱 파라미터 대상 SQL 인젝션 테스트"
             maxLength={500}
             autoFocus
           />
           <span className="formHint">
-            Helps the agent understand when to use this skill. Without a description, the first 500 characters of the markdown are used instead &mdash; a good description improves classification accuracy.
+            에이전트가 이 스킬을 언제 사용해야 할지 이해하도록 돕습니다. 설명이
+            없으면 마크다운의 처음 500자가 대신 사용됩니다. 좋은 설명은 분류
+            정확도를 높입니다.
           </span>
         </div>
       </Modal>
@@ -1689,79 +2231,99 @@ export default function SettingsPage() {
       {/* Chat Skill upload modal */}
       <Modal
         isOpen={chatSkillNameModal}
-        onClose={() => { setChatSkillNameModal(false); setPendingChatSkillContent(''); setPendingChatSkillName(''); setPendingChatSkillDescription(''); setPendingChatSkillCategory('general') }}
-        title="Upload Chat Skill"
+        onClose={() => {
+          setChatSkillNameModal(false);
+          setPendingChatSkillContent('');
+          setPendingChatSkillName('');
+          setPendingChatSkillDescription('');
+          setPendingChatSkillCategory('general');
+        }}
+        title="채팅 스킬 업로드"
         size="small"
         footer={
           <>
             <button
               className="secondaryButton"
-              onClick={() => { setChatSkillNameModal(false); setPendingChatSkillContent(''); setPendingChatSkillName(''); setPendingChatSkillDescription(''); setPendingChatSkillCategory('general') }}
+              onClick={() => {
+                setChatSkillNameModal(false);
+                setPendingChatSkillContent('');
+                setPendingChatSkillName('');
+                setPendingChatSkillDescription('');
+                setPendingChatSkillCategory('general');
+              }}
             >
-              Cancel
+              취소
             </button>
             <button
               className="primaryButton"
               disabled={!pendingChatSkillName.trim() || chatSkillUploading}
               onClick={confirmChatSkillUpload}
             >
-              {chatSkillUploading ? <Loader2 size={14} className={styles.spin} /> : <Upload size={14} />}
-              Upload
+              {chatSkillUploading ? (
+                <Loader2 size={14} className={styles.spin} />
+              ) : (
+                <Upload size={14} />
+              )}
+              업로드
             </button>
           </>
         }
       >
         <div className="formGroup">
-          <label className="formLabel">Skill Name</label>
+          <label className="formLabel">스킬 이름</label>
           <input
             className="textInput"
             type="text"
             value={pendingChatSkillName}
             onChange={(e) => setPendingChatSkillName(e.target.value)}
-            placeholder="e.g. OWASP Top 10 Reference"
+            placeholder="예: OWASP Top 10 참조"
             autoFocus
           />
         </div>
         <div className="formGroup" style={{ marginTop: '12px' }}>
-          <label className="formLabel">Description</label>
+          <label className="formLabel">설명</label>
           <textarea
             className="textInput"
             rows={3}
             value={pendingChatSkillDescription}
             onChange={(e) => setPendingChatSkillDescription(e.target.value)}
-            placeholder="e.g. Quick reference for OWASP Top 10 vulnerability categories"
+            placeholder="예: OWASP Top 10 취약점 범주에 대한 빠른 참조"
             maxLength={500}
           />
           <span className="formHint">
-            Optional. Helps you remember what this skill covers.
+            선택 사항. 이 스킬이 무엇을 다루는지 기억하는 데 도움이 됩니다.
           </span>
         </div>
         <div className="formGroup" style={{ marginTop: '12px' }}>
-          <label className="formLabel">Category</label>
+          <label className="formLabel">카테고리</label>
           <select
             className="textInput"
             value={pendingChatSkillCategory}
             onChange={(e) => setPendingChatSkillCategory(e.target.value)}
           >
-            <option value="general">general</option>
-            <option value="vulnerabilities">vulnerabilities</option>
-            <option value="tooling">tooling</option>
-            <option value="scan_modes">scan_modes</option>
-            <option value="frameworks">frameworks</option>
-            <option value="technologies">technologies</option>
-            <option value="protocols">protocols</option>
-            <option value="coordination">coordination</option>
-            <option value="cloud">cloud</option>
-            <option value="mobile">mobile</option>
-            <option value="api_security">api_security</option>
-            <option value="wireless">wireless</option>
-            <option value="network">network</option>
-            <option value="active_directory">active_directory</option>
-            <option value="social_engineering">social_engineering</option>
-            <option value="reporting">reporting</option>
+            <option value="general">일반 (general)</option>
+            <option value="vulnerabilities">취약점 (vulnerabilities)</option>
+            <option value="tooling">도구 (tooling)</option>
+            <option value="scan_modes">스캔 모드 (scan_modes)</option>
+            <option value="frameworks">프레임워크 (frameworks)</option>
+            <option value="technologies">기술 (technologies)</option>
+            <option value="protocols">프로토콜 (protocols)</option>
+            <option value="coordination">조정 (coordination)</option>
+            <option value="cloud">클라우드 (cloud)</option>
+            <option value="mobile">모바일 (mobile)</option>
+            <option value="api_security">API 보안 (api_security)</option>
+            <option value="wireless">무선 (wireless)</option>
+            <option value="network">네트워크 (network)</option>
+            <option value="active_directory">
+              액티브 디렉토리 (active_directory)
+            </option>
+            <option value="social_engineering">
+              사회 공학 (social_engineering)
+            </option>
+            <option value="reporting">보고 (reporting)</option>
           </select>
           <span className="formHint">
-            Categorize this skill for easier browsing.
+            더 쉬운 탐색을 위해 이 스킬을 분류합니다.
           </span>
         </div>
       </Modal>
@@ -1769,41 +2331,54 @@ export default function SettingsPage() {
       {/* Chat Skill edit description modal */}
       <Modal
         isOpen={editChatDescModal}
-        onClose={() => { setEditChatDescModal(false); setEditingChatSkillId(''); setEditingChatSkillDescription('') }}
-        title="Edit Chat Skill Description"
+        onClose={() => {
+          setEditChatDescModal(false);
+          setEditingChatSkillId('');
+          setEditingChatSkillDescription('');
+        }}
+        title="채팅 스킬 설명 편집"
         size="small"
         footer={
           <>
             <button
               className="secondaryButton"
-              onClick={() => { setEditChatDescModal(false); setEditingChatSkillId(''); setEditingChatSkillDescription('') }}
+              onClick={() => {
+                setEditChatDescModal(false);
+                setEditingChatSkillId('');
+                setEditingChatSkillDescription('');
+              }}
             >
-              Cancel
+              취소
             </button>
             <button
               className="primaryButton"
               disabled={editChatDescSaving}
               onClick={saveEditChatDescription}
             >
-              {editChatDescSaving ? <Loader2 size={14} className={styles.spin} /> : <Pencil size={14} />}
-              Save
+              {editChatDescSaving ? (
+                <Loader2 size={14} className={styles.spin} />
+              ) : (
+                <Pencil size={14} />
+              )}
+              저장
             </button>
           </>
         }
       >
         <div className="formGroup">
-          <label className="formLabel">Description</label>
+          <label className="formLabel">설명</label>
           <textarea
             className="textInput"
             rows={3}
             value={editingChatSkillDescription}
             onChange={(e) => setEditingChatSkillDescription(e.target.value)}
-            placeholder="e.g. Quick reference for OWASP Top 10 vulnerability categories"
+            placeholder="예: OWASP Top 10 취약점 범주에 대한 빠른 참조"
             maxLength={500}
             autoFocus
           />
           <span className="formHint">
-            Optional description to help you remember what this skill covers.
+            선택 사항. 이 스킬이 무엇을 다루는지 기억하는 데 도움이 되는
+            설명입니다.
           </span>
         </div>
       </Modal>
@@ -1812,47 +2387,66 @@ export default function SettingsPage() {
       <Modal
         isOpen={!!rotationModal}
         onClose={closeRotationModal}
-        title={`Key Rotation — ${rotationModal || ''}`}
+        title={`키 로테이션 — ${rotationModal || ''}`}
         size="small"
         footer={
           <>
-            {rotationConfigs[rotationModal || '']?.extraKeyCount > 0 && !rotationDraftDirty && (
-              <button className="secondaryButton" onClick={clearRotationConfig} style={{ marginRight: 'auto' }}>
-                Clear All Extra Keys
-              </button>
-            )}
-            <button className="secondaryButton" onClick={closeRotationModal}>Cancel</button>
+            {rotationConfigs[rotationModal || '']?.extraKeyCount > 0 &&
+              !rotationDraftDirty && (
+                <button
+                  className="secondaryButton"
+                  onClick={clearRotationConfig}
+                  style={{ marginRight: 'auto' }}
+                >
+                  모든 에크스트라 키 삭제
+                </button>
+              )}
+            <button className="secondaryButton" onClick={closeRotationModal}>
+              취소
+            </button>
             <button
               className="primaryButton"
               onClick={saveRotationDraft}
-              disabled={!rotationDraftDirty && rotationDraft.rotateEveryN === (rotationConfigs[rotationModal || '']?.rotateEveryN ?? 10)}
+              disabled={
+                !rotationDraftDirty &&
+                rotationDraft.rotateEveryN ===
+                  (rotationConfigs[rotationModal || '']?.rotateEveryN ?? 10)
+              }
             >
-              Save
+              저장
             </button>
           </>
         }
       >
         <div className="formGroup">
-          <label className="formLabel">Extra API Keys</label>
-          {rotationConfigs[rotationModal || '']?.extraKeyCount > 0 && !rotationDraftDirty ? (
+          <label className="formLabel">에크스트라 API 키</label>
+          {rotationConfigs[rotationModal || '']?.extraKeyCount > 0 &&
+          !rotationDraftDirty ? (
             <>
-              <div style={{
-                padding: '10px 12px',
-                background: 'var(--accent-secondary-subtle)',
-                borderRadius: '6px',
-                fontSize: '12px',
-                color: 'var(--accent-secondary)',
-                marginBottom: '8px',
-              }}>
-                {rotationConfigs[rotationModal || '']?.extraKeyCount} extra key(s) configured. Paste new keys below to replace them.
+              <div
+                style={{
+                  padding: '10px 12px',
+                  background: 'var(--accent-secondary-subtle)',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  color: 'var(--accent-secondary)',
+                  marginBottom: '8px',
+                }}
+              >
+                {rotationConfigs[rotationModal || '']?.extraKeyCount}개의
+                에크스트라 키가 설정되어 있습니다. 아래에 새 키를 붙여넣으면
+                교체됩니다.
               </div>
               <textarea
                 className="textInput"
                 rows={5}
                 value={rotationDraft.extraKeys}
-                onChange={e => {
-                  setRotationDraft(prev => ({ ...prev, extraKeys: e.target.value }))
-                  setRotationDraftDirty(true)
+                onChange={(e) => {
+                  setRotationDraft((prev) => ({
+                    ...prev,
+                    extraKeys: e.target.value,
+                  }));
+                  setRotationDraftDirty(true);
                 }}
                 placeholder="Paste API keys here, one per line..."
                 style={{ fontFamily: 'monospace', fontSize: '12px' }}
@@ -1863,31 +2457,40 @@ export default function SettingsPage() {
               className="textInput"
               rows={5}
               value={rotationDraft.extraKeys}
-              onChange={e => {
-                setRotationDraft(prev => ({ ...prev, extraKeys: e.target.value }))
-                setRotationDraftDirty(true)
+              onChange={(e) => {
+                setRotationDraft((prev) => ({
+                  ...prev,
+                  extraKeys: e.target.value,
+                }));
+                setRotationDraftDirty(true);
               }}
-              placeholder="Paste API keys here, one per line..."
+              placeholder="API 키를 한 줄씩 여기에 붙여넣으세요..."
               style={{ fontFamily: 'monospace', fontSize: '12px' }}
               autoFocus
             />
           )}
           <span className="formHint">
-            These keys plus the main key above form the rotation pool. All keys are treated equally.
+            위의 메인 키와 이 키들이 로테이션 풀을 형성합니다. 모든 키는
+            동등하게 취급됩니다.
           </span>
         </div>
         <div className="formGroup" style={{ marginTop: '12px' }}>
-          <label className="formLabel">Rotate Every N Calls</label>
+          <label className="formLabel">호출 N번마다 로테이트</label>
           <input
             className="textInput"
             type="number"
             min={1}
             value={rotationDraft.rotateEveryN}
-            onChange={e => setRotationDraft(prev => ({ ...prev, rotateEveryN: parseInt(e.target.value, 10) || 10 }))}
+            onChange={(e) =>
+              setRotationDraft((prev) => ({
+                ...prev,
+                rotateEveryN: parseInt(e.target.value, 10) || 10,
+              }))
+            }
             style={{ width: '120px' }}
           />
           <span className="formHint">
-            After this many API calls, switch to the next key in the pool (default: 10).
+            이 횎u수만큼 API를 호출하면 풀의 다음 키로 전환합니다 (기본값: 10).
           </span>
         </div>
       </Modal>
@@ -1896,34 +2499,65 @@ export default function SettingsPage() {
       <Modal
         isOpen={!!pendingImport}
         onClose={() => setPendingImport(null)}
-        title="Import API Keys"
+        title="API 키 가져오기"
         size="small"
         footer={
           <>
-            <button className="secondaryButton" onClick={() => setPendingImport(null)}>Cancel</button>
+            <button
+              className="secondaryButton"
+              onClick={() => setPendingImport(null)}
+            >
+              취소
+            </button>
             <button className="primaryButton" onClick={confirmImport}>
-              <Upload size={14} /> Import
+              <Upload size={14} /> 가져오기
             </button>
           </>
         }
       >
         {pendingImport && (
-          <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            <p style={{ marginBottom: '12px' }}>The following will be loaded into the form:</p>
+          <div
+            style={{
+              fontSize: '13px',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.6,
+            }}
+          >
+            <p style={{ marginBottom: '12px' }}>
+              양식에 다음 항목들이 로드됩니다:
+            </p>
             <ul style={{ margin: 0, paddingLeft: '18px' }}>
-              {pendingImport.keyCount > 0 && <li><strong>{pendingImport.keyCount}</strong> API key{pendingImport.keyCount > 1 ? 's' : ''}</li>}
-              {pendingImport.rotationCount > 0 && <li><strong>{pendingImport.rotationCount}</strong> rotation config{pendingImport.rotationCount > 1 ? 's' : ''}</li>}
-              {pendingImport.tunnelingCount > 0 && <li><strong>{pendingImport.tunnelingCount}</strong> tunneling field{pendingImport.tunnelingCount > 1 ? 's' : ''}</li>}
+              {pendingImport.keyCount > 0 && (
+                <li>
+                  <strong>{pendingImport.keyCount}</strong>개 API 키
+                </li>
+              )}
+              {pendingImport.rotationCount > 0 && (
+                <li>
+                  <strong>{pendingImport.rotationCount}</strong>개 로테이션 설정
+                </li>
+              )}
+              {pendingImport.tunnelingCount > 0 && (
+                <li>
+                  <strong>{pendingImport.tunnelingCount}</strong>개 터널링 필드
+                </li>
+              )}
             </ul>
-            <p style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-tertiary)' }}>
-              Empty values and masked values are skipped. You must click <strong>Save Settings</strong> after import to persist.
+            <p
+              style={{
+                marginTop: '12px',
+                fontSize: '12px',
+                color: 'var(--text-tertiary)',
+              }}
+            >
+              빈 값과 마스킹된 값은 건너됝니다. 가져온 후{' '}
+              <strong>설정 저장</strong>을 클릭해야 반영됩니다.
             </p>
           </div>
         )}
       </Modal>
-
     </div>
-  )
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -1931,87 +2565,149 @@ export default function SettingsPage() {
 // ---------------------------------------------------------------------------
 
 function SystemSection() {
-  const { currentVersion, latestVersion, changelog, updateAvailable, loading } = useVersionCheck()
+  const { currentVersion, latestVersion, changelog, updateAvailable, loading } =
+    useVersionCheck();
 
-  const [copied, setCopied] = useState(false)
-  const [expandedVersions, setExpandedVersions] = useState<Set<string>>(new Set())
+  const [copied, setCopied] = useState(false);
+  const [expandedVersions, setExpandedVersions] = useState<Set<string>>(
+    new Set(),
+  );
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText('./redamon.sh update').then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
-  }, [])
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, []);
 
   const toggleVersion = (version: string) => {
-    setExpandedVersions(prev => {
-      const next = new Set(prev)
-      if (next.has(version)) next.delete(version)
-      else next.add(version)
-      return next
-    })
-  }
+    setExpandedVersions((prev) => {
+      const next = new Set(prev);
+      if (next.has(version)) next.delete(version);
+      else next.add(version);
+      return next;
+    });
+  };
 
   return (
     <div className={styles.section}>
       <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+        <h2
+          className={styles.sectionTitle}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+        >
           <Info size={16} /> System
-          <WikiInfoButton target="https://github.com/samugit83/redamon/wiki/Troubleshooting" title="Open Troubleshooting wiki page" />
+          <WikiInfoButton
+            target="https://github.com/samugit83/redamon/wiki/Troubleshooting"
+            title="Open Troubleshooting wiki page"
+          />
         </h2>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* Version info */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}
+        >
           <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Current version: <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>v{currentVersion}</strong>
+            Current version:{' '}
+            <strong
+              style={{
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              v{currentVersion}
+            </strong>
           </span>
 
           {latestVersion && !updateAvailable && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: '4px',
-              fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
-              background: 'var(--status-success-bg)', color: 'var(--status-success-text)',
-            }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '2px 8px',
+                borderRadius: '4px',
+                background: 'var(--status-success-bg)',
+                color: 'var(--status-success-text)',
+              }}
+            >
               Up to date
             </span>
           )}
 
           {updateAvailable && latestVersion && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: '4px',
-              fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
-              background: 'var(--status-warning-bg)', color: 'var(--status-warning-text)',
-            }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '2px 8px',
+                borderRadius: '4px',
+                background: 'var(--status-warning-bg)',
+                color: 'var(--status-warning-text)',
+              }}
+            >
               v{latestVersion} available
             </span>
           )}
 
           {loading && (
-            <Loader2 size={12} className={styles.spin} style={{ marginLeft: 'auto' }} />
+            <Loader2
+              size={12}
+              className={styles.spin}
+              style={{ marginLeft: 'auto' }}
+            />
           )}
         </div>
 
         {/* Update available: show command + changelog */}
         {updateAvailable && (
           <>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '8px 12px', background: 'var(--bg-primary)',
-              border: '1px solid var(--border-default)', borderRadius: '6px',
-              fontFamily: 'var(--font-mono)',
-            }}>
-              <code style={{ flex: 1, fontSize: '13px', color: 'var(--color-success)' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                background: 'var(--bg-primary)',
+                border: '1px solid var(--border-default)',
+                borderRadius: '6px',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              <code
+                style={{
+                  flex: 1,
+                  fontSize: '13px',
+                  color: 'var(--color-success)',
+                }}
+              >
                 ./redamon.sh update
               </code>
               <button
                 onClick={handleCopy}
-                title="Copy command"
+                title="명령어 복사"
                 style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  padding: '4px', background: 'none', border: '1px solid var(--border-default)',
-                  borderRadius: '4px', color: 'var(--text-tertiary)', cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '4px',
+                  background: 'none',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: '4px',
+                  color: 'var(--text-tertiary)',
+                  cursor: 'pointer',
                 }}
               >
                 {copied ? <Check size={12} /> : <Copy size={12} />}
@@ -2020,52 +2716,129 @@ function SystemSection() {
 
             {/* Changelog */}
             {changelog && changelog.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <div
+                style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}
+              >
+                <span
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                  }}
+                >
                   Changes since v{currentVersion}:
                 </span>
-                <div style={{
-                  maxHeight: '250px', overflowY: 'auto',
-                  border: '1px solid var(--border-default)', borderRadius: '6px',
-                  background: 'var(--bg-primary)',
-                }}>
-                  {changelog.map((entry: { version: string; date: string; sections: { title: string; items: string[] }[] }) => {
-                    const isExpanded = expandedVersions.has(entry.version)
-                    return (
-                      <div key={entry.version} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                        <button
-                          type="button"
-                          onClick={() => toggleVersion(entry.version)}
+                <div
+                  style={{
+                    maxHeight: '250px',
+                    overflowY: 'auto',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: '6px',
+                    background: 'var(--bg-primary)',
+                  }}
+                >
+                  {changelog.map(
+                    (entry: {
+                      version: string;
+                      date: string;
+                      sections: { title: string; items: string[] }[];
+                    }) => {
+                      const isExpanded = expandedVersions.has(entry.version);
+                      return (
+                        <div
+                          key={entry.version}
                           style={{
-                            display: 'flex', alignItems: 'center', gap: '6px',
-                            width: '100%', padding: '6px 10px', background: 'none',
-                            border: 'none', cursor: 'pointer', fontSize: '12px',
-                            color: 'var(--text-primary)', textAlign: 'left',
+                            borderBottom: '1px solid var(--border-subtle)',
                           }}
                         >
-                          {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                          <strong style={{ fontFamily: 'var(--font-mono)' }}>v{entry.version}</strong>
-                          <span style={{ color: 'var(--text-tertiary)', fontSize: '11px', marginLeft: 'auto' }}>{entry.date}</span>
-                        </button>
-                        {isExpanded && (
-                          <div style={{ padding: '0 10px 8px 28px' }}>
-                            {entry.sections.map((section: { title: string; items: string[] }) => (
-                              <div key={section.title} style={{ marginTop: '4px' }}>
-                                <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                  {section.title}
-                                </div>
-                                <ul style={{ margin: '2px 0 0', paddingLeft: '16px', listStyle: 'disc' }}>
-                                  {section.items.map((item: string, i: number) => (
-                                    <li key={i} style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{item}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
+                          <button
+                            type="button"
+                            onClick={() => toggleVersion(entry.version)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              width: '100%',
+                              padding: '6px 10px',
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              color: 'var(--text-primary)',
+                              textAlign: 'left',
+                            }}
+                          >
+                            {isExpanded ? (
+                              <ChevronDown size={12} />
+                            ) : (
+                              <ChevronRight size={12} />
+                            )}
+                            <strong style={{ fontFamily: 'var(--font-mono)' }}>
+                              v{entry.version}
+                            </strong>
+                            <span
+                              style={{
+                                color: 'var(--text-tertiary)',
+                                fontSize: '11px',
+                                marginLeft: 'auto',
+                              }}
+                            >
+                              {entry.date}
+                            </span>
+                          </button>
+                          {isExpanded && (
+                            <div style={{ padding: '0 10px 8px 28px' }}>
+                              {entry.sections.map(
+                                (section: {
+                                  title: string;
+                                  items: string[];
+                                }) => (
+                                  <div
+                                    key={section.title}
+                                    style={{ marginTop: '4px' }}
+                                  >
+                                    <div
+                                      style={{
+                                        fontSize: '10px',
+                                        fontWeight: 600,
+                                        color: 'var(--text-secondary)',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.05em',
+                                      }}
+                                    >
+                                      {section.title}
+                                    </div>
+                                    <ul
+                                      style={{
+                                        margin: '2px 0 0',
+                                        paddingLeft: '16px',
+                                        listStyle: 'disc',
+                                      }}
+                                    >
+                                      {section.items.map(
+                                        (item: string, i: number) => (
+                                          <li
+                                            key={i}
+                                            style={{
+                                              fontSize: '11px',
+                                              color: 'var(--text-secondary)',
+                                              lineHeight: '1.5',
+                                            }}
+                                          >
+                                            {item}
+                                          </li>
+                                        ),
+                                      )}
+                                    </ul>
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    },
+                  )}
                 </div>
               </div>
             )}
@@ -2078,14 +2851,20 @@ function SystemSection() {
             href="https://github.com/samugit83/redamon/blob/master/CHANGELOG.md"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-tertiary)', textDecoration: 'none' }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              color: 'var(--text-tertiary)',
+              textDecoration: 'none',
+            }}
           >
             <ExternalLink size={11} /> Changelog
           </a>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // Badge color mapping
@@ -2126,7 +2905,7 @@ const BADGE_STYLES: Record<string, React.CSSProperties> = {
     verticalAlign: 'middle',
     letterSpacing: '0.02em',
   },
-  'TruffleHog': {
+  TruffleHog: {
     display: 'inline-block',
     fontSize: '10px',
     fontWeight: 600,
@@ -2138,7 +2917,7 @@ const BADGE_STYLES: Record<string, React.CSSProperties> = {
     verticalAlign: 'middle',
     letterSpacing: '0.02em',
   },
-}
+};
 
 // Reusable secret field component
 function SecretField({
@@ -2153,26 +2932,29 @@ function SecretField({
   onConfigureRotation,
   rotationInfo,
 }: {
-  label: string
-  hint: string
-  signupUrl?: string
-  badges?: string[]
-  value: string
-  visible: boolean
-  onToggle: () => void
-  onChange: (v: string) => void
-  onConfigureRotation?: () => void
-  rotationInfo?: RotationInfo | null
+  label: string;
+  hint: string;
+  signupUrl?: string;
+  badges?: string[];
+  value: string;
+  visible: boolean;
+  onToggle: () => void;
+  onChange: (v: string) => void;
+  onConfigureRotation?: () => void;
+  rotationInfo?: RotationInfo | null;
 }) {
-  const mainKeyCount = value && !value.startsWith('••••') ? 1 : value ? 1 : 0
-  const totalKeys = mainKeyCount + (rotationInfo?.extraKeyCount || 0)
+  const mainKeyCount = value && !value.startsWith('••••') ? 1 : value ? 1 : 0;
+  const totalKeys = mainKeyCount + (rotationInfo?.extraKeyCount || 0);
 
   return (
     <div className="formGroup">
       <label className="formLabel">
         {label}
-        {badges?.map(badge => (
-          <span key={badge} style={BADGE_STYLES[badge] || BADGE_STYLES['AI Agent']}>
+        {badges?.map((badge) => (
+          <span
+            key={badge}
+            style={BADGE_STYLES[badge] || BADGE_STYLES['AI Agent']}
+          >
             {badge}
           </span>
         ))}
@@ -2183,10 +2965,14 @@ function SecretField({
             className="textInput"
             type={visible ? 'text' : 'password'}
             value={value ?? ''}
-            onChange={e => onChange(e.target.value)}
+            onChange={(e) => onChange(e.target.value)}
             placeholder={`Enter ${label.toLowerCase()}`}
           />
-          <button className={styles.secretToggle} onClick={onToggle} type="button">
+          <button
+            className={styles.secretToggle}
+            onClick={onToggle}
+            type="button"
+          >
             {visible ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
         </div>
@@ -2202,8 +2988,14 @@ function SecretField({
               padding: '6px 10px',
               fontSize: '11px',
               fontWeight: 500,
-              color: rotationInfo && rotationInfo.extraKeyCount > 0 ? 'var(--accent-secondary)' : 'var(--text-secondary)',
-              background: rotationInfo && rotationInfo.extraKeyCount > 0 ? 'var(--accent-secondary-subtle)' : 'var(--bg-tertiary)',
+              color:
+                rotationInfo && rotationInfo.extraKeyCount > 0
+                  ? 'var(--accent-secondary)'
+                  : 'var(--text-secondary)',
+              background:
+                rotationInfo && rotationInfo.extraKeyCount > 0
+                  ? 'var(--accent-secondary-subtle)'
+                  : 'var(--bg-tertiary)',
               border: '1px solid var(--border-default)',
               borderRadius: '6px',
               cursor: 'pointer',
@@ -2221,27 +3013,34 @@ function SecretField({
         {signupUrl && (
           <>
             {' — '}
-            <a href={signupUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)' }}>
+            <a
+              href={signupUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--accent-primary)' }}
+            >
               Get API key
             </a>
           </>
         )}
       </span>
       {rotationInfo && rotationInfo.extraKeyCount > 0 && (
-        <span style={{
-          display: 'inline-block',
-          fontSize: '10px',
-          fontWeight: 600,
-          padding: '2px 8px',
-          borderRadius: '4px',
-          background: 'var(--accent-secondary-subtle)',
-          color: 'var(--accent-secondary)',
-          marginTop: '4px',
-          letterSpacing: '0.02em',
-        }}>
+        <span
+          style={{
+            display: 'inline-block',
+            fontSize: '10px',
+            fontWeight: 600,
+            padding: '2px 8px',
+            borderRadius: '4px',
+            background: 'var(--accent-secondary-subtle)',
+            color: 'var(--accent-secondary)',
+            marginTop: '4px',
+            letterSpacing: '0.02em',
+          }}
+        >
           {totalKeys} keys total, rotate every {rotationInfo.rotateEveryN} calls
         </span>
       )}
     </div>
-  )
+  );
 }

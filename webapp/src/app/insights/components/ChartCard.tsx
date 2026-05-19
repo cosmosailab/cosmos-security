@@ -1,18 +1,25 @@
-'use client'
+'use client';
 
-import { ReactNode } from 'react'
-import styles from './ChartCard.module.css'
+import { ReactNode } from 'react';
+import styles from './ChartCard.module.css';
 
 interface ChartCardProps {
-  title: string
-  subtitle?: string
-  children: ReactNode
-  isLoading?: boolean
-  isEmpty?: boolean
-  className?: string
+  title: string;
+  subtitle?: string;
+  children: ReactNode;
+  isLoading?: boolean;
+  isEmpty?: boolean;
+  className?: string;
 }
 
-export function ChartCard({ title, subtitle, children, isLoading, isEmpty, className }: ChartCardProps) {
+export function ChartCard({
+  title,
+  subtitle,
+  children,
+  isLoading,
+  isEmpty,
+  className,
+}: ChartCardProps) {
   return (
     <div className={`card ${styles.chartCard} ${className || ''}`}>
       <div className="cardHeader">
@@ -29,11 +36,11 @@ export function ChartCard({ title, subtitle, children, isLoading, isEmpty, class
             <div className={styles.skeletonBar} />
           </div>
         ) : isEmpty ? (
-          <div className={styles.empty}>No data available</div>
+          <div className={styles.empty}>데이터 없음</div>
         ) : (
           children
         )}
       </div>
     </div>
-  )
+  );
 }

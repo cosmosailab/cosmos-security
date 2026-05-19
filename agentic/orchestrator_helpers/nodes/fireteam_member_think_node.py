@@ -1009,7 +1009,10 @@ async def fireteam_member_think_node(
                 "completion_reason": f"llm_error: {exc}",
             }
 
-        raw_content = normalize_content(response.content if hasattr(response, "content") else response)
+        raw_content = normalize_content(
+            response.content if hasattr(response, "content") else response,
+            response=response if hasattr(response, "content") else None,
+        )
 
         _usage = getattr(response, "usage_metadata", None) or {}
         input_tokens_this_turn += int(_usage.get("input_tokens", 0) or 0)

@@ -13,10 +13,12 @@ LABEL description="Python-based GVM vulnerability scanner for RedAmon"
 # Set working directory
 WORKDIR /app
 
+# Install uv (fast Python package installer)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Install dependencies (python-gvm for scanner, neo4j for graph updates)
 COPY gvm_scan/requirements.txt /tmp/gvm_requirements.txt
-RUN pip install --no-cache-dir -r /tmp/gvm_requirements.txt && \
-    pip install --no-cache-dir neo4j
+RUN uv pip install --system --no-cache -r /tmp/gvm_requirements.txt neo4j
 
 # Copy project files (context is parent directory, so paths are relative to project root)
 COPY gvm_scan/ ./gvm_scan/

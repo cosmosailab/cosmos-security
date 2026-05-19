@@ -27,7 +27,7 @@ from orchestrator_helpers.agent_context import get_agent_context
 from orchestrator_helpers.json_utils import json_dumps_safe, normalize_content
 from orchestrator_helpers.parsing import try_parse_llm_decision
 from orchestrator_helpers.config import get_identifiers, is_session_config_complete
-from orchestrator_helpers.llm_retry import retry_llm_call
+from orchestrator_helpers.llm_retry import retry_llm_call, retry_llm_call_streaming
 from orchestrator_helpers.productivity import (
     audit_productivity_claim,
     build_productivity_audit_section,
@@ -522,8 +522,13 @@ async def think_node(state: AgentState, config, *, llm, guidance_queues, neo4j_c
     decision = None
     last_error = None
     response_text = ""
+    _reasoning_content = ""
     input_tokens_this_turn = _dt_in
     output_tokens_this_turn = _dt_out
+
+    # Resolve streaming callback for thinking chunks
+    from orchestrator_helpers.member_streaming import resolve_streaming_callback
+    _think_streaming_cb = resolve_streaming_callback(streaming_callbacks, session_id)
 
     for attempt in range(max_retries):
         if attempt > 0:
@@ -535,9 +540,18 @@ async def think_node(state: AgentState, config, *, llm, guidance_queues, neo4j_c
             ))
 
         try:
-            response = await retry_llm_call(
+            # Stream LLM response chunks to frontend
+            async def _on_chunk(delta: str):
+                if _think_streaming_cb:
+                    try:
+                        await _think_streaming_cb.on_thinking_chunk(delta)
+                    except Exception:
+                        pass
+
+            response = await retry_llm_call_streaming(
                 llm, messages,
                 label=f"{user_id}/{project_id}/{session_id} think iter={iteration}",
+                on_chunk=_on_chunk if _think_streaming_cb else None,
             )
         except Exception as exc:
             logger.error(
@@ -552,7 +566,11 @@ async def think_node(state: AgentState, config, *, llm, guidance_queues, neo4j_c
             )
             break
 
-        response_text = normalize_content(response.content).strip()
+        response_text = normalize_content(response.content, response=response).strip()
+
+        # Capture raw reasoning_content (from reasoning models like DeepSeek R1, Qwen-thinking)
+        _raw_kwargs = getattr(response, "additional_kwargs", None) or {}
+        _reasoning_content = _raw_kwargs.get("reasoning_content") or _raw_kwargs.get("reasoning") or ""
 
         usage = getattr(response, "usage_metadata", None) or {}
         input_tokens_this_turn += int(usage.get("input_tokens", 0) or 0)
@@ -703,6 +721,7 @@ async def think_node(state: AgentState, config, *, llm, guidance_queues, neo4j_c
         "tokens_used": _new_input_tokens + _new_output_tokens,
         "_input_tokens_this_turn": input_tokens_this_turn,
         "_output_tokens_this_turn": output_tokens_this_turn,
+        "_reasoning_content": _reasoning_content,  # raw model reasoning (if any)
     }
 
     logger.info(

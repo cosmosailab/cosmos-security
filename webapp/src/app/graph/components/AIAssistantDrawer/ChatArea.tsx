@@ -1,44 +1,62 @@
-'use client'
+'use client';
 
-import React, { useRef, useEffect, useState, useCallback } from 'react'
-import { Bot, User, AlertCircle, Copy, Check } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { AgentTimeline } from './AgentTimeline'
-import { FileDownloadCard } from './FileDownloadCard'
-import { TodoListWidget } from './TodoListWidget'
-import { SuggestionPanels } from './SuggestionPanels'
-import { extractTextFromChildren } from './phaseConfig'
-import type { ChatItem, Message, FileDownloadItem, FireteamItem } from './types'
-import type { ThinkingItem, ToolExecutionItem, PlanWaveItem, DeepThinkItem } from './AgentTimeline'
-import styles from './AIAssistantDrawer.module.css'
-import type { TodoItem } from '@/lib/websocket-types'
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { Bot, User, AlertCircle, Copy, Check } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { AgentTimeline } from './AgentTimeline';
+import { FileDownloadCard } from './FileDownloadCard';
+import { TodoListWidget } from './TodoListWidget';
+import { SuggestionPanels } from './SuggestionPanels';
+import { extractTextFromChildren } from './phaseConfig';
+import type {
+  ChatItem,
+  Message,
+  FileDownloadItem,
+  FireteamItem,
+} from './types';
+import type {
+  ThinkingItem,
+  ToolExecutionItem,
+  PlanWaveItem,
+  DeepThinkItem,
+} from './AgentTimeline';
+import styles from './AIAssistantDrawer.module.css';
+import type { TodoItem } from '@/lib/websocket-types';
 
-type TimelineGroupItem = ThinkingItem | ToolExecutionItem | PlanWaveItem | DeepThinkItem | FireteamItem
+type TimelineGroupItem =
+  | ThinkingItem
+  | ToolExecutionItem
+  | PlanWaveItem
+  | DeepThinkItem
+  | FireteamItem;
 
 type GroupedItem = {
-  type: 'message' | 'timeline' | 'file_download'
-  content: Message | TimelineGroupItem[] | FileDownloadItem
-}
+  type: 'message' | 'timeline' | 'file_download';
+  content: Message | TimelineGroupItem[] | FileDownloadItem;
+};
 
 interface ChatAreaProps {
-  messagesContainerRef: React.RefObject<HTMLDivElement | null>
-  messagesEndRef: React.RefObject<HTMLDivElement | null>
-  checkIfAtBottom: () => boolean
-  chatItems: ChatItem[]
-  groupedChatItems: GroupedItem[]
-  isLoading: boolean
-  todoList: TodoItem[]
-  statusWord: string
-  isConnected: boolean
-  setInputValue: (v: string) => void
-  missingApiKeys: Set<string>
-  openApiKeyModal: (toolId: string) => void
-  handleTimelineToolConfirmation: (itemId: string, decision: 'approve' | 'reject') => void
+  messagesContainerRef: React.RefObject<HTMLDivElement | null>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  checkIfAtBottom: () => boolean;
+  chatItems: ChatItem[];
+  groupedChatItems: GroupedItem[];
+  isLoading: boolean;
+  todoList: TodoItem[];
+  statusWord: string;
+  isConnected: boolean;
+  setInputValue: (v: string) => void;
+  missingApiKeys: Set<string>;
+  openApiKeyModal: (toolId: string) => void;
+  handleTimelineToolConfirmation: (
+    itemId: string,
+    decision: 'approve' | 'reject',
+  ) => void;
   /** Cancel a single running tool card. Receives the tool's item.id. */
-  handleToolStop?: (itemId: string) => void
+  handleToolStop?: (itemId: string) => void;
 }
 
 export function ChatArea({
@@ -57,47 +75,50 @@ export function ChatArea({
   handleTimelineToolConfirmation,
   handleToolStop,
 }: ChatAreaProps) {
-  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
-  const [copiedFieldKey, setCopiedFieldKey] = useState<string | null>(null)
-  const eyeRef = useRef<HTMLImageElement>(null)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [copiedFieldKey, setCopiedFieldKey] = useState<string | null>(null);
+  const eyeRef = useRef<HTMLImageElement>(null);
 
   // Random heartbeat animation for the loading eye
   useEffect(() => {
-    if (!isLoading) return
-    let timeout: ReturnType<typeof setTimeout>
+    if (!isLoading) return;
+    let timeout: ReturnType<typeof setTimeout>;
     const beat = () => {
-      const el = eyeRef.current
-      if (!el) return
-      el.style.transition = 'transform 0.15s ease-out'
-      el.style.transform = 'scale(1.25)'
+      const el = eyeRef.current;
+      if (!el) return;
+      el.style.transition = 'transform 0.15s ease-out';
+      el.style.transform = 'scale(1.25)';
       setTimeout(() => {
-        el.style.transform = 'scale(1)'
+        el.style.transform = 'scale(1)';
         setTimeout(() => {
-          el.style.transform = 'scale(1.15)'
+          el.style.transform = 'scale(1.15)';
           setTimeout(() => {
-            el.style.transform = 'scale(1)'
-          }, 150)
-        }, 120)
-      }, 150)
-      timeout = setTimeout(beat, 4000 + Math.random() * 6000)
-    }
-    timeout = setTimeout(beat, 2000 + Math.random() * 4000)
-    return () => clearTimeout(timeout)
-  }, [isLoading])
+            el.style.transform = 'scale(1)';
+          }, 150);
+        }, 120);
+      }, 150);
+      timeout = setTimeout(beat, 4000 + Math.random() * 6000);
+    };
+    timeout = setTimeout(beat, 2000 + Math.random() * 4000);
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
 
-  const handleCopyMessage = useCallback((messageId: string, content: string) => {
-    navigator.clipboard.writeText(content).then(() => {
-      setCopiedMessageId(messageId)
-      setTimeout(() => setCopiedMessageId(null), 2000)
-    })
-  }, [])
+  const handleCopyMessage = useCallback(
+    (messageId: string, content: string) => {
+      navigator.clipboard.writeText(content).then(() => {
+        setCopiedMessageId(messageId);
+        setTimeout(() => setCopiedMessageId(null), 2000);
+      });
+    },
+    [],
+  );
 
   const handleCopyField = useCallback((key: string, text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      setCopiedFieldKey(key)
-      setTimeout(() => setCopiedFieldKey(null), 2000)
-    })
-  }, [])
+      setCopiedFieldKey(key);
+      setTimeout(() => setCopiedFieldKey(null), 2000);
+    });
+  }, []);
 
   const renderMessage = (item: Message) => {
     return (
@@ -112,41 +133,48 @@ export function ChatArea({
         </div>
         <div className={styles.messageContent}>
           {item.isGuidance && (
-            <span className={styles.guidanceBadge}>Guidance</span>
+            <span className={styles.guidanceBadge}>지침</span>
           )}
           {item.responseTier === 'full_report' && (
             <div className={styles.reportHeader}>
-              <span className={styles.reportBadge}>Report</span>
+              <span className={styles.reportBadge}>리포트</span>
             </div>
           )}
           {item.responseTier === 'summary' && (
             <div className={styles.reportHeader}>
-              <span className={styles.summaryBadge}>Summary</span>
+              <span className={styles.summaryBadge}>요약</span>
             </div>
           )}
           <div
             className={styles.messageText}
-            {...(item.responseTier === 'full_report' || item.responseTier === 'summary' ? { 'data-report-content': true } : {})}
+            {...(item.responseTier === 'full_report' ||
+            item.responseTier === 'summary'
+              ? { 'data-report-content': true }
+              : {})}
           >
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
                 code({ className, children, ...props }: any) {
-                  const match = /language-(\w+)/.exec(className || '')
-                  const language = match ? match[1] : ''
-                  const isInline = !className
-                  const codeText = String(children).replace(/\n$/, '')
+                  const match = /language-(\w+)/.exec(className || '');
+                  const language = match ? match[1] : '';
+                  const isInline = !className;
+                  const codeText = String(children).replace(/\n$/, '');
 
                   if (!isInline) {
-                    const codeKey = `code-${item.id}-${codeText.slice(0, 20)}`
+                    const codeKey = `code-${item.id}-${codeText.slice(0, 20)}`;
                     return (
                       <div className={styles.codeBlockWrapper}>
                         <button
                           className={`${styles.codeBlockCopyButton} ${copiedFieldKey === codeKey ? styles.codeBlockCopyButtonCopied : ''}`}
                           onClick={() => handleCopyField(codeKey, codeText)}
-                          title="Copy code"
+                          title="코드 복사"
                         >
-                          {copiedFieldKey === codeKey ? <Check size={11} /> : <Copy size={11} />}
+                          {copiedFieldKey === codeKey ? (
+                            <Check size={11} />
+                          ) : (
+                            <Copy size={11} />
+                          )}
                         </button>
                         {language ? (
                           <SyntaxHighlighter
@@ -157,24 +185,28 @@ export function ChatArea({
                             {codeText}
                           </SyntaxHighlighter>
                         ) : (
-                          <pre><code className={className} {...props}>{children}</code></pre>
+                          <pre>
+                            <code className={className} {...props}>
+                              {children}
+                            </code>
+                          </pre>
                         )}
                       </div>
-                    )
+                    );
                   }
 
                   return (
                     <code className={className} {...props}>
                       {children}
                     </code>
-                  )
+                  );
                 },
                 td({ children, ...props }: any) {
-                  const text = extractTextFromChildren(children)
+                  const text = extractTextFromChildren(children);
                   if (!text || text.length < 3) {
-                    return <td {...props}>{children}</td>
+                    return <td {...props}>{children}</td>;
                   }
-                  const cellKey = `td-${item.id}-${text.slice(0, 30)}`
+                  const cellKey = `td-${item.id}-${text.slice(0, 30)}`;
                   return (
                     <td {...props}>
                       <span className={styles.tableCellContent}>
@@ -182,13 +214,17 @@ export function ChatArea({
                         <button
                           className={`${styles.tableCellCopyButton} ${copiedFieldKey === cellKey ? styles.tableCellCopyButtonCopied : ''}`}
                           onClick={() => handleCopyField(cellKey, text)}
-                          title="Copy value"
+                          title="값 복사"
                         >
-                          {copiedFieldKey === cellKey ? <Check size={10} /> : <Copy size={10} />}
+                          {copiedFieldKey === cellKey ? (
+                            <Check size={10} />
+                          ) : (
+                            <Copy size={10} />
+                          )}
                         </button>
                       </span>
                     </td>
-                  )
+                  );
                 },
               }}
             >
@@ -200,9 +236,17 @@ export function ChatArea({
             <button
               className={`${styles.copyButton} ${copiedMessageId === item.id ? styles.copyButtonCopied : ''}`}
               onClick={() => handleCopyMessage(item.id, item.content)}
-              title="Copy to clipboard"
+              title="클립보드에 복사"
             >
-              {copiedMessageId === item.id ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
+              {copiedMessageId === item.id ? (
+                <>
+                  <Check size={12} /> 복사됨
+                </>
+              ) : (
+                <>
+                  <Copy size={12} /> 복사
+                </>
+              )}
             </button>
           )}
 
@@ -214,8 +258,8 @@ export function ChatArea({
           )}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <>
@@ -225,25 +269,39 @@ export function ChatArea({
         </div>
       )}
 
-      <div className={styles.messages} ref={messagesContainerRef} onScroll={checkIfAtBottom}>
+      <div
+        className={styles.messages}
+        ref={messagesContainerRef}
+        onScroll={checkIfAtBottom}
+      >
         {chatItems.length === 0 && (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>
-              <img src="/logo.png" alt="RedAmon" width={72} height={72} style={{ objectFit: 'contain' }} />
+              <img
+                src="/logo.png"
+                alt="RedAmon"
+                width={72}
+                height={72}
+                style={{ objectFit: 'contain' }}
+              />
             </div>
-            <h3 className={styles.emptyTitle}>How can I help you?</h3>
+            <h3 className={styles.emptyTitle}>무엇을 도와드릴까요?</h3>
             <p className={styles.emptyDescription}>
-              Ask me about recon data, vulnerabilities, exploitation, or post-exploitation activities.
+              정찰 데이터, 취약점, 코드 실행 또는 사후 침투 활동에 대해
+              질문하세요.
             </p>
-            <SuggestionPanels isConnected={isConnected} setInputValue={setInputValue} />
+            <SuggestionPanels
+              isConnected={isConnected}
+              setInputValue={setInputValue}
+            />
           </div>
         )}
 
         {groupedChatItems.map((groupItem, index) => {
           if (groupItem.type === 'message') {
-            return renderMessage(groupItem.content as Message)
+            return renderMessage(groupItem.content as Message);
           } else if (groupItem.type === 'file_download') {
-            const file = groupItem.content as FileDownloadItem
+            const file = groupItem.content as FileDownloadItem;
             return (
               <FileDownloadCard
                 key={file.id}
@@ -252,9 +310,9 @@ export function ChatArea({
                 description={file.description}
                 source={file.source}
               />
-            )
+            );
           } else {
-            const items = groupItem.content as TimelineGroupItem[]
+            const items = groupItem.content as TimelineGroupItem[];
             return (
               <AgentTimeline
                 key={`timeline-${index}`}
@@ -265,7 +323,7 @@ export function ChatArea({
                 onToolConfirmation={handleTimelineToolConfirmation}
                 onToolStop={handleToolStop}
               />
-            )
+            );
           }
         })}
 
@@ -273,13 +331,22 @@ export function ChatArea({
           <div className={`${styles.message} ${styles.messageAssistant}`}>
             <div className={`${styles.messageIcon} ${styles.loadingEyeIcon}`}>
               <div className={styles.eyeContainer}>
-                <img src="/logo.png" alt="RedAmon" width={34} height={21} className={styles.loadingEye} ref={eyeRef} />
-                <div className={styles.eyePupil} />
+                <img
+                  src="/logo.png"
+                  alt="RedAmon"
+                  width={28}
+                  height={28}
+                  className={styles.loadingEye}
+                  ref={eyeRef}
+                  style={{ objectFit: 'contain' }}
+                />
               </div>
             </div>
             <div className={styles.messageContent}>
               <div className={styles.loadingIndicator}>
-                <span key={statusWord} className={styles.loadingWord}>{statusWord}</span>
+                <span key={statusWord} className={styles.loadingWord}>
+                  {statusWord}
+                </span>
               </div>
             </div>
           </div>
@@ -288,5 +355,5 @@ export function ChatArea({
         <div ref={messagesEndRef} />
       </div>
     </>
-  )
+  );
 }

@@ -159,11 +159,126 @@ ADDITIONAL_INDEXES = [
 ]
 
 
+# Maps constraint name → deduplication Cypher for that node label/key.
+# When a UNIQUENESS constraint fails because duplicate nodes exist, we merge
+# them (keeping the first found, re-attaching all relationships) then retry.
+_DEDUP_QUERIES: dict[str, str] = {
+    "subdomain_unique": """
+        MATCH (s:Subdomain)
+        WITH s.name AS name, s.user_id AS uid, s.project_id AS pid, collect(s) AS nodes
+        WHERE size(nodes) > 1
+        CALL {
+            WITH nodes
+            WITH nodes[0] AS keep, nodes[1..] AS dupes
+            UNWIND dupes AS d
+            CALL apoc.refactor.mergeNodes([keep, d], {properties: 'discard'})
+            YIELD node
+            RETURN count(node)
+        }
+        RETURN count(*) AS merged
+    """,
+    "ip_unique": """
+        MATCH (i:IP)
+        WITH i.address AS addr, i.user_id AS uid, i.project_id AS pid, collect(i) AS nodes
+        WHERE size(nodes) > 1
+        CALL {
+            WITH nodes
+            WITH nodes[0] AS keep, nodes[1..] AS dupes
+            UNWIND dupes AS d
+            CALL apoc.refactor.mergeNodes([keep, d], {properties: 'discard'})
+            YIELD node
+            RETURN count(node)
+        }
+        RETURN count(*) AS merged
+    """,
+    "baseurl_unique": """
+        MATCH (u:BaseURL)
+        WITH u.url AS url, u.user_id AS uid, u.project_id AS pid, collect(u) AS nodes
+        WHERE size(nodes) > 1
+        CALL {
+            WITH nodes
+            WITH nodes[0] AS keep, nodes[1..] AS dupes
+            UNWIND dupes AS d
+            CALL apoc.refactor.mergeNodes([keep, d], {properties: 'discard'})
+            YIELD node
+            RETURN count(node)
+        }
+        RETURN count(*) AS merged
+    """,
+}
+
+# Simpler dedup fallback for when APOC is not available:
+# keeps the lowest-id node and detaches/deletes duplicates.
+_DEDUP_NO_APOC: dict[str, str] = {
+    "domain_unique": """
+        MATCH (d:Domain)
+        WITH d.name AS name, d.user_id AS uid, d.project_id AS pid, collect(d) AS nodes
+        WHERE size(nodes) > 1
+        UNWIND nodes[1..] AS dup
+        DETACH DELETE dup
+    """,
+    "subdomain_unique": """
+        MATCH (s:Subdomain)
+        WITH s.name AS name, s.user_id AS uid, s.project_id AS pid, collect(s) AS nodes
+        WHERE size(nodes) > 1
+        UNWIND nodes[1..] AS dup
+        DETACH DELETE dup
+    """,
+    "ip_unique": """
+        MATCH (i:IP)
+        WITH i.address AS addr, i.user_id AS uid, i.project_id AS pid, collect(i) AS nodes
+        WHERE size(nodes) > 1
+        UNWIND nodes[1..] AS dup
+        DETACH DELETE dup
+    """,
+    "baseurl_unique": """
+        MATCH (u:BaseURL)
+        WITH u.url AS url, u.user_id AS uid, u.project_id AS pid, collect(u) AS nodes
+        WHERE size(nodes) > 1
+        UNWIND nodes[1..] AS dup
+        DETACH DELETE dup
+    """,
+}
+
+
+def _extract_constraint_name(query: str) -> str | None:
+    """Pull the constraint name out of a CREATE CONSTRAINT statement."""
+    import re
+    m = re.search(r'CREATE CONSTRAINT\s+(\w+)', query, re.IGNORECASE)
+    return m.group(1) if m else None
+
+
+def _dedup_for_constraint(session, constraint_name: str) -> None:
+    """
+    Remove duplicate nodes that block a uniqueness constraint from being created.
+    Tries APOC merge first; falls back to simple DETACH DELETE of duplicates.
+    Duplicate relationships that arose from the duplicated nodes are also gone
+    after the delete, which is acceptable — the next recon run will rebuild them.
+    """
+    apoc_query = _DEDUP_QUERIES.get(constraint_name)
+    fallback_query = _DEDUP_NO_APOC.get(constraint_name)
+
+    if apoc_query:
+        try:
+            session.run(apoc_query)
+            return
+        except Exception:
+            pass  # APOC not available — use fallback
+
+    if fallback_query:
+        try:
+            session.run(fallback_query)
+        except Exception as e:
+            print(f"[!][graph-db] Dedup fallback also failed for {constraint_name}: {e}")
+
+
 def init_schema(session):
     """
     Initialize constraints and indexes for the graph schema.
 
     Safe to call multiple times — all statements use IF NOT EXISTS / IF EXISTS guards.
+    When a UNIQUENESS constraint fails due to pre-existing duplicate nodes, the
+    duplicates are automatically removed and the constraint is retried once.
     """
     for stmt in DROP_LEGACY_CONSTRAINTS:
         try:
@@ -175,6 +290,22 @@ def init_schema(session):
         try:
             session.run(query)
         except Exception as e:
-            # Ignore if constraint/index already exists
-            if "already exists" not in str(e).lower():
-                print(f"[!][graph-db] Schema warning: {e}")
+            err = str(e).lower()
+            if "already exists" in err:
+                continue  # idempotent — fine
+
+            # If duplicate data is blocking a uniqueness constraint, dedup and retry once.
+            if "constraintcreationfailed" in err or "failed to populate index" in err:
+                cname = _extract_constraint_name(query)
+                if cname and cname in _DEDUP_NO_APOC:
+                    print(f"[!][graph-db] Duplicate nodes found for '{cname}' — deduplicating and retrying...")
+                    _dedup_for_constraint(session, cname)
+                    try:
+                        session.run(query)
+                        print(f"[+][graph-db] Constraint '{cname}' created successfully after dedup.")
+                        continue
+                    except Exception as e2:
+                        print(f"[!][graph-db] Schema warning (post-dedup): {e2}")
+                        continue
+
+            print(f"[!][graph-db] Schema warning: {e}")

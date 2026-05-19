@@ -20,7 +20,7 @@ export function AgentActivityLine({ data, isLoading }: AgentActivityLineProps) {
   const tooltipLabelStyle = useMemo(() => getTooltipLabelStyle(), [theme])
 
   return (
-    <ChartCard title="Agent Activity" subtitle="Sessions & iterations over time" isLoading={isLoading} isEmpty={!data?.length}>
+    <ChartCard title="에이전트 활동" subtitle="시간 경과에 따른 세션 및 반복 횟수" isLoading={isLoading} isEmpty={!data?.length}>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data || []} margin={{ left: 0, right: 8, top: 8, bottom: 8 }}>
           <XAxis
@@ -32,10 +32,11 @@ export function AgentActivityLine({ data, isLoading }: AgentActivityLineProps) {
           />
           <YAxis tick={{ fontSize: 11, fill: chrome.axisColor }} axisLine={false} tickLine={false} width={35} />
           <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} labelFormatter={formatDate} />
-          <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} dot={false} name="Sessions" />
-          <Line type="monotone" dataKey="iterations" stroke="#a855f7" strokeWidth={2} dot={false} name="Iterations" />
+          <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} dot={false} name="세션" />
+          <Line type="monotone" dataKey="iterations" stroke="#a855f7" strokeWidth={2} dot={false} name="반복" />
         </LineChart>
       </ResponsiveContainer>
     </ChartCard>
   )
 }
+

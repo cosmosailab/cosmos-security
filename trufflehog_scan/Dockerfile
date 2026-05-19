@@ -18,9 +18,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
     curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin && \
     apt-get purge -y curl && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install uv (fast Python package installer)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Install Python dependencies
 COPY trufflehog_scan/requirements.txt /tmp/trufflehog_requirements.txt
-RUN pip install --no-cache-dir -r /tmp/trufflehog_requirements.txt
+RUN uv pip install --system --no-cache -r /tmp/trufflehog_requirements.txt
 
 # Copy project files (context is parent directory, so paths are relative to project root)
 COPY trufflehog_scan/ ./trufflehog_scan/

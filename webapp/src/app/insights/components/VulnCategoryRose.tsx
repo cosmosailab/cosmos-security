@@ -1,31 +1,42 @@
-'use client'
+'use client';
 
-import { useMemo } from 'react'
-import { RadialBarChart, RadialBar, ResponsiveContainer, Tooltip, Legend } from 'recharts'
-import { useTheme } from '@/hooks/useTheme'
-import { getChartPalette, getTooltipStyle, getTooltipItemStyle, getTooltipLabelStyle } from '../utils/chartTheme'
-import { ChartCard } from './ChartCard'
-import type { SecurityFinding } from '../types'
+import { useMemo } from 'react';
+import {
+  RadialBarChart,
+  RadialBar,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+} from 'recharts';
+import { useTheme } from '@/hooks/useTheme';
+import {
+  getChartPalette,
+  getTooltipStyle,
+  getTooltipItemStyle,
+  getTooltipLabelStyle,
+} from '../utils/chartTheme';
+import { ChartCard } from './ChartCard';
+import type { SecurityFinding } from '../types';
 
 interface VulnCategoryRoseProps {
-  data: SecurityFinding[] | undefined
-  isLoading: boolean
+  data: SecurityFinding[] | undefined;
+  isLoading: boolean;
 }
 
 export function VulnCategoryRose({ data, isLoading }: VulnCategoryRoseProps) {
-  const { theme } = useTheme()
-  const palette = useMemo(() => getChartPalette(), [theme])
-  const tooltipStyle = useMemo(() => getTooltipStyle(), [theme])
-  const tooltipItemStyle = useMemo(() => getTooltipItemStyle(), [theme])
-  const tooltipLabelStyle = useMemo(() => getTooltipLabelStyle(), [theme])
+  const { theme } = useTheme();
+  const palette = useMemo(() => getChartPalette(), [theme]);
+  const tooltipStyle = useMemo(() => getTooltipStyle(), [theme]);
+  const tooltipItemStyle = useMemo(() => getTooltipItemStyle(), [theme]);
+  const tooltipLabelStyle = useMemo(() => getTooltipLabelStyle(), [theme]);
 
   const chartData = useMemo(() => {
-    if (!data?.length) return []
+    if (!data?.length) return [];
 
-    const counts = new Map<string, number>()
+    const counts = new Map<string, number>();
     for (const f of data) {
-      const cat = f.category || 'other'
-      counts.set(cat, (counts.get(cat) || 0) + 1)
+      const cat = f.category || 'other';
+      counts.set(cat, (counts.get(cat) || 0) + 1);
     }
 
     return Array.from(counts.entries())
@@ -35,15 +46,15 @@ export function VulnCategoryRose({ data, isLoading }: VulnCategoryRoseProps) {
         name: category,
         count,
         fill: palette[i % palette.length],
-      }))
-  }, [data, palette])
+      }));
+  }, [data, palette]);
 
-  const total = chartData.reduce((s, d) => s + d.count, 0)
+  const total = chartData.reduce((s, d) => s + d.count, 0);
 
   return (
     <ChartCard
-      title="Vulnerability Categories"
-      subtitle={`${total} findings`}
+      title="취약점 카테고리"
+      subtitle={`${total}건`}
       isLoading={isLoading}
       isEmpty={chartData.length === 0}
     >
@@ -64,18 +75,20 @@ export function VulnCategoryRose({ data, isLoading }: VulnCategoryRoseProps) {
             contentStyle={tooltipStyle}
             itemStyle={tooltipItemStyle}
             labelStyle={tooltipLabelStyle}
-            formatter={(value: number, _name: string, props: { payload?: { name?: string } }) =>
-              [value, props.payload?.name || '']
-            }
+            formatter={(
+              value: number,
+              _name: string,
+              props: { payload?: { name?: string } },
+            ) => [value, props.payload?.name || '']}
           />
           <Legend
-            formatter={(value: string) =>
+            formatter={(value: string) => (
               <span style={{ fontSize: 10 }}>{value}</span>
-            }
+            )}
             wrapperStyle={{ fontSize: 10 }}
           />
         </RadialBarChart>
       </ResponsiveContainer>
     </ChartCard>
-  )
+  );
 }

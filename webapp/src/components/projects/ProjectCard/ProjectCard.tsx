@@ -1,18 +1,18 @@
-'use client'
+'use client';
 
-import { Globe, Calendar, Settings, Trash2 } from 'lucide-react'
-import Link from 'next/link'
-import styles from './ProjectCard.module.css'
+import { Globe, Calendar, Settings, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import styles from './ProjectCard.module.css';
 
 interface ProjectCardProps {
-  id: string
-  name: string
-  targetDomain: string
-  description?: string | null
-  createdAt: string
-  isSelected?: boolean
-  onSelect?: () => void
-  onDelete?: () => void
+  id: string;
+  name: string;
+  targetDomain: string;
+  description?: string | null;
+  createdAt: string;
+  isSelected?: boolean;
+  onSelect?: () => void;
+  onDelete?: () => void;
 }
 
 export function ProjectCard({
@@ -23,13 +23,13 @@ export function ProjectCard({
   createdAt,
   isSelected,
   onSelect,
-  onDelete
+  onDelete,
 }: ProjectCardProps) {
-  const formattedDate = new Date(createdAt).toLocaleDateString('en-US', {
+  const formattedDate = new Date(createdAt).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
-  })
+    day: 'numeric',
+  });
 
   return (
     <div
@@ -46,7 +46,7 @@ export function ProjectCard({
             href={`/projects/${id}/settings`}
             className="iconButton"
             onClick={(e) => e.stopPropagation()}
-            title="Project Settings"
+            title="프로젝트 설정"
           >
             <Settings size={14} />
           </Link>
@@ -54,10 +54,10 @@ export function ProjectCard({
             <button
               className="iconButton"
               onClick={(e) => {
-                e.stopPropagation()
-                onDelete()
+                e.stopPropagation();
+                onDelete();
               }}
-              title="Delete Project"
+              title="프로젝트 삭제"
             >
               <Trash2 size={14} />
             </button>
@@ -68,7 +68,7 @@ export function ProjectCard({
         <div className={styles.meta}>
           <div className={styles.metaItem}>
             <Globe size={12} />
-            <span>{targetDomain || 'No target set'}</span>
+            <span>{targetDomain || '대상 없음'}</span>
           </div>
           <div className={styles.metaItem}>
             <Calendar size={12} />
@@ -77,7 +77,7 @@ export function ProjectCard({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default ProjectCard
+export default ProjectCard;

@@ -52,7 +52,7 @@ async def classify_attack_path(
     for attempt in range(max_retries):
         try:
             response = await llm.ainvoke(messages)
-            json_str = extract_json(normalize_content(response.content))
+            json_str = extract_json(normalize_content(response.content, response=response))
 
             if json_str:
                 data = json.loads(json_str)

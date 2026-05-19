@@ -1,67 +1,75 @@
-'use client'
+'use client';
 
-import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { ChevronDown, Users, LogOut, KeyRound } from 'lucide-react'
-import { useProject } from '@/providers/ProjectProvider'
-import { useAuth } from '@/providers/AuthProvider'
-import { useUsers } from '@/hooks/useUsers'
-import styles from './UserSelector.module.css'
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { ChevronDown, Users, LogOut, KeyRound } from 'lucide-react';
+import { useProject } from '@/providers/ProjectProvider';
+import { useAuth } from '@/providers/AuthProvider';
+import { useUsers } from '@/hooks/useUsers';
+import styles from './UserSelector.module.css';
 
 export function UserSelector() {
-  const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const { userId, setUserId, setCurrentProject } = useProject()
-  const { user: authUser, isAdmin, logout } = useAuth()
-  const { data: users } = useUsers()
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { userId, setUserId, setCurrentProject } = useProject();
+  const { user: authUser, isAdmin, logout } = useAuth();
+  const { data: users } = useUsers();
 
-  const currentUser = users?.find(u => u.id === userId)
+  const currentUser = users?.find((u) => u.id === userId);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSelectUser = (user: { id: string; name: string }) => {
     if (user.id !== userId) {
-      setUserId(user.id)
-      setCurrentProject(null)
+      setUserId(user.id);
+      setCurrentProject(null);
     }
-    setIsOpen(false)
-  }
+    setIsOpen(false);
+  };
 
   const handleManageUsers = () => {
-    router.push('/settings/users')
-    setIsOpen(false)
-  }
+    router.push('/settings/users');
+    setIsOpen(false);
+  };
 
   const handleChangePassword = () => {
-    router.push('/settings/users?changePassword=true')
-    setIsOpen(false)
-  }
+    router.push('/settings/users?changePassword=true');
+    setIsOpen(false);
+  };
 
   const handleLogout = () => {
-    setIsOpen(false)
-    logout()
-  }
+    setIsOpen(false);
+    logout();
+  };
 
-  const displayUser = currentUser || authUser
+  const displayUser = currentUser || authUser;
   const initials = displayUser
-    ? displayUser.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : '?'
+    ? displayUser.name
+        .split(' ')
+        .map((w) => w[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : '?';
 
   return (
     <div className={styles.container} ref={dropdownRef}>
       <button
         className={styles.trigger}
         onClick={() => setIsOpen(!isOpen)}
-        title="User Menu"
+        title="사용자 메뉴"
       >
         <div className={styles.avatar}>
           <span>{initials}</span>
@@ -77,7 +85,7 @@ export function UserSelector() {
           {isAdmin ? (
             <>
               <div className={styles.header}>
-                <span className={styles.headerTitle}>Users</span>
+                <span className={styles.headerTitle}>사용자</span>
               </div>
 
               <div className={styles.list}>
@@ -89,13 +97,21 @@ export function UserSelector() {
                       onClick={() => handleSelectUser(user)}
                     >
                       <div className={styles.itemAvatar}>
-                        <span>{user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}</span>
+                        <span>
+                          {user.name
+                            .split(' ')
+                            .map((w) => w[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </span>
                       </div>
                       <div className={styles.itemContent}>
                         <span className={styles.itemName}>
-                          {user.name}
-                          {' '}
-                          <span className={`${styles.roleBadge} ${user.role === 'admin' ? styles.roleBadgeAdmin : styles.roleBadgeStandard}`}>
+                          {user.name}{' '}
+                          <span
+                            className={`${styles.roleBadge} ${user.role === 'admin' ? styles.roleBadgeAdmin : styles.roleBadgeStandard}`}
+                          >
                             {user.role}
                           </span>
                         </span>
@@ -104,14 +120,15 @@ export function UserSelector() {
                     </button>
                   ))
                 ) : (
-                  <div className={styles.empty}>
-                    No users yet
-                  </div>
+                  <div className={styles.empty}>No users yet</div>
                 )}
               </div>
 
               <div className={styles.footer}>
-                <button className={styles.footerButton} onClick={handleManageUsers}>
+                <button
+                  className={styles.footerButton}
+                  onClick={handleManageUsers}
+                >
                   <Users size={12} />
                   Manage Users
                 </button>
@@ -124,14 +141,14 @@ export function UserSelector() {
           ) : (
             <>
               <div className={styles.header}>
-                <span className={styles.headerTitle}>Account</span>
+                <span className={styles.headerTitle}>계정</span>
               </div>
 
               <div className={styles.list}>
                 <button className={styles.item} onClick={handleChangePassword}>
                   <KeyRound size={14} />
                   <div className={styles.itemContent}>
-                    <span className={styles.itemName}>Change Password</span>
+                    <span className={styles.itemName}>비밀번호 변경</span>
                   </div>
                 </button>
               </div>
@@ -147,7 +164,7 @@ export function UserSelector() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default UserSelector
+export default UserSelector;

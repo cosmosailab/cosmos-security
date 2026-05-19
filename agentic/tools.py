@@ -449,7 +449,7 @@ Cypher Query:"""
 
         response = await self.llm.ainvoke(prompt)
         from orchestrator_helpers.json_utils import normalize_content
-        return self._extract_cypher_from_response(normalize_content(response.content))
+        return self._extract_cypher_from_response(normalize_content(response.content, response=response))
 
     def get_tool(self) -> Optional[callable]:
         """

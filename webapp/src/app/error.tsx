@@ -46,7 +46,7 @@ export default function Error({
           marginBottom: 'var(--space-3)',
         }}
       >
-        Something went wrong
+        문제가 발생했습니다
       </h2>
       <p
         style={{
@@ -55,7 +55,7 @@ export default function Error({
           maxWidth: '480px',
         }}
       >
-        {error.message || 'An unexpected error occurred.'}
+        {error.message || '예기치 않은 오류가 발생했습니다.'}
       </p>
       <button
         type="button"
@@ -72,7 +72,7 @@ export default function Error({
           transition: 'var(--transition-all)',
         }}
       >
-        Try again
+        다시 시도
       </button>
     </div>
   )

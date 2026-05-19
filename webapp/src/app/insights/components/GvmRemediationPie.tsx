@@ -1,34 +1,45 @@
-'use client'
+'use client';
 
-import { useMemo } from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
-import { useTheme } from '@/hooks/useTheme'
-import { getTooltipStyle, getTooltipItemStyle, getTooltipLabelStyle } from '../utils/chartTheme'
-import { ChartCard } from './ChartCard'
+import { useMemo } from 'react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+} from 'recharts';
+import { useTheme } from '@/hooks/useTheme';
+import {
+  getTooltipStyle,
+  getTooltipItemStyle,
+  getTooltipLabelStyle,
+} from '../utils/chartTheme';
+import { ChartCard } from './ChartCard';
 
 interface GvmRemediationPieProps {
-  data: { status: string; count: number }[] | undefined
-  isLoading: boolean
+  data: { status: string; count: number }[] | undefined;
+  isLoading: boolean;
 }
 
 const STATUS_COLORS: Record<string, string> = {
   Remediated: '#22c55e',
   Open: '#e53935',
-}
+};
 
 export function GvmRemediationPie({ data, isLoading }: GvmRemediationPieProps) {
-  const { theme } = useTheme()
-  const tooltipStyle = useMemo(() => getTooltipStyle(), [theme])
-  const tooltipItemStyle = useMemo(() => getTooltipItemStyle(), [theme])
-  const tooltipLabelStyle = useMemo(() => getTooltipLabelStyle(), [theme])
+  const { theme } = useTheme();
+  const tooltipStyle = useMemo(() => getTooltipStyle(), [theme]);
+  const tooltipItemStyle = useMemo(() => getTooltipItemStyle(), [theme]);
+  const tooltipLabelStyle = useMemo(() => getTooltipLabelStyle(), [theme]);
 
-  const total = data?.reduce((s, d) => s + d.count, 0) || 0
-  const remediated = data?.find(d => d.status === 'Remediated')?.count || 0
+  const total = data?.reduce((s, d) => s + d.count, 0) || 0;
+  const remediated = data?.find((d) => d.status === 'Remediated')?.count || 0;
 
   return (
     <ChartCard
-      title="GVM Remediation"
-      subtitle={`${remediated} of ${total} remediated`}
+      title="GVM 조치 현황"
+      subtitle={`전체 ${total}개 중 ${remediated}개 조치됨`}
       isLoading={isLoading}
       isEmpty={!data?.length}
     >
@@ -46,13 +57,24 @@ export function GvmRemediationPie({ data, isLoading }: GvmRemediationPieProps) {
             stroke="none"
           >
             {(data || []).map((entry) => (
-              <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || '#71717a'} />
+              <Cell
+                key={entry.status}
+                fill={STATUS_COLORS[entry.status] || '#71717a'}
+              />
             ))}
           </Pie>
-          <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-          <Legend formatter={(value: string) => <span style={{ fontSize: 11 }}>{value}</span>} />
+          <Tooltip
+            contentStyle={tooltipStyle}
+            itemStyle={tooltipItemStyle}
+            labelStyle={tooltipLabelStyle}
+          />
+          <Legend
+            formatter={(value: string) => (
+              <span style={{ fontSize: 11 }}>{value}</span>
+            )}
+          />
         </PieChart>
       </ResponsiveContainer>
     </ChartCard>
-  )
+  );
 }

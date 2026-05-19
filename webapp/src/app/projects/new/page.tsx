@@ -19,7 +19,7 @@ export default function NewProjectPage() {
 
   const createProject = async (data: ProjectFormData & { roeFile?: File | null }) => {
     if (!userId) {
-      await alertWarning('Please select a user first')
+      await alertWarning('먼저 사용자를 선택해 주세요')
       router.push('/projects')
       return null
     }
@@ -49,11 +49,11 @@ export default function NewProjectPage() {
     try {
       const project = await createProject(data)
       if (project) {
-        toast.success('Project created')
+        toast.success('프로젝트가 생성되었습니다')
         router.push(`/graph?project=${project.id}`)
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to create project'
+      const message = error instanceof Error ? error.message : '프로젝트 생성에 실패했습니다'
       if (message.toLowerCase().includes('guardrail')) {
         throw error
       }
@@ -64,7 +64,7 @@ export default function NewProjectPage() {
   const handleSaveAndStay = async (data: ProjectFormData & { roeFile?: File | null }) => {
     const project = await createProject(data)
     if (project) {
-      toast.success('Project created')
+      toast.success('프로젝트가 생성되었습니다')
       router.replace(`/projects/${project.id}/settings`)
     }
   }
@@ -77,9 +77,9 @@ export default function NewProjectPage() {
     return (
       <div className={styles.container}>
         <div className={styles.message}>
-          <p>Please select a user first before creating a project.</p>
+          <p>프로젝트를 생성하기 전에 먼저 사용자를 선택해 주세요.</p>
           <button className="primaryButton" onClick={() => router.push('/projects')}>
-            Go to Projects
+            프로젝트 목록으로 이동
           </button>
         </div>
       </div>

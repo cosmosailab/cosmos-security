@@ -1,29 +1,29 @@
-import type { Metadata } from 'next'
-import { Suspense } from 'react'
-import '@/styles/index.css'
-import { QueryProvider } from '@/providers/QueryProvider'
-import { AuthProvider } from '@/providers/AuthProvider'
-import { ProjectProvider } from '@/providers/ProjectProvider'
-import { ToastProvider, AlertProvider } from '@/components/ui'
-import { AppLayout } from '@/components/layout'
-import { ThemeDbBridge } from '@/components/ThemeDbBridge'
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import '@/styles/index.css';
+import { QueryProvider } from '@/providers/QueryProvider';
+import { AuthProvider } from '@/providers/AuthProvider';
+import { ProjectProvider } from '@/providers/ProjectProvider';
+import { ToastProvider, AlertProvider } from '@/components/ui';
+import { AppLayout } from '@/components/layout';
+import { ThemeDbBridge } from '@/components/ThemeDbBridge';
 
 export const metadata: Metadata = {
-  title: 'RedAmon',
-  description: 'Security reconnaissance and vulnerability assessment dashboard',
+  title: 'COSMOS SEQUITY',
+  description: '보안 정찰 및 취약점 평가 대시보드',
   icons: {
     icon: '/favicon.ico',
     apple: '/favicon.png',
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ko" suppressHydrationWarning>
       <head>
         {/* Prevent flash of wrong theme */}
         <script
@@ -64,5 +64,5 @@ export default function RootLayout({
         </QueryProvider>
       </body>
     </html>
-  )
+  );
 }

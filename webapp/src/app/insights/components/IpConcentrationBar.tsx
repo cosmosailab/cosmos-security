@@ -1,34 +1,60 @@
-'use client'
+'use client';
 
-import { useMemo } from 'react'
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts'
-import { useTheme } from '@/hooks/useTheme'
-import { getChartChrome, getTooltipStyle, getTooltipItemStyle, getTooltipLabelStyle, getCursorStyle } from '../utils/chartTheme'
-import { ChartCard } from './ChartCard'
+import { useMemo } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Tooltip,
+  Cell,
+} from 'recharts';
+import { useTheme } from '@/hooks/useTheme';
+import {
+  getChartChrome,
+  getTooltipStyle,
+  getTooltipItemStyle,
+  getTooltipLabelStyle,
+  getCursorStyle,
+} from '../utils/chartTheme';
+import { ChartCard } from './ChartCard';
 
 interface IpConcentrationBarProps {
-  data: { ip: string; subCount: number; isCdn: boolean }[] | undefined
-  isLoading: boolean
+  data: { ip: string; subCount: number; isCdn: boolean }[] | undefined;
+  isLoading: boolean;
 }
 
-export function IpConcentrationBar({ data, isLoading }: IpConcentrationBarProps) {
-  const { theme } = useTheme()
-  const chrome = useMemo(() => getChartChrome(), [theme])
-  const tooltipStyle = useMemo(() => getTooltipStyle(), [theme])
-  const tooltipItemStyle = useMemo(() => getTooltipItemStyle(), [theme])
-  const tooltipLabelStyle = useMemo(() => getTooltipLabelStyle(), [theme])
-  const cursorStyle = useMemo(() => getCursorStyle(), [theme])
+export function IpConcentrationBar({
+  data,
+  isLoading,
+}: IpConcentrationBarProps) {
+  const { theme } = useTheme();
+  const chrome = useMemo(() => getChartChrome(), [theme]);
+  const tooltipStyle = useMemo(() => getTooltipStyle(), [theme]);
+  const tooltipItemStyle = useMemo(() => getTooltipItemStyle(), [theme]);
+  const tooltipLabelStyle = useMemo(() => getTooltipLabelStyle(), [theme]);
+  const cursorStyle = useMemo(() => getCursorStyle(), [theme]);
 
   return (
     <ChartCard
-      title="IP Concentration"
-      subtitle={`Subdomains per IP · ${data?.length || 0} IPs`}
+      title="IP 집중도"
+      subtitle={`IP당 서브도메인 · ${data?.length || 0}개 IP`}
       isLoading={isLoading}
       isEmpty={!data?.length}
     >
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={data || []} layout="vertical" margin={{ left: 4, right: 16, top: 8, bottom: 8 }}>
-          <XAxis type="number" tick={{ fontSize: 11, fill: chrome.axisColor }} axisLine={false} tickLine={false} />
+        <BarChart
+          data={data || []}
+          layout="vertical"
+          margin={{ left: 4, right: 16, top: 8, bottom: 8 }}
+        >
+          <XAxis
+            type="number"
+            tick={{ fontSize: 11, fill: chrome.axisColor }}
+            axisLine={false}
+            tickLine={false}
+          />
           <YAxis
             type="category"
             dataKey="ip"
@@ -42,12 +68,18 @@ export function IpConcentrationBar({ data, isLoading }: IpConcentrationBarProps)
             contentStyle={tooltipStyle}
             itemStyle={tooltipItemStyle}
             labelStyle={tooltipLabelStyle}
-            formatter={(value: number, _: string, props: { payload?: { isCdn: boolean } }) => [
-              value,
-              `Subdomains${props.payload?.isCdn ? ' (CDN)' : ''}`,
-            ]}
+            formatter={(
+              value: number,
+              _: string,
+              props: { payload?: { isCdn: boolean } },
+            ) => [value, `Subdomains${props.payload?.isCdn ? ' (CDN)' : ''}`]}
           />
-          <Bar dataKey="subCount" radius={[0, 4, 4, 0]} maxBarSize={16} name="Subdomains">
+          <Bar
+            dataKey="subCount"
+            radius={[0, 4, 4, 0]}
+            maxBarSize={16}
+            name="서브도메인"
+          >
             {(data || []).map((entry) => (
               <Cell key={entry.ip} fill={entry.isCdn ? '#f97316' : '#3b82f6'} />
             ))}
@@ -55,5 +87,5 @@ export function IpConcentrationBar({ data, isLoading }: IpConcentrationBarProps)
         </BarChart>
       </ResponsiveContainer>
     </ChartCard>
-  )
+  );
 }

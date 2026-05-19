@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { useMemo } from 'react'
-import { useRouter } from 'next/navigation'
-import { TrendingUp } from 'lucide-react'
-import { useProject } from '@/providers/ProjectProvider'
+import { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { TrendingUp } from 'lucide-react';
+import { useProject } from '@/providers/ProjectProvider';
 import {
   useGraphOverview,
   useVulnerabilities,
@@ -13,88 +13,114 @@ import {
   usePipelineStatus,
   useActiveSessions,
   useRefreshInsights,
-} from './hooks/useInsightsData'
-import { DashboardHeader } from './components/DashboardHeader'
-import { KPICards } from './components/KPICards'
-import { SeverityDonut } from './components/SeverityDonut'
-import { CvssHistogram } from './components/CvssHistogram'
-import { NodeTypeBar } from './components/NodeTypeBar'
-import { ConnectedNodesBar } from './components/ConnectedNodesBar'
-import { ServicesPie } from './components/ServicesPie'
-import { PortDistributionBar } from './components/PortDistributionBar'
-import { TechnologyTreemap } from './components/TechnologyTreemap'
-import { DnsRecordsPie } from './components/DnsRecordsPie'
-import { SecurityHeadersBar } from './components/SecurityHeadersBar'
-import { HeaderInsightsPie } from './components/HeaderInsightsPie'
-import { EndpointCategoriesBar } from './components/EndpointCategoriesBar'
-import { EndpointTypePie } from './components/EndpointTypePie'
-import { ParameterAnalysisBar } from './components/ParameterAnalysisBar'
-import { CdnVsDirectPie } from './components/CdnVsDirectPie'
-import { IpConcentrationBar } from './components/IpConcentrationBar'
-import { TimelineArea } from './components/TimelineArea'
-import { AgentActivityLine } from './components/AgentActivityLine'
-import { AttackChainCards } from './components/AttackChainCards'
-import { RemediationStatusBar } from './components/RemediationStatusBar'
-import { TechCveBar } from './components/TechCveBar'
-import { AttackPatternsBar } from './components/AttackPatternsBar'
-import { ExploitsCard } from './components/ExploitsCard'
-import { FindingsBySource } from './components/FindingsBySource'
-import { FindingsByCategory } from './components/FindingsByCategory'
-import { VulnSourcePie } from './components/VulnSourcePie'
-import { CweBreakdownBar } from './components/CweBreakdownBar'
-import { VulnTargetsBar } from './components/VulnTargetsBar'
-import { GvmRemediationPie } from './components/GvmRemediationPie'
-import { CisaKevGauge } from './components/CisaKevGauge'
-import { ChainSuccessRatePie } from './components/ChainSuccessRatePie'
-import { FindingTypesBar } from './components/FindingTypesBar'
-import { PhaseProgressionBar } from './components/PhaseProgressionBar'
-import { ExploitSuccessesCard } from './components/ExploitSuccessesCard'
-import { GvmExploitsCard } from './components/GvmExploitsCard'
-import { ChainFailuresBar } from './components/ChainFailuresBar'
-import { ChainDecisionsPie } from './components/ChainDecisionsPie'
-import { TargetsAttackedBar } from './components/TargetsAttackedBar'
-import { TopFindingsTable } from './components/TopFindingsTable'
-import { SecurityPostureRadar } from './components/SecurityPostureRadar'
-import { RiskScoreGauge } from './components/RiskScoreGauge'
-import { AttackKillChainFunnel } from './components/AttackKillChainFunnel'
-import { CvssExploitScatter } from './components/CvssExploitScatter'
-import { VulnCategoryRose } from './components/VulnCategoryRose'
-import { TopVulnTechBubble } from './components/TopVulnTechBubble'
-import { AttackFlowSankey } from './components/AttackFlowSankey'
-import { AttackChainSankey } from './components/AttackChainSankey'
-import { VulnAccumulationArea } from './components/VulnAccumulationArea'
-import { formatNumber } from './utils/formatters'
-import styles from './page.module.css'
+} from './hooks/useInsightsData';
+import { DashboardHeader } from './components/DashboardHeader';
+import { KPICards } from './components/KPICards';
+import { SeverityDonut } from './components/SeverityDonut';
+import { CvssHistogram } from './components/CvssHistogram';
+import { NodeTypeBar } from './components/NodeTypeBar';
+import { ConnectedNodesBar } from './components/ConnectedNodesBar';
+import { ServicesPie } from './components/ServicesPie';
+import { PortDistributionBar } from './components/PortDistributionBar';
+import { TechnologyTreemap } from './components/TechnologyTreemap';
+import { DnsRecordsPie } from './components/DnsRecordsPie';
+import { SecurityHeadersBar } from './components/SecurityHeadersBar';
+import { HeaderInsightsPie } from './components/HeaderInsightsPie';
+import { EndpointCategoriesBar } from './components/EndpointCategoriesBar';
+import { EndpointTypePie } from './components/EndpointTypePie';
+import { ParameterAnalysisBar } from './components/ParameterAnalysisBar';
+import { CdnVsDirectPie } from './components/CdnVsDirectPie';
+import { IpConcentrationBar } from './components/IpConcentrationBar';
+import { TimelineArea } from './components/TimelineArea';
+import { AgentActivityLine } from './components/AgentActivityLine';
+import { AttackChainCards } from './components/AttackChainCards';
+import { RemediationStatusBar } from './components/RemediationStatusBar';
+import { TechCveBar } from './components/TechCveBar';
+import { AttackPatternsBar } from './components/AttackPatternsBar';
+import { ExploitsCard } from './components/ExploitsCard';
+import { FindingsBySource } from './components/FindingsBySource';
+import { FindingsByCategory } from './components/FindingsByCategory';
+import { VulnSourcePie } from './components/VulnSourcePie';
+import { CweBreakdownBar } from './components/CweBreakdownBar';
+import { VulnTargetsBar } from './components/VulnTargetsBar';
+import { GvmRemediationPie } from './components/GvmRemediationPie';
+import { CisaKevGauge } from './components/CisaKevGauge';
+import { ChainSuccessRatePie } from './components/ChainSuccessRatePie';
+import { FindingTypesBar } from './components/FindingTypesBar';
+import { PhaseProgressionBar } from './components/PhaseProgressionBar';
+import { ExploitSuccessesCard } from './components/ExploitSuccessesCard';
+import { GvmExploitsCard } from './components/GvmExploitsCard';
+import { ChainFailuresBar } from './components/ChainFailuresBar';
+import { ChainDecisionsPie } from './components/ChainDecisionsPie';
+import { TargetsAttackedBar } from './components/TargetsAttackedBar';
+import { TopFindingsTable } from './components/TopFindingsTable';
+import { SecurityPostureRadar } from './components/SecurityPostureRadar';
+import { RiskScoreGauge } from './components/RiskScoreGauge';
+import { AttackKillChainFunnel } from './components/AttackKillChainFunnel';
+import { CvssExploitScatter } from './components/CvssExploitScatter';
+import { VulnCategoryRose } from './components/VulnCategoryRose';
+import { TopVulnTechBubble } from './components/TopVulnTechBubble';
+import { AttackFlowSankey } from './components/AttackFlowSankey';
+import { AttackChainSankey } from './components/AttackChainSankey';
+import { VulnAccumulationArea } from './components/VulnAccumulationArea';
+import { formatNumber } from './utils/formatters';
+import styles from './page.module.css';
 
 export default function InsightsPage() {
-  const { projectId, currentProject, isLoading: projectLoading } = useProject()
-  const router = useRouter()
-  const refresh = useRefreshInsights()
+  const { projectId, currentProject, isLoading: projectLoading } = useProject();
+  const router = useRouter();
+  const refresh = useRefreshInsights();
 
-  const graphOverview = useGraphOverview(projectId)
-  const vulns = useVulnerabilities(projectId)
-  const surface = useAttackSurface(projectId)
-  const activity = useActivity(projectId)
-  const attackChains = useAttackChains(projectId)
-  const pipeline = usePipelineStatus(projectId)
-  const sessions = useActiveSessions()
+  const graphOverview = useGraphOverview(projectId);
+  const vulns = useVulnerabilities(projectId);
+  const surface = useAttackSurface(projectId);
+  const activity = useActivity(projectId);
+  const attackChains = useAttackChains(projectId);
+  const pipeline = usePipelineStatus(projectId);
+  const sessions = useActiveSessions();
 
-  const isAnyLoading = graphOverview.isLoading || vulns.isLoading || surface.isLoading || activity.isLoading
+  const isAnyLoading =
+    graphOverview.isLoading ||
+    vulns.isLoading ||
+    surface.isLoading ||
+    activity.isLoading;
 
   const kpis = useMemo(() => {
-    const go = graphOverview.data
-    const v = vulns.data
-    const a = activity.data
-    const ac = attackChains.data
+    const go = graphOverview.data;
+    const v = vulns.data;
+    const a = activity.data;
+    const ac = attackChains.data;
     return [
-      { label: 'Total Nodes', value: go?.totalNodes || 0 },
-      { label: 'Vulns & CVEs', value: (v?.severityDistribution?.reduce((s, d) => s + d.count, 0) || 0) + (v?.cveSeverity?.reduce((s, d) => s + d.count, 0) || 0), accent: 'var(--status-error)' },
-      { label: 'Attack Chains', value: ac?.chains?.length || 0, accent: 'var(--accent-primary)' },
-      { label: 'Exploit Successes', value: ac?.exploitSuccesses?.length || 0, accent: 'var(--status-error)' },
-      { label: 'Chain Findings', value: ac?.findingsByType?.reduce((s, d) => s + d.count, 0) || 0, accent: 'var(--status-warning)' },
-      { label: 'Agent Sessions', value: a?.conversations.total || 0, accent: 'var(--accent-secondary)' },
-    ]
-  }, [graphOverview.data, vulns.data, activity.data, attackChains.data])
+      { label: '전체 노드', value: go?.totalNodes || 0 },
+      {
+        label: '취약점 및 CVE',
+        value:
+          (v?.severityDistribution?.reduce((s, d) => s + d.count, 0) || 0) +
+          (v?.cveSeverity?.reduce((s, d) => s + d.count, 0) || 0),
+        accent: 'var(--status-error)',
+      },
+      {
+        label: '공격 체인',
+        value: ac?.chains?.length || 0,
+        accent: 'var(--accent-primary)',
+      },
+      {
+        label: '익스플로잇 성공',
+        value: ac?.exploitSuccesses?.length || 0,
+        accent: 'var(--status-error)',
+      },
+      {
+        label: '체인 발견 사항',
+        value: ac?.findingsByType?.reduce((s, d) => s + d.count, 0) || 0,
+        accent: 'var(--status-warning)',
+      },
+      {
+        label: '에이전트 세션',
+        value: a?.conversations.total || 0,
+        accent: 'var(--accent-secondary)',
+      },
+    ];
+  }, [graphOverview.data, vulns.data, activity.data, attackChains.data]);
 
   // No project selected
   if (!projectLoading && !projectId) {
@@ -102,16 +128,21 @@ export default function InsightsPage() {
       <div className={styles.page}>
         <div className={styles.noProject}>
           <TrendingUp size={48} strokeWidth={1.5} />
-          <div className={styles.noProjectTitle}>No Project Selected</div>
-          <div className={styles.noProjectText}>
-            Select a project from the header to view insights and analytics.
+          <div className={styles.noProjectTitle}>
+            프로젝트가 선택되지 않았습니다
           </div>
-          <button className="primaryButton" onClick={() => router.push('/projects')}>
-            Go to Projects
+          <div className={styles.noProjectText}>
+            헤더에서 프로젝트를 선택하여 인사이트와 분석을 확인하세요.
+          </div>
+          <button
+            className="primaryButton"
+            onClick={() => router.push('/projects')}
+          >
+            프로젝트로 이동
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -126,45 +157,120 @@ export default function InsightsPage() {
       />
 
       {/* KPI Cards + Pipeline Status */}
-      <KPICards items={kpis} isLoading={graphOverview.isLoading} pipeline={pipeline.data} sessions={sessions.data} />
+      <KPICards
+        items={kpis}
+        isLoading={graphOverview.isLoading}
+        pipeline={pipeline.data}
+        sessions={sessions.data}
+      />
 
       {/* Executive Summary */}
       <div className={styles.section}>
-        <div className={styles.sectionTitle}>Executive Summary</div>
+        <div className={styles.sectionTitle}>요약 보고서</div>
         <div className={styles.grid3}>
-          <SecurityPostureRadar graphData={graphOverview.data} vulnData={vulns.data} surfaceData={surface.data} exploitSuccessCount={attackChains.data?.exploitSuccesses?.length || 0} chainFindingsCount={attackChains.data?.findingsByType?.reduce((s: number, d: { count: number }) => s + d.count, 0) || 0} isLoading={graphOverview.isLoading || vulns.isLoading || surface.isLoading || attackChains.isLoading} />
-          <RiskScoreGauge vulnData={vulns.data} surfaceData={surface.data} graphData={graphOverview.data} exploitSuccessCount={attackChains.data?.exploitSuccesses?.length || 0} chainFindingsBySeverity={attackChains.data?.findingsBySeverity} isLoading={vulns.isLoading || surface.isLoading || graphOverview.isLoading || attackChains.isLoading} />
-          <AttackKillChainFunnel data={attackChains.data?.phaseProgression} isLoading={attackChains.isLoading} />
+          <SecurityPostureRadar
+            graphData={graphOverview.data}
+            vulnData={vulns.data}
+            surfaceData={surface.data}
+            exploitSuccessCount={
+              attackChains.data?.exploitSuccesses?.length || 0
+            }
+            chainFindingsCount={
+              attackChains.data?.findingsByType?.reduce(
+                (s: number, d: { count: number }) => s + d.count,
+                0,
+              ) || 0
+            }
+            isLoading={
+              graphOverview.isLoading ||
+              vulns.isLoading ||
+              surface.isLoading ||
+              attackChains.isLoading
+            }
+          />
+          <RiskScoreGauge
+            vulnData={vulns.data}
+            surfaceData={surface.data}
+            graphData={graphOverview.data}
+            exploitSuccessCount={
+              attackChains.data?.exploitSuccesses?.length || 0
+            }
+            chainFindingsBySeverity={attackChains.data?.findingsBySeverity}
+            isLoading={
+              vulns.isLoading ||
+              surface.isLoading ||
+              graphOverview.isLoading ||
+              attackChains.isLoading
+            }
+          />
+          <AttackKillChainFunnel
+            data={attackChains.data?.phaseProgression}
+            isLoading={attackChains.isLoading}
+          />
         </div>
       </div>
 
       {/* Attack Chains & Exploits */}
       <div className={styles.section}>
-        <div className={styles.sectionTitle}>Attack Chains & Exploits</div>
+        <div className={styles.sectionTitle}>공격 체인 및 익스플로잇</div>
         <div className={styles.grid4}>
-          <ChainSuccessRatePie data={attackChains.data?.chainSuccessRate} isLoading={attackChains.isLoading} />
-          <FindingTypesBar data={attackChains.data?.findingsByType} isLoading={attackChains.isLoading} />
-          <TargetsAttackedBar data={attackChains.data?.targetsAttacked} isLoading={attackChains.isLoading} />
-          <PhaseProgressionBar data={attackChains.data?.phaseProgression} isLoading={attackChains.isLoading} />
+          <ChainSuccessRatePie
+            data={attackChains.data?.chainSuccessRate}
+            isLoading={attackChains.isLoading}
+          />
+          <FindingTypesBar
+            data={attackChains.data?.findingsByType}
+            isLoading={attackChains.isLoading}
+          />
+          <TargetsAttackedBar
+            data={attackChains.data?.targetsAttacked}
+            isLoading={attackChains.isLoading}
+          />
+          <PhaseProgressionBar
+            data={attackChains.data?.phaseProgression}
+            isLoading={attackChains.isLoading}
+          />
         </div>
         <div className={styles.grid4}>
           <div style={{ gridColumn: 'span 2' }}>
-            <ExploitSuccessesCard data={attackChains.data?.exploitSuccesses} isLoading={attackChains.isLoading} />
+            <ExploitSuccessesCard
+              data={attackChains.data?.exploitSuccesses}
+              isLoading={attackChains.isLoading}
+            />
           </div>
-          <SeverityDonut data={attackChains.data?.findingsBySeverity} isLoading={attackChains.isLoading} title="Finding Severity" />
-          <ChainDecisionsPie data={attackChains.data?.decisions} isLoading={attackChains.isLoading} />
+          <SeverityDonut
+            data={attackChains.data?.findingsBySeverity}
+            isLoading={attackChains.isLoading}
+            title="발견 사항 위험도"
+          />
+          <ChainDecisionsPie
+            data={attackChains.data?.decisions}
+            isLoading={attackChains.isLoading}
+          />
         </div>
         {(attackChains.data?.gvmExploits?.length ?? 0) > 0 && (
           <div className={styles.gridFull}>
-            <GvmExploitsCard data={attackChains.data?.gvmExploits} isLoading={attackChains.isLoading} />
+            <GvmExploitsCard
+              data={attackChains.data?.gvmExploits}
+              isLoading={attackChains.isLoading}
+            />
           </div>
         )}
         <div className={styles.gridFull}>
-          <TopFindingsTable data={attackChains.data?.topFindings} isLoading={attackChains.isLoading} />
+          <TopFindingsTable
+            data={attackChains.data?.topFindings}
+            isLoading={attackChains.isLoading}
+          />
         </div>
         <div className={styles.sankeyRow}>
-          <AttackFlowSankey data={vulns.data?.cveChains} isLoading={vulns.isLoading} />
-          <AttackChainSankey data={attackChains.data?.attackFlowRows} isLoading={attackChains.isLoading} />
+          <AttackFlowSankey
+            data={vulns.data?.cveChains}
+            isLoading={vulns.isLoading}
+          />
+          <AttackChainSankey
+            data={attackChains.data?.attackFlowRows}
+            isLoading={attackChains.isLoading}
+          />
         </div>
         <div className={styles.chainRow}>
           <AttackChainCards
@@ -172,107 +278,239 @@ export default function InsightsPage() {
             toolUsage={attackChains.data?.chainToolUsage}
             isLoading={attackChains.isLoading}
           />
-          <ChainFailuresBar data={attackChains.data?.failuresByType} isLoading={attackChains.isLoading} />
+          <ChainFailuresBar
+            data={attackChains.data?.failuresByType}
+            isLoading={attackChains.isLoading}
+          />
         </div>
       </div>
 
       {/* Attack Surface */}
       <div className={styles.section}>
-        <div className={styles.sectionTitle}>Attack Surface</div>
+        <div className={styles.sectionTitle}>공격 표면</div>
         {/* All 6 stat cards in one row */}
         <div className={styles.surfaceStats}>
           <div className="statCard">
-            <div className="statLabel">Subdomains</div>
-            <div className="statValue">{formatNumber(graphOverview.data?.subdomainStats.total || 0)}</div>
-            <div className={styles.statDetail}>{graphOverview.data?.subdomainStats.resolved || 0} resolved · {graphOverview.data?.subdomainStats.uniqueIps || 0} unique IPs</div>
-          </div>
-          <div className="statCard">
-            <div className="statLabel">Endpoints</div>
-            <div className="statValue">{formatNumber(graphOverview.data?.endpointCoverage.endpoints || 0)}</div>
-            <div className={styles.statDetail}>{graphOverview.data?.endpointCoverage.baseUrls || 0} base URLs · {graphOverview.data?.endpointCoverage.parameters || 0} params</div>
-          </div>
-          <div className="statCard">
-            <div className="statLabel">Certificates</div>
-            <div className="statValue">{formatNumber(graphOverview.data?.certificateHealth.total || 0)}</div>
+            <div className="statLabel">서브도메인</div>
+            <div className="statValue">
+              {formatNumber(graphOverview.data?.subdomainStats.total || 0)}
+            </div>
             <div className={styles.statDetail}>
-              {graphOverview.data?.certificateHealth.expired ? <span style={{ color: 'var(--status-error)' }}>{graphOverview.data.certificateHealth.expired} expired</span> : '0 expired'}
-              {' · '}
-              {graphOverview.data?.certificateHealth.expiringSoon ? <span style={{ color: 'var(--status-warning)' }}>{graphOverview.data.certificateHealth.expiringSoon} expiring</span> : '0 expiring'}
+              {graphOverview.data?.subdomainStats.resolved || 0} 해석됨 ·{' '}
+              {graphOverview.data?.subdomainStats.uniqueIps || 0} 고유 IP
             </div>
           </div>
           <div className="statCard">
-            <div className="statLabel">IPs</div>
-            <div className="statValue">{formatNumber(graphOverview.data?.infrastructureStats?.totalIps || 0)}</div>
-            <div className={styles.statDetail}>{graphOverview.data?.infrastructureStats?.ipv4 || 0} IPv4 · {graphOverview.data?.infrastructureStats?.ipv6 || 0} IPv6</div>
+            <div className="statLabel">엔드포인트</div>
+            <div className="statValue">
+              {formatNumber(
+                graphOverview.data?.endpointCoverage.endpoints || 0,
+              )}
+            </div>
+            <div className={styles.statDetail}>
+              {graphOverview.data?.endpointCoverage.baseUrls || 0} 기본 URL ·{' '}
+              {graphOverview.data?.endpointCoverage.parameters || 0} 파라미터
+            </div>
           </div>
           <div className="statCard">
-            <div className="statLabel">CDN Coverage</div>
-            <div className="statValue">{formatNumber(graphOverview.data?.infrastructureStats?.cdnCount || 0)}</div>
-            <div className={styles.statDetail}>{(graphOverview.data?.infrastructureStats?.totalIps || 0) - (graphOverview.data?.infrastructureStats?.cdnCount || 0)} direct · {graphOverview.data?.infrastructureStats?.uniqueCdns || 0} providers</div>
+            <div className="statLabel">인증서</div>
+            <div className="statValue">
+              {formatNumber(graphOverview.data?.certificateHealth.total || 0)}
+            </div>
+            <div className={styles.statDetail}>
+              {graphOverview.data?.certificateHealth.expired ? (
+                <span style={{ color: 'var(--status-error)' }}>
+                  {graphOverview.data.certificateHealth.expired} 만료됨
+                </span>
+              ) : (
+                '0 만료됨'
+              )}
+              {' · '}
+              {graphOverview.data?.certificateHealth.expiringSoon ? (
+                <span style={{ color: 'var(--status-warning)' }}>
+                  {graphOverview.data.certificateHealth.expiringSoon} 곧 만료됨
+                </span>
+              ) : (
+                '0 곧 만료됨'
+              )}
+            </div>
           </div>
           <div className="statCard">
-            <div className="statLabel">ASN Diversity</div>
-            <div className="statValue">{formatNumber(graphOverview.data?.infrastructureStats?.uniqueAsns || 0)}</div>
-            <div className={styles.statDetail}>unique autonomous systems</div>
+            <div className="statLabel">IP</div>
+            <div className="statValue">
+              {formatNumber(
+                graphOverview.data?.infrastructureStats?.totalIps || 0,
+              )}
+            </div>
+            <div className={styles.statDetail}>
+              {graphOverview.data?.infrastructureStats?.ipv4 || 0} IPv4 ·{' '}
+              {graphOverview.data?.infrastructureStats?.ipv6 || 0} IPv6
+            </div>
+          </div>
+          <div className="statCard">
+            <div className="statLabel">CDN 범위</div>
+            <div className="statValue">
+              {formatNumber(
+                graphOverview.data?.infrastructureStats?.cdnCount || 0,
+              )}
+            </div>
+            <div className={styles.statDetail}>
+              {(graphOverview.data?.infrastructureStats?.totalIps || 0) -
+                (graphOverview.data?.infrastructureStats?.cdnCount || 0)}{' '}
+              직접 · {graphOverview.data?.infrastructureStats?.uniqueCdns || 0}{' '}
+              제공자
+            </div>
+          </div>
+          <div className="statCard">
+            <div className="statLabel">ASN 다양성</div>
+            <div className="statValue">
+              {formatNumber(
+                graphOverview.data?.infrastructureStats?.uniqueAsns || 0,
+              )}
+            </div>
+            <div className={styles.statDetail}>고유 자율 시스템(AS)</div>
           </div>
         </div>
         {/* Charts: 4 per row */}
         <div className={styles.grid4}>
-          <ServicesPie data={surface.data?.services} isLoading={surface.isLoading} />
-          <PortDistributionBar data={surface.data?.ports} isLoading={surface.isLoading} />
-          <TechnologyTreemap data={surface.data?.technologies} isLoading={surface.isLoading} />
-          <DnsRecordsPie data={surface.data?.dnsRecords} isLoading={surface.isLoading} />
+          <ServicesPie
+            data={surface.data?.services}
+            isLoading={surface.isLoading}
+          />
+          <PortDistributionBar
+            data={surface.data?.ports}
+            isLoading={surface.isLoading}
+          />
+          <TechnologyTreemap
+            data={surface.data?.technologies}
+            isLoading={surface.isLoading}
+          />
+          <DnsRecordsPie
+            data={surface.data?.dnsRecords}
+            isLoading={surface.isLoading}
+          />
         </div>
         <div className={styles.grid4}>
-          <SecurityHeadersBar data={surface.data?.securityHeaders} isLoading={surface.isLoading} />
-          <HeaderInsightsPie data={surface.data?.headerCategories} isLoading={surface.isLoading} />
-          <CdnVsDirectPie data={surface.data?.cdnDistribution} isLoading={surface.isLoading} />
-          <EndpointCategoriesBar data={surface.data?.endpointCategories} isLoading={surface.isLoading} />
+          <SecurityHeadersBar
+            data={surface.data?.securityHeaders}
+            isLoading={surface.isLoading}
+          />
+          <HeaderInsightsPie
+            data={surface.data?.headerCategories}
+            isLoading={surface.isLoading}
+          />
+          <CdnVsDirectPie
+            data={surface.data?.cdnDistribution}
+            isLoading={surface.isLoading}
+          />
+          <EndpointCategoriesBar
+            data={surface.data?.endpointCategories}
+            isLoading={surface.isLoading}
+          />
         </div>
         <div className={styles.grid3}>
-          <EndpointTypePie data={surface.data?.endpointTypes} isLoading={surface.isLoading} />
-          <ParameterAnalysisBar data={surface.data?.parameterAnalysis} isLoading={surface.isLoading} />
-          <IpConcentrationBar data={surface.data?.ipConcentration} isLoading={surface.isLoading} />
+          <EndpointTypePie
+            data={surface.data?.endpointTypes}
+            isLoading={surface.isLoading}
+          />
+          <ParameterAnalysisBar
+            data={surface.data?.parameterAnalysis}
+            isLoading={surface.isLoading}
+          />
+          <IpConcentrationBar
+            data={surface.data?.ipConcentration}
+            isLoading={surface.isLoading}
+          />
         </div>
       </div>
 
-
-
       {/* Vulnerabilities & CVE Intelligence */}
       <div className={styles.section}>
-        <div className={styles.sectionTitle}>Vulnerabilities & CVE Intelligence</div>
+        <div className={styles.sectionTitle}>취약점 및 CVE 인텔리전스</div>
         <div className={styles.grid4}>
-          <SeverityDonut data={vulns.data?.severityDistribution} isLoading={vulns.isLoading} title="Vulnerability Severity" />
-          <SeverityDonut data={vulns.data?.cveSeverity} isLoading={vulns.isLoading} title="CVE Severity" />
-          <CvssHistogram data={vulns.data?.cvssHistogram} isLoading={vulns.isLoading} />
-          <VulnSourcePie data={vulns.data?.findings} isLoading={vulns.isLoading} />
+          <SeverityDonut
+            data={vulns.data?.severityDistribution}
+            isLoading={vulns.isLoading}
+            title="취약점 위험도"
+          />
+          <SeverityDonut
+            data={vulns.data?.cveSeverity}
+            isLoading={vulns.isLoading}
+            title="CVE 위험도"
+          />
+          <CvssHistogram
+            data={vulns.data?.cvssHistogram}
+            isLoading={vulns.isLoading}
+          />
+          <VulnSourcePie
+            data={vulns.data?.findings}
+            isLoading={vulns.isLoading}
+          />
         </div>
         <div className={styles.grid4}>
-          <FindingsBySource data={vulns.data?.findings} isLoading={vulns.isLoading} />
-          <FindingsByCategory data={vulns.data?.findings} isLoading={vulns.isLoading} />
-          <CweBreakdownBar data={vulns.data?.cveChains} isLoading={vulns.isLoading} />
-          <VulnTargetsBar data={vulns.data?.findings} isLoading={vulns.isLoading} />
+          <FindingsBySource
+            data={vulns.data?.findings}
+            isLoading={vulns.isLoading}
+          />
+          <FindingsByCategory
+            data={vulns.data?.findings}
+            isLoading={vulns.isLoading}
+          />
+          <CweBreakdownBar
+            data={vulns.data?.cveChains}
+            isLoading={vulns.isLoading}
+          />
+          <VulnTargetsBar
+            data={vulns.data?.findings}
+            isLoading={vulns.isLoading}
+          />
         </div>
         <div className={styles.grid2}>
-          <TechCveBar data={vulns.data?.cveChains} isLoading={vulns.isLoading} />
-          <AttackPatternsBar data={vulns.data?.cveChains} isLoading={vulns.isLoading} />
+          <TechCveBar
+            data={vulns.data?.cveChains}
+            isLoading={vulns.isLoading}
+          />
+          <AttackPatternsBar
+            data={vulns.data?.cveChains}
+            isLoading={vulns.isLoading}
+          />
         </div>
         <div className={styles.grid3}>
-          <CvssExploitScatter cveChains={vulns.data?.cveChains} exploits={vulns.data?.exploits} isLoading={vulns.isLoading} />
-          <VulnCategoryRose data={vulns.data?.findings} isLoading={vulns.isLoading} />
-          <TopVulnTechBubble data={vulns.data?.cveChains} isLoading={vulns.isLoading} />
+          <CvssExploitScatter
+            cveChains={vulns.data?.cveChains}
+            exploits={vulns.data?.exploits}
+            isLoading={vulns.isLoading}
+          />
+          <VulnCategoryRose
+            data={vulns.data?.findings}
+            isLoading={vulns.isLoading}
+          />
+          <TopVulnTechBubble
+            data={vulns.data?.cveChains}
+            isLoading={vulns.isLoading}
+          />
         </div>
         {/* Conditional row: Exploits + GVM Remediation + CISA KEV */}
-        {((vulns.data?.exploits?.length ?? 0) > 0 || (vulns.data?.gvmRemediation?.length ?? 0) > 0) && (
+        {((vulns.data?.exploits?.length ?? 0) > 0 ||
+          (vulns.data?.gvmRemediation?.length ?? 0) > 0) && (
           <div className={styles.grid3}>
             {(vulns.data?.exploits?.length ?? 0) > 0 && (
-              <ExploitsCard data={vulns.data?.exploits} isLoading={vulns.isLoading} />
+              <ExploitsCard
+                data={vulns.data?.exploits}
+                isLoading={vulns.isLoading}
+              />
             )}
             {(vulns.data?.gvmRemediation?.length ?? 0) > 0 && (
-              <GvmRemediationPie data={vulns.data?.gvmRemediation} isLoading={vulns.isLoading} />
+              <GvmRemediationPie
+                data={vulns.data?.gvmRemediation}
+                isLoading={vulns.isLoading}
+              />
             )}
             {(vulns.data?.exploits?.length ?? 0) > 0 && (
-              <CisaKevGauge data={vulns.data?.exploits} isLoading={vulns.isLoading} />
+              <CisaKevGauge
+                data={vulns.data?.exploits}
+                isLoading={vulns.isLoading}
+              />
             )}
           </div>
         )}
@@ -280,21 +518,27 @@ export default function InsightsPage() {
 
       {/* Graph Overview */}
       <div className={styles.section}>
-        <div className={styles.sectionTitle}>Graph Overview</div>
+        <div className={styles.sectionTitle}>그래프 개요</div>
         <div className={styles.grid2}>
-          <NodeTypeBar data={graphOverview.data?.nodeCounts} isLoading={graphOverview.isLoading} />
-          <ConnectedNodesBar data={graphOverview.data?.topConnected} isLoading={graphOverview.isLoading} />
+          <NodeTypeBar
+            data={graphOverview.data?.nodeCounts}
+            isLoading={graphOverview.isLoading}
+          />
+          <ConnectedNodesBar
+            data={graphOverview.data?.topConnected}
+            isLoading={graphOverview.isLoading}
+          />
         </div>
       </div>
 
       {/* Activity & Timeline */}
       <div className={styles.section}>
-        <div className={styles.sectionTitle}>Activity & Timeline</div>
+        <div className={styles.sectionTitle}>활동 및 타임라인</div>
         <div className={styles.grid3}>
           <TimelineArea
             data={activity.data?.timeline.remediations}
             isLoading={activity.isLoading}
-            title="Remediations Over Time"
+            title="시간 경과에 따른 조치"
             color="#e53935"
           />
           <AgentActivityLine
@@ -307,34 +551,47 @@ export default function InsightsPage() {
           />
         </div>
         <div className={styles.gridFull}>
-          <VulnAccumulationArea data={activity.data?.timeline.remediations} isLoading={activity.isLoading} />
+          <VulnAccumulationArea
+            data={activity.data?.timeline.remediations}
+            isLoading={activity.isLoading}
+          />
         </div>
       </div>
 
       {/* GitHub Secrets (conditional) */}
-      {vulns.data?.githubSecrets && (vulns.data.githubSecrets.repos > 0 || vulns.data.githubSecrets.secrets > 0) && (
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>GitHub Intelligence</div>
-          <div className={styles.secretsGrid}>
-            <div className="statCard">
-              <div className="statLabel">Repos Scanned</div>
-              <div className="statValue">{formatNumber(vulns.data.githubSecrets.repos)}</div>
-            </div>
-            <div className="statCard">
-              <div className="statLabel">Secrets Found</div>
-              <div className="statValue" style={{ color: 'var(--status-error)' }}>
-                {formatNumber(vulns.data.githubSecrets.secrets)}
+      {vulns.data?.githubSecrets &&
+        (vulns.data.githubSecrets.repos > 0 ||
+          vulns.data.githubSecrets.secrets > 0) && (
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>GitHub 인텔리전스</div>
+            <div className={styles.secretsGrid}>
+              <div className="statCard">
+                <div className="statLabel">스캔된 저장소</div>
+                <div className="statValue">
+                  {formatNumber(vulns.data.githubSecrets.repos)}
+                </div>
               </div>
-            </div>
-            <div className="statCard">
-              <div className="statLabel">Sensitive Files</div>
-              <div className="statValue" style={{ color: 'var(--status-warning)' }}>
-                {formatNumber(vulns.data.githubSecrets.sensitiveFiles)}
+              <div className="statCard">
+                <div className="statLabel">발견된 시크릿</div>
+                <div
+                  className="statValue"
+                  style={{ color: 'var(--status-error)' }}
+                >
+                  {formatNumber(vulns.data.githubSecrets.secrets)}
+                </div>
+              </div>
+              <div className="statCard">
+                <div className="statLabel">민감한 파일</div>
+                <div
+                  className="statValue"
+                  style={{ color: 'var(--status-warning)' }}
+                >
+                  {formatNumber(vulns.data.githubSecrets.sensitiveFiles)}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
-  )
+  );
 }

@@ -1,22 +1,22 @@
-'use client'
+'use client';
 
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
-import { Loader2, Sparkles, RefreshCw, Save, ListFilter } from 'lucide-react'
-import { GraphCanvas } from '../GraphCanvas'
-import { useDimensions } from '../../hooks'
-import { useGraphViews } from '../../hooks/useGraphViews'
-import type { GraphData, GraphNode } from '../../types'
-import styles from './GraphViews.module.css'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { Loader2, Sparkles, RefreshCw, Save, ListFilter } from 'lucide-react';
+import { GraphCanvas } from '../GraphCanvas';
+import { useDimensions } from '../../hooks';
+import { useGraphViews } from '../../hooks/useGraphViews';
+import type { GraphData, GraphNode } from '../../types';
+import styles from './GraphViews.module.css';
 
 interface GraphViewsProps {
-  projectId: string
-  userId: string
-  modelConfigured: boolean
-  is3D: boolean
-  showLabels: boolean
-  isDark: boolean
-  onFilterCreated?: () => void
-  onFilterCreatedAndSelect?: (filterId: string) => void
+  projectId: string;
+  userId: string;
+  modelConfigured: boolean;
+  is3D: boolean;
+  showLabels: boolean;
+  isDark: boolean;
+  onFilterCreated?: () => void;
+  onFilterCreatedAndSelect?: (filterId: string) => void;
 }
 
 const EXAMPLE_QUERIES: { label: string; items: string[] }[] = [
@@ -65,7 +65,7 @@ const EXAMPLE_QUERIES: { label: string; items: string[] }[] = [
       'GVM confirmed exploits (ExploitGvm) and their target IPs and CVEs',
     ],
   },
-]
+];
 
 export function GraphViews({
   projectId,
@@ -77,128 +77,145 @@ export function GraphViews({
   onFilterCreated,
   onFilterCreatedAndSelect,
 }: GraphViewsProps) {
-  const {
-    createView,
-    generateCypher,
-    executeCypher,
-  } = useGraphViews(projectId)
+  const { createView, generateCypher, executeCypher } =
+    useGraphViews(projectId);
 
-  const [nlQuery, setNlQuery] = useState('')
-  const [viewName, setViewName] = useState('')
-  const [generatedCypher, setGeneratedCypher] = useState<string | null>(null)
-  const [previewData, setPreviewData] = useState<GraphData | null>(null)
-  const [previewLoading, setPreviewLoading] = useState(false)
-  const [previewError, setPreviewError] = useState<string | null>(null)
-  const [generating, setGenerating] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
-  const [examplesOpen, setExamplesOpen] = useState(false)
+  const [nlQuery, setNlQuery] = useState('');
+  const [viewName, setViewName] = useState('');
+  const [generatedCypher, setGeneratedCypher] = useState<string | null>(null);
+  const [previewData, setPreviewData] = useState<GraphData | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [examplesOpen, setExamplesOpen] = useState(false);
 
-  const canvasRef = useRef<HTMLDivElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const dimensions = useDimensions(canvasRef)
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dimensions = useDimensions(canvasRef);
 
   useEffect(() => {
-    if (!examplesOpen) return
+    if (!examplesOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setExamplesOpen(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setExamplesOpen(false);
       }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [examplesOpen])
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [examplesOpen]);
 
   const handleGenerate = useCallback(async () => {
-    if (!nlQuery.trim()) return
-    setGenerating(true)
-    setPreviewError(null)
-    setGeneratedCypher(null)
-    setPreviewData(null)
+    if (!nlQuery.trim()) return;
+    setGenerating(true);
+    setPreviewError(null);
+    setGeneratedCypher(null);
+    setPreviewData(null);
 
-    const result = await generateCypher(nlQuery.trim(), userId)
+    const result = await generateCypher(nlQuery.trim(), userId);
 
     if ('error' in result) {
-      setPreviewError(result.error)
-      setGenerating(false)
-      return
+      setPreviewError(result.error);
+      setGenerating(false);
+      return;
     }
 
-    setGeneratedCypher(result.cypher)
-    setViewName(nlQuery.trim().slice(0, 60))
+    setGeneratedCypher(result.cypher);
+    setViewName(nlQuery.trim().slice(0, 60));
 
     // Execute the generated cypher for preview
-    setPreviewLoading(true)
-    const execResult = await executeCypher(result.cypher)
-    setGenerating(false)
-    setPreviewLoading(false)
+    setPreviewLoading(true);
+    const execResult = await executeCypher(result.cypher);
+    setGenerating(false);
+    setPreviewLoading(false);
 
     if ('error' in execResult) {
-      setPreviewError(execResult.error)
-      setPreviewData(null)
+      setPreviewError(execResult.error);
+      setPreviewData(null);
     } else {
       setPreviewData({
         nodes: execResult.nodes || [],
         links: execResult.links || [],
         projectId,
-      })
+      });
     }
-  }, [nlQuery, userId, projectId, generateCypher, executeCypher])
+  }, [nlQuery, userId, projectId, generateCypher, executeCypher]);
 
   const handleRegenerate = useCallback(async () => {
-    setGeneratedCypher(null)
-    setPreviewData(null)
-    setPreviewError(null)
-    await handleGenerate()
-  }, [handleGenerate])
+    setGeneratedCypher(null);
+    setPreviewData(null);
+    setPreviewError(null);
+    await handleGenerate();
+  }, [handleGenerate]);
 
   const handleSave = useCallback(async () => {
-    if (!generatedCypher || !viewName.trim()) return
-    setSaving(true)
-    const result = await createView(viewName.trim(), nlQuery.trim(), generatedCypher)
-    setSaving(false)
+    if (!generatedCypher || !viewName.trim()) return;
+    setSaving(true);
+    const result = await createView(
+      viewName.trim(),
+      nlQuery.trim(),
+      generatedCypher,
+    );
+    setSaving(false);
     if (result) {
-      setNlQuery('')
-      setViewName('')
-      setGeneratedCypher(null)
-      setPreviewData(null)
-      setPreviewError(null)
-      setSelectedNode(null)
-      onFilterCreated?.()
+      setNlQuery('');
+      setViewName('');
+      setGeneratedCypher(null);
+      setPreviewData(null);
+      setPreviewError(null);
+      setSelectedNode(null);
+      onFilterCreated?.();
     }
-  }, [generatedCypher, viewName, nlQuery, createView, onFilterCreated])
+  }, [generatedCypher, viewName, nlQuery, createView, onFilterCreated]);
 
   const handleSaveAndSelect = useCallback(async () => {
-    if (!generatedCypher || !viewName.trim()) return
-    setSaving(true)
-    const result = await createView(viewName.trim(), nlQuery.trim(), generatedCypher)
-    setSaving(false)
+    if (!generatedCypher || !viewName.trim()) return;
+    setSaving(true);
+    const result = await createView(
+      viewName.trim(),
+      nlQuery.trim(),
+      generatedCypher,
+    );
+    setSaving(false);
     if (result) {
-      setNlQuery('')
-      setViewName('')
-      setGeneratedCypher(null)
-      setPreviewData(null)
-      setPreviewError(null)
-      setSelectedNode(null)
-      onFilterCreatedAndSelect?.(result.id)
+      setNlQuery('');
+      setViewName('');
+      setGeneratedCypher(null);
+      setPreviewData(null);
+      setPreviewError(null);
+      setSelectedNode(null);
+      onFilterCreatedAndSelect?.(result.id);
     }
-  }, [generatedCypher, viewName, nlQuery, createView, onFilterCreatedAndSelect])
+  }, [
+    generatedCypher,
+    viewName,
+    nlQuery,
+    createView,
+    onFilterCreatedAndSelect,
+  ]);
 
   const handleDiscard = useCallback(() => {
-    setNlQuery('')
-    setViewName('')
-    setGeneratedCypher(null)
-    setPreviewData(null)
-    setPreviewError(null)
-    setSelectedNode(null)
-  }, [])
+    setNlQuery('');
+    setViewName('');
+    setGeneratedCypher(null);
+    setPreviewData(null);
+    setPreviewError(null);
+    setSelectedNode(null);
+  }, []);
 
   const handleExampleClick = useCallback((example: string) => {
-    setNlQuery(example)
-    setExamplesOpen(false)
-  }, [])
+    setNlQuery(example);
+    setExamplesOpen(false);
+  }, []);
 
-  const nodeCount = useMemo(() => previewData?.nodes.length ?? 0, [previewData])
+  const nodeCount = useMemo(
+    () => previewData?.nodes.length ?? 0,
+    [previewData],
+  );
 
   return (
     <div className={styles.container}>
@@ -209,7 +226,8 @@ export function GraphViews({
             <div className={styles.headerLeft}>
               <h2 className={styles.title}>Surface Shaper</h2>
               <span className={styles.subtitle}>
-                Shape the attack surface in natural language to scope Graph Map, Data Table, and AI agent
+                자연어로 공격 표면을 조형하여 그래프 맵, 데이터 테이블, AI
+                에이전트 범위를 설정스니다
               </span>
             </div>
           </div>
@@ -217,18 +235,23 @@ export function GraphViews({
           {!modelConfigured && (
             <div className={styles.noLlmBanner}>
               <Sparkles size={14} />
-              <span>Configure an AI model in project settings to shape attack surfaces with natural language.</span>
+              <span>
+                프로젝트 설정에서 AI 모델을 설정하여 자연어로 공격 표면을
+                조형하세요.
+              </span>
             </div>
           )}
 
           <div className={styles.createForm}>
             <div className={styles.labelRow}>
-              <label className={styles.label}>Describe the attack surface you want to shape</label>
+              <label className={styles.label}>
+                조형할 공격 표면을 설명하세요
+              </label>
               <div className={styles.examplesDropdown} ref={dropdownRef}>
                 <button
                   className={styles.examplesToggle}
-                  onClick={() => setExamplesOpen(o => !o)}
-                  title="Example queries"
+                  onClick={() => setExamplesOpen((o) => !o)}
+                  title="예시 쿼리"
                   disabled={generating}
                 >
                   <ListFilter size={13} />
@@ -237,7 +260,9 @@ export function GraphViews({
                   <div className={styles.examplesMenu}>
                     {EXAMPLE_QUERIES.map((group, gi) => (
                       <div key={gi} className={styles.examplesGroup}>
-                        <span className={styles.examplesGroupLabel}>{group.label}</span>
+                        <span className={styles.examplesGroupLabel}>
+                          {group.label}
+                        </span>
                         {group.items.map((item, ii) => (
                           <button
                             key={ii}
@@ -255,9 +280,9 @@ export function GraphViews({
             </div>
             <textarea
               className={styles.textarea}
-              placeholder="e.g., All IPs with critical vulnerabilities and their open ports"
+              placeholder="예) 중요 취약점이 있는 모든 IP와 열린 포트"
               value={nlQuery}
-              onChange={e => setNlQuery(e.target.value)}
+              onChange={(e) => setNlQuery(e.target.value)}
               rows={3}
               disabled={generating || !modelConfigured}
             />
@@ -271,12 +296,12 @@ export function GraphViews({
                 {generating ? (
                   <>
                     <Loader2 size={14} className={styles.spin} />
-                    <span>Generating...</span>
+                    <span>생성 중...</span>
                   </>
                 ) : (
                   <>
                     <Sparkles size={14} />
-                    <span>Generate Cypher</span>
+                    <span>Cypher 생성</span>
                   </>
                 )}
               </button>
@@ -287,7 +312,7 @@ export function GraphViews({
                 <span>{previewError}</span>
                 <button className={styles.retryBtn} onClick={handleRegenerate}>
                   <RefreshCw size={12} />
-                  Retry
+                  재시도
                 </button>
               </div>
             )}
@@ -296,10 +321,13 @@ export function GraphViews({
               <>
                 <div className={styles.cypherBlock}>
                   <div className={styles.cypherHeader}>
-                    <label className={styles.label}>Generated Cypher</label>
-                    <button className={styles.retryBtn} onClick={handleRegenerate}>
+                    <label className={styles.label}>생성된 Cypher</label>
+                    <button
+                      className={styles.retryBtn}
+                      onClick={handleRegenerate}
+                    >
                       <RefreshCw size={12} />
-                      Regenerate
+                      재생성
                     </button>
                   </div>
                   <pre className={styles.cypherCode}>{generatedCypher}</pre>
@@ -308,9 +336,9 @@ export function GraphViews({
                 <div className={styles.saveRow}>
                   <input
                     className={styles.nameInput}
-                    placeholder="Surface name"
+                    placeholder="표면 이름"
                     value={viewName}
-                    onChange={e => setViewName(e.target.value)}
+                    onChange={(e) => setViewName(e.target.value)}
                   />
                   <button
                     className={styles.saveBtn}
@@ -322,7 +350,7 @@ export function GraphViews({
                     ) : (
                       <Save size={14} />
                     )}
-                    <span>{saving ? 'Saving...' : 'Save'}</span>
+                    <span>{saving ? '저장 중...' : '저장'}</span>
                   </button>
                   <button
                     className={styles.saveSelectBtn}
@@ -334,10 +362,10 @@ export function GraphViews({
                     ) : (
                       <Save size={14} />
                     )}
-                    <span>{saving ? 'Saving...' : 'Save & Select'}</span>
+                    <span>{saving ? '저장 중...' : '저장 후 선택'}</span>
                   </button>
                   <button className={styles.discardBtn} onClick={handleDiscard}>
-                    Discard
+                    취소
                   </button>
                 </div>
               </>
@@ -349,7 +377,7 @@ export function GraphViews({
         <div className={styles.rightPanel}>
           <div className={styles.previewHeader}>
             <span className={styles.label}>
-              Preview {nodeCount > 0 && `(${nodeCount} nodes)`}
+              미리보기 {nodeCount > 0 && `(${nodeCount}개 노드)`}
             </span>
           </div>
           <div ref={canvasRef} className={styles.previewCanvas}>
@@ -370,5 +398,5 @@ export function GraphViews({
         </div>
       </div>
     </div>
-  )
+  );
 }

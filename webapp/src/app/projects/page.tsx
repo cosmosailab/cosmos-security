@@ -53,9 +53,9 @@ export default function ProjectsPage() {
   }
 
   const handleDeleteProject = async (projectId: string) => {
-    if (await dangerConfirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+    if (await dangerConfirm('이 프로젝트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
       await deleteProjectMutation.mutateAsync(projectId)
-      toast.success('Project deleted')
+      toast.success('프로젝트가 삭제되었습니다')
     }
   }
 
@@ -70,9 +70,9 @@ export default function ProjectsPage() {
       setShowUserModal(false)
       setNewUserName('')
       setNewUserEmail('')
-      toast.success('User created')
+      toast.success('사용자가 생성되었습니다')
     } catch (error) {
-      alertError(error instanceof Error ? error.message : 'Failed to create user')
+      alertError(error instanceof Error ? error.message : '사용자 생성에 실패했습니다')
     }
   }
 
@@ -81,16 +81,16 @@ export default function ProjectsPage() {
     const selectedUser = users?.find(u => u.id === userId)
     const projectCount = selectedUser?._count?.projects ?? 0
     const warning = projectCount > 0
-      ? `This will permanently delete user "${selectedUser?.name}" and their ${projectCount} project(s). This action cannot be undone.`
-      : `Are you sure you want to delete user "${selectedUser?.name}"? This action cannot be undone.`
+      ? `사용자 "${selectedUser?.name}"와(과) 해당 사용자의 프로젝트 ${projectCount}개를 영구적으로 삭제합니다. 이 작업은 되돌릴 수 없습니다.`
+      : `사용자 "${selectedUser?.name}"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`
     if (await dangerConfirm(warning)) {
       try {
         await deleteUserMutation.mutateAsync(userId)
         setUserId(null)
         setCurrentProject(null)
-        toast.success('User deleted')
+        toast.success('사용자가 삭제되었습니다')
       } catch (error) {
-        alertError(error instanceof Error ? error.message : 'Failed to delete user')
+        alertError(error instanceof Error ? error.message : '사용자 삭제에 실패했습니다')
       }
     }
   }
@@ -102,14 +102,14 @@ export default function ProjectsPage() {
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <FolderOpen size={20} />
-          <h1 className={styles.title}>Projects</h1>
-          <WikiInfoButton target="projects" title="Open Creating a Project wiki page" />
+          <h1 className={styles.title}>프로젝트</h1>
+          <WikiInfoButton target="projects" title="프로젝트 생성 위키 페이지 열기" />
         </div>
         <div className={styles.headerActions}>
           <button
             className="iconButton"
             onClick={() => refetch()}
-            title="Refresh"
+            title="새로고침"
           >
             <RefreshCw size={14} />
           </button>
@@ -117,21 +117,21 @@ export default function ProjectsPage() {
             <button
               className="secondaryButton"
               onClick={() => setShowImportModal(true)}
-              title="Import project from backup"
+              title="백업에서 프로젝트 가져오기"
             >
               <Upload size={14} />
-              Import Project
+              프로젝트 가져오기
             </button>
           )}
           {userId ? (
             <Link href="/projects/new" className="primaryButton">
               <Plus size={14} />
-              New Project
+              새 프로젝트
             </Link>
           ) : (
             <button className="primaryButton" disabled>
               <Plus size={14} />
-              New Project
+              새 프로젝트
             </button>
           )}
         </div>
@@ -140,14 +140,14 @@ export default function ProjectsPage() {
       <div className={styles.userSelector}>
         <div className={styles.userSelectorLabel}>
           <Users size={14} />
-          <span>User:</span>
+          <span>사용자:</span>
         </div>
         <select
           className="select"
           value={userId || ''}
           onChange={(e) => setUserId(e.target.value || null)}
         >
-          <option value="">Select a user</option>
+          <option value="">사용자 선택</option>
           {users?.map((user) => (
             <option key={user.id} value={user.id}>
               {user.name} ({user.email})
@@ -159,14 +159,14 @@ export default function ProjectsPage() {
           onClick={() => setShowUserModal(true)}
         >
           <Plus size={12} />
-          New User
+          새 사용자
         </button>
         {userId && (
           <button
             className="iconButton"
             onClick={handleDeleteUser}
             disabled={deleteUserMutation.isPending}
-            title="Delete selected user"
+            title="선택한 사용자 삭제"
           >
             <Trash2 size={14} />
           </button>
@@ -174,7 +174,7 @@ export default function ProjectsPage() {
       </div>
 
       {isLoading ? (
-        <div className={styles.loading}>Loading...</div>
+        <div className={styles.loading}>로딩 중...</div>
       ) : projects && projects.length > 0 ? (
         <div className={styles.grid}>
           {projects.map((project) => (
@@ -193,17 +193,17 @@ export default function ProjectsPage() {
       ) : (
         <div className={styles.empty}>
           <FolderOpen size={48} />
-          <h2>No Projects Yet</h2>
-          <p>Create your first project to get started with reconnaissance.</p>
+          <h2>프로젝트가 없습니다</h2>
+          <p>첫 번째 프로젝트를 생성하여 정찰을 시작하세요.</p>
           {userId ? (
             <Link href="/projects/new" className="primaryButton">
               <Plus size={14} />
-              Create Project
+              프로젝트 생성
             </Link>
           ) : (
             <button className="primaryButton" disabled>
               <Plus size={14} />
-              Create Project
+              프로젝트 생성
             </button>
           )}
         </div>
@@ -221,27 +221,27 @@ export default function ProjectsPage() {
       {showUserModal && (
         <div className={styles.modalOverlay} onClick={() => setShowUserModal(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2 className={styles.modalTitle}>Create New User</h2>
+            <h2 className={styles.modalTitle}>새 사용자 생성</h2>
             <form onSubmit={handleCreateUser}>
               <div className="formGroup">
-                <label className="formLabel formLabelRequired">Name</label>
+                <label className="formLabel formLabelRequired">이름</label>
                 <input
                   type="text"
                   className="textInput"
                   value={newUserName}
                   onChange={(e) => setNewUserName(e.target.value)}
-                  placeholder="Enter user name"
+                  placeholder="사용자 이름 입력"
                   required
                 />
               </div>
               <div className="formGroup">
-                <label className="formLabel formLabelRequired">Email</label>
+                <label className="formLabel formLabelRequired">이메일</label>
                 <input
                   type="email"
                   className="textInput"
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
-                  placeholder="Enter email address"
+                  placeholder="이메일 주소 입력"
                   required
                 />
               </div>
@@ -251,14 +251,14 @@ export default function ProjectsPage() {
                   className="secondaryButton"
                   onClick={() => setShowUserModal(false)}
                 >
-                  Cancel
+                  취소
                 </button>
                 <button
                   type="submit"
                   className="primaryButton"
                   disabled={createUserMutation.isPending}
                 >
-                  {createUserMutation.isPending ? 'Creating...' : 'Create User'}
+                  {createUserMutation.isPending ? '생성 중...' : '사용자 생성'}
                 </button>
               </div>
             </form>

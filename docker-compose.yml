@@ -12,7 +12,6 @@
 # =============================================================================
 
 services:
-
   # ===========================================================================
   # Databases
   # ===========================================================================
@@ -30,7 +29,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-redamon} -d ${POSTGRES_DB:-redamon}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-redamon} -d ${POSTGRES_DB:-redamon}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -95,14 +98,15 @@ services:
     container_name: redamon-gvm-cert-data
     volumes:
       - cert_data:/mnt
+    depends_on:
+      gvm-dfn-cert-data:
+        condition: service_completed_successfully
 
   gvm-dfn-cert-data:
     image: registry.community.greenbone.net/community/dfn-cert-data
     container_name: redamon-gvm-dfn-cert
     volumes:
       - cert_data:/mnt
-    depends_on:
-      - gvm-cert-bund-data
 
   gvm-data-objects:
     image: registry.community.greenbone.net/community/data-objects
@@ -143,7 +147,12 @@ services:
     volumes:
       - gvm_psql_data:/var/lib/postgresql
       - gvm_psql_socket:/var/run/postgresql
-    entrypoint: ["/bin/sh", "-c", "rm -f /var/run/postgresql/.s.PGSQL.5432.lock /var/run/postgresql/.s.PGSQL.5432 /var/lib/postgresql/17/main/postmaster.pid && echo 'Cleaned stale PG locks'"]
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        "rm -f /var/run/postgresql/.s.PGSQL.5432.lock /var/run/postgresql/.s.PGSQL.5432 /var/lib/postgresql/17/main/postmaster.pid && echo 'Cleaned stale PG locks'",
+      ]
 
   gvm-postgres:
     image: registry.community.greenbone.net/community/pg-gvm:stable
@@ -378,7 +387,13 @@ services:
       REDAMON_AGENT_URL: http://agent:8080
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python3", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -594,7 +609,8 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      test:
+        ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -658,4 +674,4 @@ volumes:
     name: redamon_gvmd_socket
   ospd_socket:
     name: redamon_ospd_socket
-  cypherfix-repos:  # Temp storage for cloned GitHub repos (CodeFix agent)
+  cypherfix-repos: # Temp storage for cloned GitHub repos (CodeFix agent)

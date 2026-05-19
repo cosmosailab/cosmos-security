@@ -156,8 +156,8 @@
   display: flex;
   align-items: baseline;
   gap: 0.25rem;
-  font-size: 0.625rem;
-  line-height: 1.2;
+  font-size: 0.75rem;
+  line-height: 1.4;
   font-family: 'JetBrains Mono', monospace;
   width: 100%;
 }
@@ -166,7 +166,7 @@
   font-weight: 600;
   color: var(--text-tertiary);
   flex-shrink: 0;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
 }
 
 .argValue {
@@ -177,7 +177,7 @@
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
 }
 
 .cardActions {
@@ -416,15 +416,17 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
-  padding: 0.625rem;
+  padding: 0.375rem 0.5rem;
   overflow-x: auto;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.688rem;
-  line-height: 1.5;
+  line-height: 1.4;
   color: var(--text-primary);
   margin: 0;
   max-height: 300px;
   overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .codeBlock code {
@@ -441,10 +443,12 @@
 }
 
 @keyframes blink {
-  0%, 50% {
+  0%,
+  50% {
     opacity: 1;
   }
-  51%, 100% {
+  51%,
+  100% {
     opacity: 0;
   }
 }
@@ -464,7 +468,12 @@
   left: 0;
   height: 100%;
   width: 40%;
-  background: linear-gradient(90deg, transparent, var(--status-warning), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--status-warning),
+    transparent
+  );
   animation: progress 1.5s ease-in-out infinite;
 }
 

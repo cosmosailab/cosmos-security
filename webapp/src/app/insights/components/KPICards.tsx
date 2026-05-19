@@ -32,6 +32,17 @@ function PipelineCard({ label, icon, status, phase }: {
   else if (s === 'error' || s === 'failed') dotCls = styles.dotError
   else if (s === 'paused') dotCls = styles.dotPaused
 
+  const statusMap: Record<string, string> = {
+    idle: '대기',
+    running: '실행 중',
+    starting: '시작 중',
+    completed: '완료',
+    error: '오류',
+    failed: '실패',
+    paused: '일시 정지',
+  }
+  const displayStatus = statusMap[s] || status || '대기'
+
   return (
     <div className="statCard">
       <div className="statLabel" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -39,7 +50,7 @@ function PipelineCard({ label, icon, status, phase }: {
       </div>
       <div className={styles.pipelineStatus}>
         <span className={`${styles.dot} ${dotCls}`} />
-        <span className={styles.statusText}>{status || 'idle'}</span>
+        <span className={styles.statusText}>{displayStatus}</span>
         {phase && <span className={styles.phase}>{phase}</span>}
       </div>
     </div>
@@ -54,7 +65,7 @@ function SessionsCard({ sessions }: { sessions: SessionsData | undefined }) {
   return (
     <div className="statCard">
       <div className="statLabel" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Terminal size={12} />Active Shells
+        <Terminal size={12} />활성 쉘
       </div>
       <div className="statValue" style={total > 0 ? { color: 'var(--status-success)' } : undefined}>
         {total}
@@ -88,9 +99,10 @@ export function KPICards({ items, isLoading, pipeline, sessions }: KPICardsProps
         </div>
       ))}
       <SessionsCard sessions={sessions} />
-      <PipelineCard label="Recon Pipeline" icon={<Activity size={12} />} status={pipeline?.recon?.status} phase={pipeline?.recon?.currentPhase} />
-      <PipelineCard label="GVM Scan" icon={<Shield size={12} />} status={pipeline?.gvm?.status} />
-      <PipelineCard label="GitHub Hunt" icon={<Github size={12} />} status={pipeline?.githubHunt?.status} />
+      <PipelineCard label="Recon 파이프라인" icon={<Activity size={12} />} status={pipeline?.recon?.status} phase={pipeline?.recon?.currentPhase} />
+      <PipelineCard label="GVM 스캔" icon={<Shield size={12} />} status={pipeline?.gvm?.status} />
+      <PipelineCard label="GitHub 헌트" icon={<Github size={12} />} status={pipeline?.githubHunt?.status} />
     </div>
   )
 }
+

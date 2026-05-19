@@ -187,7 +187,7 @@ async def _invoke_guardrail(llm: Any, user_prompt: str) -> dict[str, Any]:
                 await asyncio.sleep(min(2 ** attempt, 8))
             continue
 
-        text = normalize_content(response.content)
+        text = normalize_content(response.content, response=response)
         json_str = extract_json(text)
 
         if json_str:

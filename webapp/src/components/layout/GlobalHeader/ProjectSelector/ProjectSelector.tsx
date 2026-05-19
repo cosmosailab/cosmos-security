@@ -1,30 +1,33 @@
-'use client'
+'use client';
 
-import { useState, useRef, useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import { ChevronDown, FolderOpen, Plus, Settings } from 'lucide-react'
-import { useProject } from '@/providers/ProjectProvider'
-import { useProjects, type ProjectListItem } from '@/hooks/useProjects'
-import styles from './ProjectSelector.module.css'
+import { useState, useRef, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { ChevronDown, FolderOpen, Plus, Settings } from 'lucide-react';
+import { useProject } from '@/providers/ProjectProvider';
+import { useProjects, type ProjectListItem } from '@/hooks/useProjects';
+import styles from './ProjectSelector.module.css';
 
 export function ProjectSelector() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const { currentProject, setCurrentProject, userId } = useProject()
-  const { data: projects } = useProjects(userId || undefined)
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { currentProject, setCurrentProject, userId } = useProject();
+  const { data: projects } = useProjects(userId || undefined);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSelectProject = (project: ProjectListItem) => {
     setCurrentProject({
@@ -34,33 +37,33 @@ export function ProjectSelector() {
       subdomainList: project.subdomainList,
       description: project.description || undefined,
       createdAt: project.createdAt,
-      updatedAt: project.updatedAt
-    })
-    setIsOpen(false)
+      updatedAt: project.updatedAt,
+    });
+    setIsOpen(false);
 
     // If on a project settings page, navigate to the new project's settings
     if (pathname.match(/\/projects\/[^/]+\/settings/)) {
-      router.push(`/projects/${project.id}/settings`)
+      router.push(`/projects/${project.id}/settings`);
     }
-  }
+  };
 
   const handleSettings = (e: React.MouseEvent) => {
-    e.stopPropagation()
+    e.stopPropagation();
     if (currentProject) {
-      router.push(`/projects/${currentProject.id}/settings`)
-      setIsOpen(false)
+      router.push(`/projects/${currentProject.id}/settings`);
+      setIsOpen(false);
     }
-  }
+  };
 
   const handleNewProject = () => {
-    router.push('/projects/new')
-    setIsOpen(false)
-  }
+    router.push('/projects/new');
+    setIsOpen(false);
+  };
 
   const handleViewAll = () => {
-    router.push('/projects')
-    setIsOpen(false)
-  }
+    router.push('/projects');
+    setIsOpen(false);
+  };
 
   return (
     <div className={styles.container} ref={dropdownRef}>
@@ -68,7 +71,7 @@ export function ProjectSelector() {
         <button
           className={styles.trigger}
           onClick={() => setIsOpen(!isOpen)}
-          title="Select Project"
+          title="프로젝트 선택"
         >
           <FolderOpen size={14} />
           <span className={styles.projectName}>
@@ -80,7 +83,7 @@ export function ProjectSelector() {
           <button
             className={styles.settingsIconButton}
             onClick={handleSettings}
-            title="Project Settings"
+            title="프로젝트 설정"
           >
             <Settings size={13} />
           </button>
@@ -90,12 +93,12 @@ export function ProjectSelector() {
       {isOpen && (
         <div className={styles.dropdown}>
           <div className={styles.header}>
-            <span className={styles.headerTitle}>Projects</span>
+            <span className={styles.headerTitle}>프로젝트</span>
             {currentProject && (
               <button
                 className={styles.settingsButton}
                 onClick={handleSettings}
-                title="Project Settings"
+                title="프로젝트 설정"
               >
                 <Settings size={12} />
               </button>
@@ -105,7 +108,7 @@ export function ProjectSelector() {
           <div className={styles.list}>
             {!userId ? (
               <div className={styles.empty}>
-                Select a user to view projects
+                사용자를 선택하여 프로젝트를 확인하세요
               </div>
             ) : projects && projects.length > 0 ? (
               projects.map((project) => (
@@ -116,30 +119,33 @@ export function ProjectSelector() {
                 >
                   <div className={styles.itemContent}>
                     <span className={styles.itemName}>{project.name}</span>
-                    <span className={styles.itemDomain}>{project.targetDomain}</span>
+                    <span className={styles.itemDomain}>
+                      {project.targetDomain}
+                    </span>
                   </div>
                 </button>
               ))
             ) : (
-              <div className={styles.empty}>
-                No projects yet
-              </div>
+              <div className={styles.empty}>프로젝트가 없습니다</div>
             )}
           </div>
 
           <div className={styles.footer}>
-            <button className={styles.footerButton} onClick={handleNewProject} disabled={!userId}>
-              <Plus size={12} />
-              New Project
+            <button
+              className={styles.footerButton}
+              onClick={handleNewProject}
+              disabled={!userId}
+            >
+              <Plus size={12} />새 프로젝트
             </button>
             <button className={styles.footerButton} onClick={handleViewAll}>
-              Manage Projects
+              프로젝트 관리
             </button>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default ProjectSelector
+export default ProjectSelector;

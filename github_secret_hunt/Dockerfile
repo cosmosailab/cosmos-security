@@ -13,9 +13,12 @@ LABEL description="Python-based GitHub secret hunter for RedAmon"
 # Set working directory
 WORKDIR /app
 
+# Install uv (fast Python package installer)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Install dependencies
 COPY github_secret_hunt/requirements.txt /tmp/github_requirements.txt
-RUN pip install --no-cache-dir -r /tmp/github_requirements.txt
+RUN uv pip install --system --no-cache -r /tmp/github_requirements.txt
 
 # Copy project files (context is parent directory, so paths are relative to project root)
 COPY github_secret_hunt/ ./github_secret_hunt/

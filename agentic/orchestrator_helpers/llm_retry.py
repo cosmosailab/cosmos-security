@@ -118,3 +118,63 @@ async def retry_llm_call(
                 await asyncio.sleep(min(2 ** attempt, 8))
     assert last_exc is not None  # pragma: no cover — loop body always assigns
     raise last_exc
+
+
+async def retry_llm_call_streaming(
+    llm: Any,
+    messages: list,
+    *,
+    label: str = "llm",
+    max_attempts: int = 3,
+    on_chunk=None,
+):
+    """Like retry_llm_call but uses llm.astream() to emit chunks via on_chunk callback.
+
+    Returns the final complete AIMessage (reconstructed from chunks).
+    The on_chunk callback receives each text delta as a string.
+    Falls back to ainvoke if the LLM doesn't support astream.
+    """
+    last_exc: BaseException | None = None
+    for attempt in range(max_attempts):
+        try:
+            # Try streaming
+            full_content = ""
+            response = None
+            async for chunk in llm.astream(messages):
+                # LangChain chunks have .content (str or list)
+                delta = ""
+                if hasattr(chunk, "content"):
+                    if isinstance(chunk.content, str):
+                        delta = chunk.content
+                    elif isinstance(chunk.content, list):
+                        for block in chunk.content:
+                            if isinstance(block, dict) and block.get("type") == "text":
+                                delta = block.get("text", "")
+                            elif isinstance(block, str):
+                                delta = block
+                full_content += delta
+                if delta and on_chunk:
+                    await on_chunk(delta)
+                response = chunk  # keep last chunk for metadata
+            # Reconstruct a final message-like object
+            if response is not None:
+                # Patch content to be the full accumulated text
+                response.content = full_content
+            return response
+        except AttributeError:
+            # LLM doesn't support astream — fall back to ainvoke
+            return await llm.ainvoke(messages)
+        except Exception as exc:
+            last_exc = exc
+            transient = is_transient_llm_error(exc)
+            logger.warning(
+                "[%s] LLM stream attempt %d/%d error (transient=%s, type=%s): %s",
+                label, attempt + 1, max_attempts, transient,
+                type(exc).__name__, exc,
+            )
+            if not transient:
+                raise
+            if attempt < max_attempts - 1:
+                await asyncio.sleep(min(2 ** attempt, 8))
+    assert last_exc is not None
+    raise last_exc

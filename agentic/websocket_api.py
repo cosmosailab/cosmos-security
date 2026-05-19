@@ -481,7 +481,8 @@ class StreamingCallback:
     async def on_thinking(self, iteration: int, phase: str, thought: str, reasoning: str,
                           action: Optional[str] = None,
                           input_tokens: int = 0,
-                          output_tokens: int = 0):
+                          output_tokens: int = 0,
+                          reasoning_content: str = ""):
         """Called when agent starts thinking.
 
         `action` is the decision's action (e.g. "use_tool", "deploy_fireteam").
@@ -492,6 +493,9 @@ class StreamingCallback:
         `input_tokens` / `output_tokens` are the per-turn LLM usage deltas
         (from provider usage_metadata). The UI renders them as "in X · out Y"
         and sums them across every thinking event for the cumulative counter.
+
+        `reasoning_content` is the raw chain-of-thought from reasoning models
+        (DeepSeek R1, Qwen-thinking, etc.) — empty for non-reasoning models.
         """
         payload = {
             "iteration": iteration,
@@ -502,6 +506,8 @@ class StreamingCallback:
             "input_tokens": int(input_tokens or 0),
             "output_tokens": int(output_tokens or 0),
         }
+        if reasoning_content:
+            payload["reasoning_content"] = reasoning_content
         await self.connection.send_message(MessageType.THINKING, payload)
         self._persist("thinking", payload)
 

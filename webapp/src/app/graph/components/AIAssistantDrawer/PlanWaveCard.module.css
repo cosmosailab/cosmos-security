@@ -150,7 +150,7 @@
 }
 
 .toolNamesPreview {
-  font-size: 0.625rem;
+  font-size: 0.688rem;
   color: var(--text-tertiary);
   font-family: 'JetBrains Mono', monospace;
   overflow: hidden;
@@ -218,8 +218,12 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .successIcon {

@@ -21,7 +21,7 @@
   background: #1a1c22;
 }
 
-:global([data-theme="light"]) .header {
+:global([data-theme='light']) .header {
   background: #c8ccd3;
   border-bottom-color: #cccfd6;
 }
@@ -56,14 +56,14 @@
   width: 100%;
 }
 
-:global([data-theme="light"]) .tabsWrapper {
+:global([data-theme='light']) .tabsWrapper {
   background: var(--bg-primary);
   border-bottom-color: var(--border-default);
 }
 
 .tabs {
   display: flex;
-  gap: var(--space-2);
+  gap: 6px;
   padding: 8px var(--space-3);
   align-items: stretch;
   max-width: 1220px;
@@ -75,16 +75,16 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 4px 8px 4px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-default);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .tabGroupScope {
   composes: tabGroup;
   background: rgba(59, 130, 246, 0.04);
-  border-color: rgba(59, 130, 246, 0.10);
+  border-color: rgba(59, 130, 246, 0.1);
   padding: 2px 11px;
   justify-content: center;
   align-items: center;
@@ -93,7 +93,7 @@
 .tabGroupRecon {
   composes: tabGroup;
   background: rgba(34, 197, 94, 0.04);
-  border-color: rgba(34, 197, 94, 0.10);
+  border-color: rgba(34, 197, 94, 0.1);
   padding: 2px 4px;
   gap: 1px;
 }
@@ -101,53 +101,53 @@
 .tabGroupOther {
   composes: tabGroup;
   background: rgba(234, 179, 8, 0.04);
-  border-color: rgba(234, 179, 8, 0.10);
+  border-color: rgba(234, 179, 8, 0.1);
   padding: 18px 4px 4px 4px;
 }
 
 .tabGroupAgent {
   composes: tabGroup;
   background: rgba(168, 85, 247, 0.04);
-  border-color: rgba(168, 85, 247, 0.10);
+  border-color: rgba(168, 85, 247, 0.1);
 }
 
 .tabGroupRemediation {
   composes: tabGroup;
   background: rgba(251, 146, 60, 0.04);
-  border-color: rgba(251, 146, 60, 0.10);
+  border-color: rgba(251, 146, 60, 0.1);
   justify-content: center;
   align-items: center;
 }
 
 /* ---- Light mode: stronger tab group tinting ---- */
 
-:global([data-theme="light"]) .tabGroup {
+:global([data-theme='light']) .tabGroup {
   background: rgba(0, 0, 0, 0.04);
   border-color: rgba(0, 0, 0, 0.08);
 }
 
-:global([data-theme="light"]) .tabGroupScope {
-  background: rgba(59, 130, 246, 0.10);
+:global([data-theme='light']) .tabGroupScope {
+  background: rgba(59, 130, 246, 0.1);
   border-color: rgba(59, 130, 246, 0.22);
 }
 
-:global([data-theme="light"]) .tabGroupRecon {
-  background: rgba(34, 197, 94, 0.10);
+:global([data-theme='light']) .tabGroupRecon {
+  background: rgba(34, 197, 94, 0.1);
   border-color: rgba(34, 197, 94, 0.22);
 }
 
-:global([data-theme="light"]) .tabGroupOther {
-  background: rgba(234, 179, 8, 0.10);
+:global([data-theme='light']) .tabGroupOther {
+  background: rgba(234, 179, 8, 0.1);
   border-color: rgba(234, 179, 8, 0.22);
 }
 
-:global([data-theme="light"]) .tabGroupAgent {
-  background: rgba(168, 85, 247, 0.10);
+:global([data-theme='light']) .tabGroupAgent {
+  background: rgba(168, 85, 247, 0.1);
   border-color: rgba(168, 85, 247, 0.22);
 }
 
-:global([data-theme="light"]) .tabGroupRemediation {
-  background: rgba(251, 146, 60, 0.10);
+:global([data-theme='light']) .tabGroupRemediation {
+  background: rgba(251, 146, 60, 0.1);
   border-color: rgba(251, 146, 60, 0.22);
 }
 
@@ -166,11 +166,11 @@
   padding: 0 2px;
 }
 
-:global([data-theme="light"]) .tabGroupLabel {
+:global([data-theme='light']) .tabGroupLabel {
   color: var(--text-secondary);
 }
 
-:global([data-theme="light"]) .compactTab {
+:global([data-theme='light']) .compactTab {
   color: var(--text-primary);
 }
 
@@ -240,17 +240,17 @@
 
 .tabGroupTabs {
   display: flex;
-  gap: 2px;
+  gap: 4px;
   margin-top: auto;
   margin-bottom: auto;
 }
 
 .compactTab {
-  padding: 4px 1px !important;
+  padding: 4px 6px !important;
   font-size: 11px !important;
   text-align: center;
   line-height: 1.2;
-  white-space: normal !important;
+  white-space: nowrap !important;
 }
 
 .hiddenTab {
@@ -265,9 +265,9 @@
 .presetTab {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 0 !important;
-  padding-left: 8px !important;
-  padding-right: 1px !important;
+  gap: 3px !important;
+  padding-left: 6px !important;
+  padding-right: 8px !important;
   border: 1px solid rgba(34, 197, 94, 0.3) !important;
 }
 
@@ -278,7 +278,6 @@
 .presetIcon {
   color: rgba(34, 197, 94, 0.85);
   flex-shrink: 0;
-  margin-right: -7px;
 }
 
 .presetBadge {
@@ -296,7 +295,7 @@
   vertical-align: middle;
 }
 
-:global([data-theme="light"]) .presetBadge {
+:global([data-theme='light']) .presetBadge {
   background: #fff;
   color: #15803d;
   border-color: rgba(34, 197, 94, 0.3);
@@ -658,7 +657,7 @@
   justify-content: center;
 }
 
-.phaseCheck input[type="checkbox"] {
+.phaseCheck input[type='checkbox'] {
   width: 16px;
   height: 16px;
   accent-color: var(--accent-secondary);
@@ -874,7 +873,9 @@
   align-items: center;
   text-align: center;
   gap: var(--space-3, 12px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 80, 80, 0.1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 80, 80, 0.1);
   animation: guardrailSlideIn 0.25s ease-out;
 }
 
@@ -950,13 +951,13 @@
 .badgePassive {
   background: rgba(6, 182, 212, 0.15);
   color: #22d3ee;
-  border: 1px solid rgba(6, 182, 212, 0.30);
+  border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
 .badgeActive {
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.30);
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .subSectionTitle .badgePassive,
@@ -978,7 +979,9 @@
   cursor: help;
   flex-shrink: 0;
   opacity: 0.95;
-  transition: opacity 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
 }
 
 .nodeInfoIcon:hover {
@@ -1016,7 +1019,7 @@
   border-radius: 9999px;
   background: rgba(168, 85, 247, 0.15);
   color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.30);
+  border: 1px solid rgba(168, 85, 247, 0.3);
   white-space: nowrap;
 }
 
@@ -1029,7 +1032,7 @@
   border-radius: 9999px;
   background: rgba(59, 130, 246, 0.15);
   color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.30);
+  border: 1px solid rgba(59, 130, 246, 0.3);
   white-space: nowrap;
 }
 
@@ -1042,7 +1045,7 @@
   border-radius: 9999px;
   background: rgba(34, 197, 94, 0.15);
   color: #4ade80;
-  border: 1px solid rgba(34, 197, 94, 0.30);
+  border: 1px solid rgba(34, 197, 94, 0.3);
   white-space: nowrap;
 }
 
@@ -1075,7 +1078,10 @@
   border-radius: var(--radius-sm);
   color: var(--text-tertiary);
   cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
   z-index: 1;
 }
 
@@ -1151,7 +1157,7 @@
 
 .fileImportTooltipList code,
 .fileImportTooltipFooter code {
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.1);
   padding: 0 3px;
   border-radius: 2px;
   font-size: 10px;

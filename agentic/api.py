@@ -280,7 +280,7 @@ async def parse_roe_document(body: RoeParseRequest):
             SystemMessage(content=system_prompt),
             HumanMessage(content=f"RoE Document:\n---\n{doc_text}\n---\n\nParse the RoE document above and return the JSON."),
         ])
-        content = normalize_content(response.content).strip()
+        content = normalize_content(response.content, response=response).strip()
 
         # Strip markdown code fences if present (handle ```json, ```JSON, ``` json, etc.)
         import re
@@ -1718,7 +1718,7 @@ async def test_llm_provider(body: LlmProviderTestRequest):
 
         response = await llm.ainvoke([HumanMessage(content="Say hello in one sentence.")])
         from orchestrator_helpers import normalize_content
-        text = normalize_content(response.content).strip()
+        text = normalize_content(response.content, response=response).strip()
 
         return {"success": True, "response_text": text}
 
@@ -2175,7 +2175,7 @@ async def command_whisperer(body: CommandWhispererRequest):
             HumanMessage(content=body.prompt),
         ])
 
-        command = normalize_content(response.content).strip()
+        command = normalize_content(response.content, response=response).strip()
 
         # Strip markdown code fences if the LLM wraps the answer
         if command.startswith("```") and command.endswith("```"):

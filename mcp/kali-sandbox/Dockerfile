@@ -178,21 +178,27 @@ RUN retry go install -v github.com/PentestPad/subzy@latest
 # Update nuclei templates
 RUN nuclei -update-templates || true
 
+# Purge Go build cache + module cache (~6 GB) — binaries are already in /root/go/bin
+RUN go clean -cache -modcache 2>/dev/null || true
+
+# Install uv (fast Python package installer)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Create virtual environment for Python dependencies
-RUN python3 -m venv /opt/venv
+RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Install Python MCP dependencies
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN uv pip install --no-cache -r /tmp/requirements.txt
 
 # Neo4j driver for the redagraph CLI (tenant-scoped graph queries from the shell)
-RUN pip install --no-cache-dir neo4j
+RUN uv pip install --no-cache neo4j
 
 # Install API security testing tools (Python-based)
 # jwt_tool - JWT exploitation toolkit (alg:none, key confusion, cracking)
 # Source: https://github.com/ticarpi/jwt_tool (GPL-3.0)
-RUN pip install --no-cache-dir pycryptodomex termcolor ratelimit \
+RUN uv pip install --no-cache pycryptodomex termcolor ratelimit \
     && retry git clone --depth 1 https://github.com/ticarpi/jwt_tool.git /opt/jwt_tool \
     && chmod +x /opt/jwt_tool/jwt_tool.py \
     && ln -s /opt/jwt_tool/jwt_tool.py /usr/local/bin/jwt_tool
@@ -200,7 +206,7 @@ RUN pip install --no-cache-dir pycryptodomex termcolor ratelimit \
 # graphql-cop - GraphQL security auditor
 # Source: https://github.com/dolevf/graphql-cop (BSD-3-Clause)
 RUN retry git clone --depth 1 https://github.com/dolevf/graphql-cop.git /opt/graphql-cop \
-    && pip install --no-cache-dir -r /opt/graphql-cop/requirements.txt \
+    && uv pip install --no-cache -r /opt/graphql-cop/requirements.txt \
     && chmod +x /opt/graphql-cop/graphql-cop.py \
     && ln -s /opt/graphql-cop/graphql-cop.py /usr/local/bin/graphql-cop
 
@@ -210,11 +216,11 @@ RUN retry git clone --depth 1 https://github.com/dolevf/graphql-cop.git /opt/gra
 # from requirements.txt as it fails on Python 3.13 (Linux Python has readline built-in)
 RUN retry git clone --depth 1 https://github.com/swisskyrepo/GraphQLmap.git /opt/graphqlmap \
     && cd /opt/graphqlmap \
-    && pip install --no-cache-dir requests \
-    && pip install --no-cache-dir -e .
+    && uv pip install --no-cache requests \
+    && uv pip install --no-cache -e .
 
 # Playwright browser automation (for web application recon & interaction)
-RUN pip install --no-cache-dir playwright \
+RUN uv pip install --no-cache playwright \
     && playwright install chromium \
     && playwright install-deps chromium \
     && rm -rf /var/lib/apt/lists/*
@@ -230,14 +236,14 @@ RUN mkdir -p /usr/share/seclists/Discovery/Web-Content && \
 
 # ParamSpider — passive URL parameter discovery from Wayback Machine
 # Source: https://github.com/devanshbatham/ParamSpider (MIT)
-RUN retry pip install --no-cache-dir git+https://github.com/devanshbatham/ParamSpider.git
+RUN retry uv pip install --no-cache git+https://github.com/devanshbatham/ParamSpider.git
 
 # semgrep — source-aware static analysis (rule packs from semgrep registry).
 # Used by the source-aware-sast Chat Skill when the operator provides a repo
 # (git clone target) for a black-box-bridged code review. Pinned via pip in the
 # shared venv; no apt package because the upstream Kali build lags semgrep releases.
 # Source: https://github.com/semgrep/semgrep (LGPL-2.1)
-RUN retry pip install --no-cache-dir semgrep
+RUN retry uv pip install --no-cache semgrep
 
 # Node.js + npm (for the prototype-pollution Chat Skill: gadget testing via execute_code Node workers).
 # Apt list was wiped by the earlier core-tools layer, so update first.
@@ -249,7 +255,7 @@ RUN apt-get update \
 # - websockets: ws/wss client for CSWSH and per-message-auth probes.
 # - zeep: SOAP client for WS-Security / XSW probing.
 # - python3-saml: SAML XSW / Comment Injection / Golden SAML construction.
-RUN pip install --no-cache-dir websockets zeep python3-saml
+RUN uv pip install --no-cache websockets zeep python3-saml
 
 # Cloud SDKs powering the AWS / Azure / GCP Chat Skills via execute_code.
 # Heavy CLIs (awscli, az, gcloud) are skipped in favor of the Python SDKs which
@@ -258,7 +264,7 @@ RUN pip install --no-cache-dir websockets zeep python3-saml
 # - msal + azure-identity + azure-mgmt-resource: Entra ID / Azure resource probes.
 # - google-auth + google-api-python-client + google-cloud-storage: GCP service
 #   accounts, IAM, Storage probes.
-RUN pip install --no-cache-dir \
+RUN uv pip install --no-cache \
     boto3 \
     msal azure-identity azure-mgmt-resource \
     google-auth google-api-python-client google-cloud-storage
@@ -303,14 +309,14 @@ RUN mkdir -p /opt/tools/windows \
 # ldapdomaindump: LDAP enumeration (users, groups, password policies)
 # bloodyAD: live AD abuse primitives (password reset, group add, SPN set) driven by BloodHound edges
 # networkx + orjson: power the /opt/adkc/bhgraph helper (BloodHound JSON → in-memory graph, no Neo4j)
-RUN pip install --no-cache-dir hashID bloodhound certipy-ad ldapdomaindump \
+RUN uv pip install --no-cache hashID bloodhound certipy-ad ldapdomaindump \
     bloodyAD networkx orjson
 
 # gMSADumper: read gMSA passwords when BloodHound flags ReadGMSAPassword edge.
 # Not on PyPI — install from git. Source: https://github.com/micahvandeusen/gMSADumper
 # (GPL-3.0; invoked as separate-process CLI, mere aggregation)
 RUN retry git clone --depth 1 https://github.com/micahvandeusen/gMSADumper.git /opt/gMSADumper \
-    && pip install --no-cache-dir ldap3 pyasn1 \
+    && uv pip install --no-cache ldap3 pyasn1 \
     && chmod +x /opt/gMSADumper/gMSADumper.py \
     && ln -sf /opt/gMSADumper/gMSADumper.py /usr/local/bin/gMSADumper.py \
     && ln -sf /opt/gMSADumper/gMSADumper.py /usr/local/bin/gMSADumper
@@ -370,7 +376,7 @@ RUN apt-get update \
 # SSTImap — Server-Side Template Injection detection & exploitation
 # Source: https://github.com/vladko312/SSTImap (GPL-3.0; invoked as separate-process CLI, mere aggregation)
 RUN retry git clone --depth 1 https://github.com/vladko312/SSTImap.git /opt/sstimap \
-    && pip install --no-cache-dir -r /opt/sstimap/requirements.txt \
+    && uv pip install --no-cache -r /opt/sstimap/requirements.txt \
     && chmod +x /opt/sstimap/sstimap.py \
     && ln -s /opt/sstimap/sstimap.py /usr/local/bin/sstimap
 
@@ -382,7 +388,7 @@ RUN retry git clone --depth 1 https://github.com/vladko312/SSTImap.git /opt/ssti
 # install are non-fatal: the wrapper still launches the tool with relaxed deps,
 # and the SSTI community skill documents an SSTImap-only fallback.
 RUN retry git clone --depth 1 https://github.com/epinna/tplmap.git /opt/tplmap \
-    && python3 -m venv /opt/tplmap/venv \
+    && uv venv /opt/tplmap/venv \
     && /opt/tplmap/venv/bin/pip install --no-cache-dir requests pysocks \
        || echo "WARNING: tplmap base deps install hit issues; tplmap may be degraded" \
     && (/opt/tplmap/venv/bin/pip install --no-cache-dir -r /opt/tplmap/requirements.txt \

@@ -1,28 +1,35 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback } from 'react'
-import Image from 'next/image'
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import {
-  ShieldAlert, ExternalLink, Star, Github,
-  Rocket, UserPlus, FolderPlus,
-  Bot, Play, BookOpen,
-} from 'lucide-react'
+  ShieldAlert,
+  ExternalLink,
+  Star,
+  Github,
+  Rocket,
+  UserPlus,
+  FolderPlus,
+  Bot,
+  Play,
+  BookOpen,
+} from 'lucide-react';
 import {
   DISCLAIMER_VERSION,
   DISCLAIMER_STORAGE_KEY,
   DISCLAIMER_GITHUB_URL,
   REDAMON_GITHUB_URL,
   WIKI_URL,
-} from '@/lib/disclaimerVersion'
-import styles from './DisclaimerGate.module.css'
+} from '@/lib/disclaimerVersion';
+import styles from './DisclaimerGate.module.css';
 
 interface DisclaimerGateProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 interface StoredAcceptance {
-  version: string
-  acceptedAt: string
+  version: string;
+  acceptedAt: string;
 }
 
 const CHECKBOXES = [
@@ -56,81 +63,98 @@ const CHECKBOXES = [
     label:
       'I understand I must comply with licenses of all bundled tools (AGPL-3.0, GPL, MIT, etc.) and applicable regulations including export controls.',
   },
-] as const
+] as const;
 
 export function DisclaimerGate({ children }: DisclaimerGateProps) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [isAccepted, setIsAccepted] = useState(false)
-  const [step, setStep] = useState<'welcome' | 'disclaimer' | 'guide'>('welcome')
-  const [checked, setChecked] = useState<boolean[]>(
-    () => new Array(CHECKBOXES.length).fill(false)
-  )
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAccepted, setIsAccepted] = useState(false);
+  const [step, setStep] = useState<'welcome' | 'disclaimer' | 'guide'>(
+    'welcome',
+  );
+  const [checked, setChecked] = useState<boolean[]>(() =>
+    new Array(CHECKBOXES.length).fill(false),
+  );
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(DISCLAIMER_STORAGE_KEY)
+      const stored = localStorage.getItem(DISCLAIMER_STORAGE_KEY);
       if (stored) {
-        const parsed: StoredAcceptance = JSON.parse(stored)
+        const parsed: StoredAcceptance = JSON.parse(stored);
         if (parsed.version === DISCLAIMER_VERSION) {
-          setIsAccepted(true)
+          setIsAccepted(true);
         }
       }
     } catch {
       // localStorage unavailable or corrupted — show the gate
     }
-    setIsLoading(false)
-  }, [])
+    setIsLoading(false);
+  }, []);
 
   const handleToggle = useCallback((index: number) => {
     setChecked((prev) => {
-      const next = [...prev]
-      next[index] = !next[index]
-      return next
-    })
-  }, [])
+      const next = [...prev];
+      next[index] = !next[index];
+      return next;
+    });
+  }, []);
 
   const handleAccept = useCallback(() => {
     try {
       const value: StoredAcceptance = {
         version: DISCLAIMER_VERSION,
         acceptedAt: new Date().toISOString(),
-      }
-      localStorage.setItem(DISCLAIMER_STORAGE_KEY, JSON.stringify(value))
+      };
+      localStorage.setItem(DISCLAIMER_STORAGE_KEY, JSON.stringify(value));
     } catch {
       // localStorage unavailable — acceptance lasts this session only
     }
-    setIsAccepted(true)
-  }, [])
+    setIsAccepted(true);
+  }, []);
 
-  const allChecked = checked.every(Boolean)
+  const allChecked = checked.every(Boolean);
 
   if (isLoading) {
-    return null
+    return null;
   }
 
   if (isAccepted) {
-    return <>{children}</>
+    return <>{children}</>;
   }
 
   if (step === 'welcome') {
     return (
       <div className={styles.overlay}>
         <div className={styles.card}>
-          <Image src="/logo.png" alt="" aria-hidden width={520} height={520} className={styles.eyeBg} />
+          <Image
+            src="/logo.png"
+            alt=""
+            aria-hidden
+            width={520}
+            height={520}
+            className={styles.eyeBg}
+          />
           <div className={styles.welcomeHeader}>
-            <Image src="/logo.png" alt="RedAmon" width={36} height={36} style={{ objectFit: 'contain' }} />
+            <Image
+              src="/logo.png"
+              alt="RedAmon"
+              width={36}
+              height={36}
+              style={{ objectFit: 'contain' }}
+            />
             <h1 className={styles.welcomeTitle}>
-              Welcome to <span className={styles.logoAccent}>Red</span>Amon
+              Welcome to <span className={styles.logoAccent}>COSMOS</span>
+              SEQURITY
             </h1>
           </div>
 
           <div className={styles.body}>
             <p className={styles.welcomeThank}>
-              Thank you for downloading and installing <strong>RedAmon</strong>!
+              Thank you for downloading and installing{' '}
+              <strong>COSMOS SEQURITY</strong>!
             </p>
 
             <p className={styles.welcomeDesc}>
-              <strong>RedAmon</strong> is an open-source, AI-powered
+              <strong>COSMOS SEQURITY</strong> is an open-source, AI-powered
               penetration testing platform that combines autonomous
               reconnaissance, graph-based attack surface mapping, and an
               intelligent agent to help security professionals work faster and
@@ -139,15 +163,23 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
 
             <div className={styles.missionBox}>
               <p className={styles.missionText}>
-                Our commitment is to keep RedAmon always up-to-date and make it
-                the <strong>#1 open-source pentesting platform</strong> in the
+                Our commitment is to keep <strong>COSMOS SEQURITY</strong>{' '}
+                always up-to-date and make it the{' '}
+                <strong>#1 open-source pentesting platform</strong> in the
                 world. To get there, we need the community&apos;s help.
               </p>
               <p className={styles.missionText}>
-                We&apos;re not asking for money, just a ⭐ GitHub star to help us grow, gain visibility, and attract contributors. If you&apos;d like to go further, feel free to open a pull request or reach out to our maintainers directly.<br />Every contribution matters.
+                We&apos;re not asking for money, just a ⭐ GitHub star to help
+                us grow, gain visibility, and attract contributors. If
+                you&apos;d like to go further, feel free to open a pull request
+                or reach out to our maintainers directly.
+                <br />
+                Every contribution matters.
               </p>
               <p className={styles.footerSignature}>
-                Happy hunting!<br />Samuele &amp; Ritesh
+                Happy hunting!
+                <br />
+                Samuele &amp; Ritesh
               </p>
             </div>
 
@@ -159,14 +191,15 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
             >
               <Github size={20} />
               <Star size={18} className={styles.starIcon} />
-              <span>Star RedAmon on GitHub</span>
+              <span>Star COSMOS SEQURITY on GitHub</span>
               <ExternalLink size={13} className={styles.starExternal} />
             </a>
           </div>
 
           <div className={styles.footer}>
             <p className={styles.footerQuote}>
-              &ldquo;Open source is humanity&apos;s greatest collaborative experiment.&rdquo;
+              &ldquo;Open source is humanity&apos;s greatest collaborative
+              experiment.&rdquo;
             </p>
             <button
               className={styles.acceptButton}
@@ -177,7 +210,7 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (step === 'guide') {
@@ -187,7 +220,9 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
           <div className={styles.header}>
             <div className={styles.headerLeft}>
               <Rocket size={20} className={styles.headerIcon} />
-              <h1 className={styles.title}>Getting Started — Your First Steps</h1>
+              <h1 className={styles.title}>
+                Getting Started — Your First Steps
+              </h1>
             </div>
           </div>
 
@@ -204,7 +239,10 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
                     </div>
                     <div>
                       <p className={styles.guideStepTitle}>Create a User</p>
-                      <p className={styles.guideStepDesc}>Go to the Users panel and create your profile. Each user can manage multiple independent projects.</p>
+                      <p className={styles.guideStepDesc}>
+                        Go to the Users panel and create your profile. Each user
+                        can manage multiple independent projects.
+                      </p>
                     </div>
                   </div>
                   <div className={styles.guideStep}>
@@ -214,10 +252,12 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
                     </div>
                     <div>
                       <p className={styles.guideStepTitle}>Create a Project</p>
-                      <p className={styles.guideStepDesc}>Set up a project to group all recon data, settings, and agent sessions for a single engagement.</p>
+                      <p className={styles.guideStepDesc}>
+                        Set up a project to group all recon data, settings, and
+                        agent sessions for a single engagement.
+                      </p>
                     </div>
                   </div>
-
                 </div>
               </div>
 
@@ -231,8 +271,14 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
                       <Play size={18} className={styles.guideStepIcon} />
                     </div>
                     <div>
-                      <p className={styles.guideStepTitle}>Launch the Recon Pipeline</p>
-                      <p className={styles.guideStepDesc}>From the <strong>Red Zone</strong> press <strong>Start Recon</strong>. Wait for the pipeline to fully complete before starting the AI agent.</p>
+                      <p className={styles.guideStepTitle}>
+                        Launch the Recon Pipeline
+                      </p>
+                      <p className={styles.guideStepDesc}>
+                        From the <strong>Red Zone</strong> press{' '}
+                        <strong>Start Recon</strong>. Wait for the pipeline to
+                        fully complete before starting the AI agent.
+                      </p>
                     </div>
                   </div>
                   <div className={styles.guideStep}>
@@ -241,8 +287,14 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
                       <Bot size={18} className={styles.guideStepIcon} />
                     </div>
                     <div>
-                      <p className={styles.guideStepTitle}>Start the AI Agent</p>
-                      <p className={styles.guideStepDesc}>Once recon is done, switch to <strong>Agent AI</strong> to interrogate findings, plan attack paths, and generate reports.</p>
+                      <p className={styles.guideStepTitle}>
+                        Start the AI Agent
+                      </p>
+                      <p className={styles.guideStepDesc}>
+                        Once recon is done, switch to <strong>Agent AI</strong>{' '}
+                        to interrogate findings, plan attack paths, and generate
+                        reports.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -267,7 +319,7 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -282,12 +334,12 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
 
         <div className={styles.body}>
           <p className={styles.intro}>
-            <strong>RedAmon</strong> is an AI-powered penetration testing
-            platform intended exclusively for{' '}
+            <strong>COSMOS SEQURITY</strong> is an AI-powered penetration
+            testing platform intended exclusively for{' '}
             <strong>authorized security testing</strong>,{' '}
-            <strong>educational purposes</strong>, and{' '}
-            <strong>research</strong>. Before using this tool, you must read and
-            accept the following terms.
+            <strong>educational purposes</strong>, and <strong>research</strong>
+            . Before using this tool, you must read and accept the following
+            terms.
           </p>
 
           <div className={styles.linkWrapper}>
@@ -328,5 +380,5 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -134,12 +134,14 @@ RUN mkdir -p /app/recon/output \
              /data/.env \
     && chown -R redamon:redamon /app /data
 
+# Install uv (fast Python package installer)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Copy requirements first (for better Docker layer caching)
 COPY recon/requirements.txt /app/recon/requirements.txt
 
 # Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /app/recon/requirements.txt
+RUN uv pip install --system --no-cache -r /app/recon/requirements.txt
 
 # Copy Go binaries from build stages
 COPY --from=jsluice-builder /go/bin/jsluice /usr/local/bin/jsluice

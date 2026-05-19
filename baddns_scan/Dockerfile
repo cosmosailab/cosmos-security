@@ -22,9 +22,7 @@ LABEL license="AGPL-3.0"
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PYTHONUNBUFFERED=1
 
 # Pin baddns version. Upstream is actively developed and bumps Finding
 # schema / CLI flags occasionally. Bump this deliberately after verifying
@@ -41,8 +39,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates bash coreutils \
     && rm -rf /var/lib/apt/lists/* && apt-get clean
 
+# Install uv (fast Python package installer)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Install baddns from PyPI (unmodified upstream, pinned version)
-RUN retry pip install "baddns==${BADDNS_VERSION}"
+RUN retry uv pip install --system --no-cache "baddns==${BADDNS_VERSION}"
 
 # Non-root user for safety
 RUN groupadd -r baddns && useradd -r -g baddns -d /work baddns \

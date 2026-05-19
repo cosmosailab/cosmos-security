@@ -124,7 +124,7 @@ async def generate_report_narratives(
         ])
 
         from orchestrator_helpers import normalize_content
-        content = normalize_content(response.content).strip()
+        content = normalize_content(response.content, response=response).strip()
 
         # Strip markdown code fences
         import re

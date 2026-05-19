@@ -5,14 +5,25 @@
  * Compact design with key-value arg display.
  */
 
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Wrench, ChevronDown, ChevronRight, Copy, Check, Loader2, CheckCircle2, XCircle, AlertTriangle, Square } from 'lucide-react'
-import { ExternalLink } from '@/components/ui'
-import { isHttpUrl } from '@/lib/url-utils'
-import styles from './ToolExecutionCard.module.css'
-import type { ToolExecutionItem } from './AgentTimeline'
+import { useState, useEffect } from 'react';
+import {
+  Wrench,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Check,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Square,
+} from 'lucide-react';
+import { ExternalLink } from '@/components/ui';
+import { isHttpUrl } from '@/lib/url-utils';
+import styles from './ToolExecutionCard.module.css';
+import type { ToolExecutionItem } from './AgentTimeline';
 
 const TOOL_KEY_LABEL: Record<string, string> = {
   web_search: 'Tavily',
@@ -21,42 +32,51 @@ const TOOL_KEY_LABEL: Record<string, string> = {
   execute_wpscan: 'WPScan',
   execute_gau: 'URLScan',
   cve_intel: 'PDCP',
-}
+};
 
 interface ToolExecutionCardProps {
-  item: ToolExecutionItem
-  isExpanded: boolean
-  onToggleExpand: () => void
-  missingApiKey?: boolean
-  onAddApiKey?: () => void
-  onApprove?: () => void
-  onReject?: () => void
+  item: ToolExecutionItem;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  missingApiKey?: boolean;
+  onAddApiKey?: () => void;
+  onApprove?: () => void;
+  onReject?: () => void;
   /** Cancel just this running tool (same semantics as the global Stop
    *  button, scoped to one card). Shown in the card header only while
    *  status === 'running'. */
-  onStop?: () => void
+  onStop?: () => void;
 }
 
-export function ToolExecutionCard({ item, isExpanded, onToggleExpand, missingApiKey, onAddApiKey, onApprove, onReject, onStop }: ToolExecutionCardProps) {
-  const [copied, setCopied] = useState(false)
-  const [duration, setDuration] = useState(0)
+export function ToolExecutionCard({
+  item,
+  isExpanded,
+  onToggleExpand,
+  missingApiKey,
+  onAddApiKey,
+  onApprove,
+  onReject,
+  onStop,
+}: ToolExecutionCardProps) {
+  const [copied, setCopied] = useState(false);
+  const [duration, setDuration] = useState(0);
 
   // Calculate duration for running tools
   useEffect(() => {
     if (item.status === 'pending_approval') {
-      setDuration(0)
-      return
+      setDuration(0);
+      return;
     }
     if (item.status === 'running') {
       const interval = setInterval(() => {
-        const elapsed = Date.now() - item.timestamp.getTime()
-        setDuration(Math.floor(elapsed / 1000))
-      }, 1000)
-      return () => clearInterval(interval)
+        const elapsed = Date.now() - item.timestamp.getTime();
+        setDuration(Math.floor(elapsed / 1000));
+      }, 1000);
+      return () => clearInterval(interval);
     } else if (item.duration) {
-      setDuration(Math.floor(item.duration / 1000))
+      setDuration(Math.floor(item.duration / 1000));
     }
-  }, [item.status, item.timestamp, item.duration])
+  }, [item.status, item.timestamp, item.duration]);
 
   const handleCopy = async () => {
     try {
@@ -65,72 +85,97 @@ export function ToolExecutionCard({ item, isExpanded, onToggleExpand, missingApi
         tool_args: item.tool_args,
         output: item.output_chunks.join(''),
         status: item.status,
-      }
-      await navigator.clipboard.writeText(JSON.stringify(data, null, 2))
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      };
+      await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
       // Silent fail
     }
-  }
+  };
 
   const getStatusIcon = () => {
     switch (item.status) {
       case 'pending_approval':
-        return <Loader2 size={14} className={`${styles.statusIcon} ${styles.spinner}`} />
+        return (
+          <Loader2
+            size={14}
+            className={`${styles.statusIcon} ${styles.spinner}`}
+          />
+        );
       case 'running':
-        return <Loader2 size={14} className={`${styles.statusIcon} ${styles.spinner}`} />
+        return (
+          <Loader2
+            size={14}
+            className={`${styles.statusIcon} ${styles.spinner}`}
+          />
+        );
       case 'success':
-        return <CheckCircle2 size={14} className={`${styles.statusIcon} ${styles.successIcon}`} />
+        return (
+          <CheckCircle2
+            size={14}
+            className={`${styles.statusIcon} ${styles.successIcon}`}
+          />
+        );
       case 'error':
-        return <XCircle size={14} className={`${styles.statusIcon} ${styles.errorIcon}`} />
+        return (
+          <XCircle
+            size={14}
+            className={`${styles.statusIcon} ${styles.errorIcon}`}
+          />
+        );
     }
-  }
+  };
 
   const getStatusText = () => {
     switch (item.status) {
       case 'pending_approval':
-        return 'Awaiting approval'
+        return '승인 대기 중';
       case 'running':
-        return `Running... (${duration}s)`
+        return `실행 중... (${duration}초)`;
       case 'success':
-        return `Completed (${duration}s)`
+        return `완료 (${duration}초)`;
       case 'error':
-        return 'Failed'
+        return '실패';
     }
-  }
+  };
 
   const getStatusClass = () => {
     switch (item.status) {
       case 'pending_approval':
-        return styles.statusPendingApproval
+        return styles.statusPendingApproval;
       case 'running':
-        return styles.statusRunning
+        return styles.statusRunning;
       case 'success':
-        return styles.statusSuccess
+        return styles.statusSuccess;
       case 'error':
-        return styles.statusError
+        return styles.statusError;
     }
-  }
+  };
 
   // Render tool arguments as key-value pairs
   const renderToolArgs = () => {
     if (!item.tool_args || Object.keys(item.tool_args).length === 0) {
-      return null
+      return null;
     }
 
     return Object.entries(item.tool_args).map(([key, value]) => {
-      const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
+      const valueStr =
+        typeof value === 'string' ? value : JSON.stringify(value);
       return (
         <div key={key} className={styles.argItem}>
           <span className={styles.argKey}>{key}:</span>
           <span className={styles.argValue}>
-            {isHttpUrl(valueStr) ? <ExternalLink href={valueStr}>{valueStr}</ExternalLink> : valueStr}
+            {isHttpUrl(valueStr) ? (
+              <ExternalLink href={valueStr}>{valueStr}</ExternalLink>
+            ) : (
+              valueStr
+            )}
           </span>
         </div>
-      )
-    })
-  }
+      );
+    });
+  };
 
   return (
     <div className={`${styles.card} ${getStatusClass()}`}>
@@ -145,11 +190,19 @@ export function ToolExecutionCard({ item, isExpanded, onToggleExpand, missingApi
               <span
                 className={styles.apiKeyMissing}
                 title={`Set ${TOOL_KEY_LABEL[item.tool_name] || ''} API key`}
-                onClick={onAddApiKey ? (e) => { e.stopPropagation(); onAddApiKey() } : undefined}
+                onClick={
+                  onAddApiKey
+                    ? (e) => {
+                        e.stopPropagation();
+                        onAddApiKey();
+                      }
+                    : undefined
+                }
                 role={onAddApiKey ? 'button' : undefined}
                 tabIndex={onAddApiKey ? 0 : undefined}
               >
-                <AlertTriangle size={10} /> No {TOOL_KEY_LABEL[item.tool_name] || 'API'} key — Add
+                <AlertTriangle size={10} /> No{' '}
+                {TOOL_KEY_LABEL[item.tool_name] || 'API'} key — Add
               </span>
             )}
           </span>
@@ -160,16 +213,35 @@ export function ToolExecutionCard({ item, isExpanded, onToggleExpand, missingApi
             </div>
             {item.status === 'pending_approval' && onApprove && (
               <div className={styles.confirmActions}>
-                <button className={styles.allowBtn} onClick={(e) => { e.stopPropagation(); onApprove() }}>Allow</button>
-                <button className={styles.denyBtn} onClick={(e) => { e.stopPropagation(); onReject?.() }}>Deny</button>
+                <button
+                  className={styles.allowBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onApprove();
+                  }}
+                >
+                  허용
+                </button>
+                <button
+                  className={styles.denyBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReject?.();
+                  }}
+                >
+                  거부
+                </button>
               </div>
             )}
             {item.status === 'running' && onStop && (
               <button
                 className={styles.stopButton}
-                onClick={(e) => { e.stopPropagation(); onStop() }}
-                title="Stop this tool"
-                aria-label="Stop this tool"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStop();
+                }}
+                title="이 도구 중지"
+                aria-label="이 도구 중지"
               >
                 <Square size={12} fill="currentColor" />
               </button>
@@ -177,22 +249,24 @@ export function ToolExecutionCard({ item, isExpanded, onToggleExpand, missingApi
             <button
               className={styles.copyButton}
               onClick={(e) => {
-                e.stopPropagation()
-                handleCopy()
+                e.stopPropagation();
+                handleCopy();
               }}
-              title="Copy JSON"
+              title="JSON 복사"
             >
               {copied ? <Check size={12} /> : <Copy size={12} />}
             </button>
             <button className={styles.expandButton}>
-              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              {isExpanded ? (
+                <ChevronDown size={14} />
+              ) : (
+                <ChevronRight size={14} />
+              )}
             </button>
           </div>
         </div>
         {!isExpanded && (
-          <div className={styles.argsPreview}>
-            {renderToolArgs()}
-          </div>
+          <div className={styles.argsPreview}>{renderToolArgs()}</div>
         )}
       </div>
 
@@ -205,15 +279,24 @@ export function ToolExecutionCard({ item, isExpanded, onToggleExpand, missingApi
               <div className={styles.sectionContent}>
                 <div className={styles.argsExpanded}>
                   {Object.entries(item.tool_args).map(([key, value]) => {
-                    const valueStr = typeof value === 'string' ? value : JSON.stringify(value, null, 2)
+                    const valueStr =
+                      typeof value === 'string'
+                        ? value
+                        : JSON.stringify(value, null, 2);
                     return (
                       <div key={key} className={styles.argItemExpanded}>
                         <span className={styles.argKeyExpanded}>{key}:</span>
                         <pre className={styles.argValueExpanded}>
-                          {isHttpUrl(valueStr) ? <ExternalLink href={valueStr}>{valueStr}</ExternalLink> : valueStr}
+                          {isHttpUrl(valueStr) ? (
+                            <ExternalLink href={valueStr}>
+                              {valueStr}
+                            </ExternalLink>
+                          ) : (
+                            valueStr
+                          )}
                         </pre>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               </div>
@@ -232,7 +315,15 @@ export function ToolExecutionCard({ item, isExpanded, onToggleExpand, missingApi
               <div className={styles.sectionContent}>
                 <pre className={styles.codeBlock}>
                   <code>
-                    {item.output_chunks.join('')}
+                    {(() => {
+                      const raw = item.output_chunks.join('');
+                      try {
+                        const parsed = JSON.parse(raw);
+                        return JSON.stringify(parsed, null, 2);
+                      } catch {
+                        return raw;
+                      }
+                    })()}
                     {item.status === 'running' && (
                       <span className={styles.cursor}>▋</span>
                     )}
@@ -259,7 +350,9 @@ export function ToolExecutionCard({ item, isExpanded, onToggleExpand, missingApi
               <div className={styles.sectionContent}>
                 <ul className={styles.findingsList}>
                   {item.actionable_findings.map((finding, index) => (
-                    <li key={index} className={styles.findingItem}>{finding}</li>
+                    <li key={index} className={styles.findingItem}>
+                      {finding}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -267,18 +360,23 @@ export function ToolExecutionCard({ item, isExpanded, onToggleExpand, missingApi
           )}
 
           {/* Recommended Next Steps */}
-          {item.recommended_next_steps && item.recommended_next_steps.length > 0 && (
-            <div className={styles.section}>
-              <div className={styles.sectionLabel}>Recommended Next Steps</div>
-              <div className={styles.sectionContent}>
-                <ul className={styles.stepsList}>
-                  {item.recommended_next_steps.map((step, index) => (
-                    <li key={index} className={styles.stepItem}>{step}</li>
-                  ))}
-                </ul>
+          {item.recommended_next_steps &&
+            item.recommended_next_steps.length > 0 && (
+              <div className={styles.section}>
+                <div className={styles.sectionLabel}>
+                  Recommended Next Steps
+                </div>
+                <div className={styles.sectionContent}>
+                  <ul className={styles.stepsList}>
+                    {item.recommended_next_steps.map((step, index) => (
+                      <li key={index} className={styles.stepItem}>
+                        {step}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Progress Bar for Running Tools */}
           {item.status === 'running' && (
@@ -291,5 +389,5 @@ export function ToolExecutionCard({ item, isExpanded, onToggleExpand, missingApi
         </div>
       )}
     </div>
-  )
+  );
 }

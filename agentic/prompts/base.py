@@ -756,6 +756,18 @@ CACHE_PREFIX_END_MARKER = "<<REDAMON_CACHE_PREFIX_END>>"
 
 REACT_SYSTEM_PROMPT = """You are RedAmon, an AI penetration testing assistant using the ReAct (Reasoning and Acting) framework.
 
+## Output Language
+
+You MUST write all user-visible text fields in **Korean (한국어)**:
+- `thought`, `reasoning`: Write in Korean. Keep technical terms (CVE IDs, tool names, commands, IP addresses, URLs, protocol names) in English.
+- `completion_reason`: Write in Korean.
+- `user_question.question`, `user_question.context`: Write in Korean.
+- `updated_todo_list[].description`: Write in Korean.
+- `phase_transition.reason`, `phase_transition.planned_actions[]`, `phase_transition.risks[]`: Write in Korean.
+- All JSON structure keys, `action` values, `tool_name` values, `tool_args` content: Keep in English exactly as specified.
+- `output_analysis` internal fields (`interpretation`, `actionable_findings`, `recommended_next_steps`, `what_was_new`, `rationale`): Write in Korean.
+- `chain_findings[].title`, `chain_findings[].evidence`: Write title in Korean, evidence in original language.
+
 ## Your Operating Model
 
 You work step-by-step using the Thought-Tool-Output pattern:
@@ -1086,25 +1098,25 @@ Then decide your next action as usual.
 # PHASE TRANSITION PROMPT
 # =============================================================================
 
-PHASE_TRANSITION_MESSAGE = """## Phase Transition Request
+PHASE_TRANSITION_MESSAGE = """## 페이즈 전환 요청
 
-I need your approval to proceed from **{from_phase}** to **{to_phase}**.
+**{from_phase}** 에서 **{to_phase}** 로 진행하려면 승인이 필요합니다.
 
-### Reason
+### 이유
 {reason}
 
-### Planned Actions
+### 계획 작업
 {planned_actions}
 
-### Potential Risks
+### 잠재적 위험
 {risks}
 
 ---
 
-Please respond with:
-- **Approve** - Proceed with the transition
-- **Modify** - Modify the plan (provide your changes)
-- **Abort** - Cancel and stay in current phase
+다음 중 하나로 응답해 주세요:
+- **승인** - 전환을 진행합니다
+- **수정** - 계획을 수정합니다 (변경사항 제공)
+- **취소** - 취소하고 현재 페이즈를 유지합니다
 """
 
 
@@ -1112,28 +1124,28 @@ Please respond with:
 # USER QUESTION PROMPT
 # =============================================================================
 
-USER_QUESTION_MESSAGE = """## Question for User
+USER_QUESTION_MESSAGE = """## 사용자에게 질문
 
-I need additional information to proceed effectively.
+진행을 위해 추가 정보가 필요합니다.
 
-### Question
+### 질문
 {question}
 
-### Why I'm Asking
+### 질문 이유
 {context}
 
-### Response Format
+### 응답 형식
 {format}
 
-### Options
+### 선택지
 {options}
 
-### Default Value
+### 기본값
 {default}
 
 ---
 
-Please provide your answer to continue.
+답변을 입력하면 진행됩니다.
 """
 
 
@@ -1141,7 +1153,7 @@ Please provide your answer to continue.
 # FINAL REPORT PROMPT
 # =============================================================================
 
-FINAL_REPORT_PROMPT = """Generate a summary report of the penetration test session.
+FINAL_REPORT_PROMPT = """Generate a summary report of the penetration test session. Write the entire report in **Korean (한국어)**. Keep technical terms (CVE IDs, IP addresses, tool names, commands, exploit module names) in English.
 
 ## Original Objective
 {objective}
@@ -1177,7 +1189,7 @@ Generate a concise but comprehensive report including:
 # CONVERSATIONAL RESPONSE PROMPT (tier: conversational)
 # =============================================================================
 
-CONVERSATIONAL_RESPONSE_PROMPT = """You completed an informational request. Respond directly and naturally.
+CONVERSATIONAL_RESPONSE_PROMPT = """You completed an informational request. Respond directly and naturally **in Korean (한국어)**. Keep technical terms (CVE IDs, IP addresses, tool names, commands) in English.
 
 ## Original Request
 {objective}
@@ -1207,7 +1219,7 @@ Respond directly to the user's request in a clear, conversational tone.
 # SUMMARY RESPONSE PROMPT (tier: summary)
 # =============================================================================
 
-SUMMARY_RESPONSE_PROMPT = """Generate a brief summary of the completed task.
+SUMMARY_RESPONSE_PROMPT = """Generate a brief summary of the completed task **in Korean (한국어)**. Keep technical terms (CVE IDs, IP addresses, tool names, commands, exploit module names, payload names) in English.
 
 ## Original Objective
 {objective}

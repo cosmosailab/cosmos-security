@@ -1,21 +1,31 @@
-'use client'
+'use client';
 
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { GraphToolbar } from './components/GraphToolbar'
-import { FileSystemDrawer } from './components/FileSystemDrawer'
-import { GraphCanvas, AUTO_2D_THRESHOLD } from './components/GraphCanvas'
-import { NodeDrawer } from './components/NodeDrawer'
-import { AIAssistantDrawer } from './components/AIAssistantDrawer'
-import { PageBottomBar } from './components/PageBottomBar'
-import { ReconConfirmModal } from './components/ReconConfirmModal'
-import { GvmConfirmModal } from './components/GvmConfirmModal'
-import { ReconLogsDrawer } from './components/ReconLogsDrawer'
-import { ViewTabs, type ViewMode, type TunnelStatus, type TableViewMode } from './components/ViewTabs'
-import { DataTable } from './components/DataTable'
-import { NodeDetailsTable } from './components/NodeDetailsTable'
-import { JsReconTable, exportJsReconCsv, exportJsReconJson, exportJsReconMarkdown } from './components/JsReconTable'
-import type { JsReconData } from './components/JsReconTable'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { GraphToolbar } from './components/GraphToolbar';
+import { FileSystemDrawer } from './components/FileSystemDrawer';
+import { GraphCanvas, AUTO_2D_THRESHOLD } from './components/GraphCanvas';
+import { NodeDrawer } from './components/NodeDrawer';
+import { AIAssistantDrawer } from './components/AIAssistantDrawer';
+import { PageBottomBar } from './components/PageBottomBar';
+import { ReconConfirmModal } from './components/ReconConfirmModal';
+import { GvmConfirmModal } from './components/GvmConfirmModal';
+import { ReconLogsDrawer } from './components/ReconLogsDrawer';
+import {
+  ViewTabs,
+  type ViewMode,
+  type TunnelStatus,
+  type TableViewMode,
+} from './components/ViewTabs';
+import { DataTable } from './components/DataTable';
+import { NodeDetailsTable } from './components/NodeDetailsTable';
+import {
+  JsReconTable,
+  exportJsReconCsv,
+  exportJsReconJson,
+  exportJsReconMarkdown,
+} from './components/JsReconTable';
+import type { JsReconData } from './components/JsReconTable';
 import {
   KillChainTable,
   BlastRadiusTable,
@@ -30,62 +40,106 @@ import {
   ThreatIntelTable,
   SupplyChainTable,
   DnsDriftTable,
-} from './components/RedZoneTables'
-import { ActiveSessions } from './components/ActiveSessions'
-import { RoeViewer } from './components/RoeViewer'
-import { KaliTerminal } from './components/KaliTerminal'
-import { GraphViews } from './components/GraphViews'
-import { GitHubStarBanner } from './components/GitHubStarBanner'
-import { useGraphData, useDimensions, useNodeSelection, useTableData, useGraphViews } from './hooks'
-import { useStableGraphData } from './hooks/useStableGraphData'
-import { exportToCsv, exportToJson, exportToMarkdown } from './utils/exportCsv'
-import { clusterGraphData } from './utils/clusterNodes'
-import { useTheme, useSession, useReconStatus, useReconSSE, useGvmStatus, useGvmSSE, useGithubHuntStatus, useGithubHuntSSE, useTrufflehogStatus, useTrufflehogSSE, useActiveSessions, useMultiPartialReconStatus, useMultiPartialReconSSE } from '@/hooks'
-import { useProjectById } from '@/hooks/useProjects'
-import { useGraphTypeFilterPrefs, useGraphViewPrefs } from '@/hooks/useUserPreferences'
-import { useProject } from '@/providers/ProjectProvider'
-import { GVM_PHASES, GITHUB_HUNT_PHASES, TRUFFLEHOG_PHASES, PARTIAL_RECON_PHASE_MAP } from '@/lib/recon-types'
-import { WORKFLOW_TOOLS } from '@/components/projects/ProjectForm/WorkflowView/workflowDefinition'
-import type { ReconStatus } from '@/lib/recon-types'
-import { OtherScansModal } from './components/OtherScansModal/OtherScansModal'
-import { useAlertModal, useToast } from '@/components/ui'
-import styles from './page.module.css'
+} from './components/RedZoneTables';
+import { ActiveSessions } from './components/ActiveSessions';
+import { RoeViewer } from './components/RoeViewer';
+import { KaliTerminal } from './components/KaliTerminal';
+import { GraphViews } from './components/GraphViews';
+import {
+  useGraphData,
+  useDimensions,
+  useNodeSelection,
+  useTableData,
+  useGraphViews,
+} from './hooks';
+import { useStableGraphData } from './hooks/useStableGraphData';
+import { exportToCsv, exportToJson, exportToMarkdown } from './utils/exportCsv';
+import { clusterGraphData } from './utils/clusterNodes';
+import {
+  useTheme,
+  useSession,
+  useReconStatus,
+  useReconSSE,
+  useGvmStatus,
+  useGvmSSE,
+  useGithubHuntStatus,
+  useGithubHuntSSE,
+  useTrufflehogStatus,
+  useTrufflehogSSE,
+  useActiveSessions,
+  useMultiPartialReconStatus,
+  useMultiPartialReconSSE,
+} from '@/hooks';
+import { useProjectById } from '@/hooks/useProjects';
+import {
+  useGraphTypeFilterPrefs,
+  useGraphViewPrefs,
+} from '@/hooks/useUserPreferences';
+import { useProject } from '@/providers/ProjectProvider';
+import {
+  GVM_PHASES,
+  GITHUB_HUNT_PHASES,
+  TRUFFLEHOG_PHASES,
+  PARTIAL_RECON_PHASE_MAP,
+} from '@/lib/recon-types';
+import { WORKFLOW_TOOLS } from '@/components/projects/ProjectForm/WorkflowView/workflowDefinition';
+import type { ReconStatus } from '@/lib/recon-types';
+import { OtherScansModal } from './components/OtherScansModal/OtherScansModal';
+import { useAlertModal, useToast } from '@/components/ui';
+import styles from './page.module.css';
 
 export default function GraphPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { alertError } = useAlertModal()
-  const toast = useToast()
-  const { projectId, userId, currentProject, setCurrentProject, isLoading: projectLoading } = useProject()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { alertError } = useAlertModal();
+  const toast = useToast();
+  const {
+    projectId,
+    userId,
+    currentProject,
+    setCurrentProject,
+    isLoading: projectLoading,
+  } = useProject();
 
-  const [activeView, setActiveView] = useState<ViewMode>('graph')
+  const [activeView, setActiveView] = useState<ViewMode>('graph');
 
   // Full project data for RoE viewer (only fetched when RoE tab is active)
-  const { data: fullProject } = useProjectById(activeView === 'roe' ? projectId : null)
+  const { data: fullProject } = useProjectById(
+    activeView === 'roe' ? projectId : null,
+  );
   // 2D/3D + labels are persisted per-user per-project. The hook returns the
   // saved value (or a sensible default) and the optimistic-updating setter.
-  const {
-    is3D,
-    showLabels,
-    setIs3D,
-    setShowLabels,
-  } = useGraphViewPrefs(projectId)
-  const [isAIOpen, setIsAIOpen] = useState(false)
-  const [isFileSystemOpen, setIsFileSystemOpen] = useState(false)
-  const [isReconModalOpen, setIsReconModalOpen] = useState(false)
-  const [activeLogsDrawer, setActiveLogsDrawer] = useState<'recon' | 'gvm' | 'githubHunt' | 'trufflehog' | `partialRecon:${string}` | null>(null)
-  const [hasReconData, setHasReconData] = useState(false)
-  const [hasGvmData, setHasGvmData] = useState(false)
-  const [hasGithubHuntData, setHasGithubHuntData] = useState(false)
-  const [hasTrufflehogData, setHasTrufflehogData] = useState(false)
-  const [gvmAvailable, setGvmAvailable] = useState(true)
-  const [isOtherScansModalOpen, setIsOtherScansModalOpen] = useState(false)
-  const [hasGithubToken, setHasGithubToken] = useState(false)
-  const [graphStats, setGraphStats] = useState<{ totalNodes: number; nodesByType: Record<string, number> } | null>(null)
-  const [gvmStats, setGvmStats] = useState<{ totalGvmNodes: number; nodesByType: Record<string, number> } | null>(null)
-  const [isGvmModalOpen, setIsGvmModalOpen] = useState(false)
-  const contentRef = useRef<HTMLDivElement>(null)
-  const bodyRef = useRef<HTMLDivElement>(null)
+  const { is3D, showLabels, setIs3D, setShowLabels } =
+    useGraphViewPrefs(projectId);
+  const [isAIOpen, setIsAIOpen] = useState(false);
+  const [isFileSystemOpen, setIsFileSystemOpen] = useState(false);
+  const [isReconModalOpen, setIsReconModalOpen] = useState(false);
+  const [activeLogsDrawer, setActiveLogsDrawer] = useState<
+    | 'recon'
+    | 'gvm'
+    | 'githubHunt'
+    | 'trufflehog'
+    | `partialRecon:${string}`
+    | null
+  >(null);
+  const [hasReconData, setHasReconData] = useState(false);
+  const [hasGvmData, setHasGvmData] = useState(false);
+  const [hasGithubHuntData, setHasGithubHuntData] = useState(false);
+  const [hasTrufflehogData, setHasTrufflehogData] = useState(false);
+  const [gvmAvailable, setGvmAvailable] = useState(true);
+  const [isOtherScansModalOpen, setIsOtherScansModalOpen] = useState(false);
+  const [hasGithubToken, setHasGithubToken] = useState(false);
+  const [graphStats, setGraphStats] = useState<{
+    totalNodes: number;
+    nodesByType: Record<string, number>;
+  } | null>(null);
+  const [gvmStats, setGvmStats] = useState<{
+    totalGvmNodes: number;
+    nodesByType: Record<string, number>;
+  } | null>(null);
+  const [isGvmModalOpen, setIsGvmModalOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   const {
     selectedNode,
@@ -95,147 +149,184 @@ export default function GraphPage() {
     clearSelection,
     expandChild,
     collapseChild,
-  } = useNodeSelection()
+  } = useNodeSelection();
   // Toggle the FS drawer. Opening must close the node drawer first - both
   // live on the left edge of the graph; otherwise the FS would slide over
   // the node panel and the user would see a confusing stack.
   const toggleFileSystemDrawer = useCallback(() => {
-    setIsFileSystemOpen(prev => {
-      if (!prev) clearSelection()
-      return !prev
-    })
-  }, [clearSelection])
-  const handleNodeClick = useCallback((node: Parameters<typeof selectNode>[0]) => {
-    setIsFileSystemOpen(false)
-    selectNode(node)
-  }, [selectNode])
-  const dimensions = useDimensions(contentRef)
+    setIsFileSystemOpen((prev) => {
+      if (!prev) clearSelection();
+      return !prev;
+    });
+  }, [clearSelection]);
+  const handleNodeClick = useCallback(
+    (node: Parameters<typeof selectNode>[0]) => {
+      setIsFileSystemOpen(false);
+      selectNode(node);
+    },
+    [selectNode],
+  );
+  const dimensions = useDimensions(contentRef);
 
   // Close all drawers when project changes
   useEffect(() => {
-    setIsAIOpen(false)
-    setActiveLogsDrawer(null)
-    clearSelection()
-  }, [projectId, clearSelection])
+    setIsAIOpen(false);
+    setActiveLogsDrawer(null);
+    clearSelection();
+  }, [projectId, clearSelection]);
 
   // Track .body position for fixed-position log drawers
   useEffect(() => {
-    const body = bodyRef.current
-    if (!body) return
+    const body = bodyRef.current;
+    if (!body) return;
     const update = () => {
-      const rect = body.getBoundingClientRect()
-      document.documentElement.style.setProperty('--drawer-top', `${rect.top}px`)
-      document.documentElement.style.setProperty('--drawer-bottom', `${window.innerHeight - rect.bottom}px`)
-    }
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(body)
-    window.addEventListener('resize', update)
-    return () => { ro.disconnect(); window.removeEventListener('resize', update) }
-  }, [])
+      const rect = body.getBoundingClientRect();
+      document.documentElement.style.setProperty(
+        '--drawer-top',
+        `${rect.top}px`,
+      );
+      document.documentElement.style.setProperty(
+        '--drawer-bottom',
+        `${window.innerHeight - rect.bottom}px`,
+      );
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(body);
+    window.addEventListener('resize', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
   // Check if GVM stack is installed
   useEffect(() => {
     fetch('/api/gvm/available')
-      .then(res => res.json())
-      .then(data => setGvmAvailable(data.available ?? false))
-      .catch(() => setGvmAvailable(false))
-  }, [])
+      .then((res) => res.json())
+      .then((data) => setGvmAvailable(data.available ?? false))
+      .catch(() => setGvmAvailable(false));
+  }, []);
 
-  const { isDark } = useTheme()
-  const { sessionId, resetSession, switchSession } = useSession()
+  const { isDark } = useTheme();
+  const { sessionId, resetSession, switchSession } = useSession();
 
   // Data filters (formerly graph views) -- used in tab selector, Graph Map, Data Table, AI drawer
-  const { views: graphViews, deleteView, executeCypher, fetchViews } = useGraphViews(projectId)
-  const [selectedFilterId, setSelectedFilterId] = useState<string | null>(null)
-  const [filterGraphData, setFilterGraphData] = useState<{ nodes: any[]; links: any[]; projectId: string } | null>(null)
-  const [filterLoading, setFilterLoading] = useState(false)
+  const {
+    views: graphViews,
+    deleteView,
+    executeCypher,
+    fetchViews,
+  } = useGraphViews(projectId);
+  const [selectedFilterId, setSelectedFilterId] = useState<string | null>(null);
+  const [filterGraphData, setFilterGraphData] = useState<{
+    nodes: any[];
+    links: any[];
+    projectId: string;
+  } | null>(null);
+  const [filterLoading, setFilterLoading] = useState(false);
 
   // Resolve the Cypher query for the selected filter (stable across graphViews refetches)
   const selectedFilterCypherQuery = useMemo(() => {
-    if (!selectedFilterId) return null
-    return graphViews.find(v => v.id === selectedFilterId)?.cypherQuery ?? null
-  }, [selectedFilterId, graphViews])
+    if (!selectedFilterId) return null;
+    return (
+      graphViews.find((v) => v.id === selectedFilterId)?.cypherQuery ?? null
+    );
+  }, [selectedFilterId, graphViews]);
 
   // Active filter Cypher for the agent
-  const selectedFilterCypher = selectedFilterCypherQuery ?? undefined
+  const selectedFilterCypher = selectedFilterCypherQuery ?? undefined;
 
   // Clear filter if the selected filter gets deleted
-  const handleDeleteFilter = useCallback(async (id: string) => {
-    const ok = await deleteView(id)
-    if (ok && selectedFilterId === id) {
-      setSelectedFilterId(null)
-    }
-  }, [deleteView, selectedFilterId])
+  const handleDeleteFilter = useCallback(
+    async (id: string) => {
+      const ok = await deleteView(id);
+      if (ok && selectedFilterId === id) {
+        setSelectedFilterId(null);
+      }
+    },
+    [deleteView, selectedFilterId],
+  );
 
   // Callback for when a new filter is created in the GraphViews tab
   const handleFilterCreated = useCallback(() => {
-    fetchViews()
-  }, [fetchViews])
+    fetchViews();
+  }, [fetchViews]);
 
-  const handleFilterCreatedAndSelect = useCallback((filterId: string) => {
-    fetchViews()
-    setSelectedFilterId(filterId)
-    setActiveView('graph')
-  }, [fetchViews])
+  const handleFilterCreatedAndSelect = useCallback(
+    (filterId: string) => {
+      fetchViews();
+      setSelectedFilterId(filterId);
+      setActiveView('graph');
+    },
+    [fetchViews],
+  );
 
   // Agent status polling — lightweight fetch every 5s for toolbar indicators
   const [agentSummary, setAgentSummary] = useState<{
-    activeCount: number
+    activeCount: number;
     conversations: Array<{
-      id: string
-      title: string
-      currentPhase: string
-      iterationCount: number
-      agentRunning: boolean
-      sessionId: string
-    }>
-  }>({ activeCount: 0, conversations: [] })
+      id: string;
+      title: string;
+      currentPhase: string;
+      iterationCount: number;
+      agentRunning: boolean;
+      sessionId: string;
+    }>;
+  }>({ activeCount: 0, conversations: [] });
 
   useEffect(() => {
-    if (!projectId || !userId) return
+    if (!projectId || !userId) return;
     const fetchStatus = async () => {
       try {
-        const res = await fetch(`/api/conversations?projectId=${projectId}&userId=${userId}`)
-        if (!res.ok) return
-        const convs = await res.json()
-        const active = convs.filter((c: any) => c.agentRunning)
-        setAgentSummary({ activeCount: active.length, conversations: convs })
-      } catch { /* ignore fetch errors */ }
-    }
-    fetchStatus()
-    const interval = setInterval(fetchStatus, 5000)
-    return () => clearInterval(interval)
-  }, [projectId, userId])
+        const res = await fetch(
+          `/api/conversations?projectId=${projectId}&userId=${userId}`,
+        );
+        if (!res.ok) return;
+        const convs = await res.json();
+        const active = convs.filter((c: any) => c.agentRunning);
+        setAgentSummary({ activeCount: active.length, conversations: convs });
+      } catch {
+        /* ignore fetch errors */
+      }
+    };
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 5000);
+    return () => clearInterval(interval);
+  }, [projectId, userId]);
 
   // Tunnel status polling — check every 10s which tunnels are active
-  const [tunnelStatus, setTunnelStatus] = useState<TunnelStatus>()
+  const [tunnelStatus, setTunnelStatus] = useState<TunnelStatus>();
 
   useEffect(() => {
     const fetchTunnels = async () => {
       try {
-        const res = await fetch('/api/agent/tunnel-status')
-        if (res.ok) setTunnelStatus(await res.json())
-      } catch { /* ignore */ }
-    }
-    fetchTunnels()
-    const interval = setInterval(fetchTunnels, 10000)
-    return () => clearInterval(interval)
-  }, [])
+        const res = await fetch('/api/agent/tunnel-status');
+        if (res.ok) setTunnelStatus(await res.json());
+      } catch {
+        /* ignore */
+      }
+    };
+    fetchTunnels();
+    const interval = setInterval(fetchTunnels, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Check if user has a GitHub access token configured in global settings
   useEffect(() => {
-    if (!userId) return
+    if (!userId) return;
     const checkToken = async () => {
       try {
-        const res = await fetch(`/api/users/${userId}/settings`)
+        const res = await fetch(`/api/users/${userId}/settings`);
         if (res.ok) {
-          const data = await res.json()
-          setHasGithubToken((data.githubAccessToken || '').length > 0)
+          const data = await res.json();
+          setHasGithubToken((data.githubAccessToken || '').length > 0);
         }
-      } catch { /* ignore */ }
-    }
-    checkToken()
-  }, [userId])
+      } catch {
+        /* ignore */
+      }
+    };
+    checkToken();
+  }, [userId]);
 
   // Recon status hook - must be before useGraphData to provide isReconRunning
   const {
@@ -248,57 +339,74 @@ export default function GraphPage() {
   } = useReconStatus({
     projectId,
     enabled: !!projectId,
-  })
+  });
 
   // Check if recon is running to enable auto-refresh of graph data
-  const isReconRunning = reconState?.status === 'running' || reconState?.status === 'starting'
+  const isReconRunning =
+    reconState?.status === 'running' || reconState?.status === 'starting';
 
   // Check if any agent conversation is active (writes attack chain nodes to graph)
-  const isAgentRunning = agentSummary.activeCount > 0
+  const isAgentRunning = agentSummary.activeCount > 0;
 
   // Graph data -- no timer polling. Refetches are event-driven:
   //  - full recon SSE log events (via useReconSSE onLog)
   //  - partial recon SSE log events (via useMultiPartialReconSSE onLog)
   //  - agent tool-completion websocket events (via AIAssistantDrawer onRefetchGraph)
   //  - pipeline completion (refetchAfterCompletion)
-  const { data, isLoading, error, refetch: refetchGraph, refetchFresh } = useGraphData(projectId)
+  const {
+    data,
+    isLoading,
+    error,
+    refetch: refetchGraph,
+    refetchFresh,
+  } = useGraphData(projectId);
 
   // Debounced refetch: SSE log events fire rapidly during a scan; we only need
   // to re-pull the graph at most once per ~1.5s to pick up newly written nodes.
-  const refetchGraphDebounceRef = useRef<NodeJS.Timeout | null>(null)
+  const refetchGraphDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const triggerGraphRefetch = useCallback(() => {
-    if (refetchGraphDebounceRef.current) return
+    if (refetchGraphDebounceRef.current) return;
     refetchGraphDebounceRef.current = setTimeout(() => {
-      refetchGraphDebounceRef.current = null
-      refetchGraph()
-    }, 1500)
-  }, [refetchGraph])
-  useEffect(() => () => {
-    if (refetchGraphDebounceRef.current) clearTimeout(refetchGraphDebounceRef.current)
-  }, [])
+      refetchGraphDebounceRef.current = null;
+      refetchGraph();
+    }, 1500);
+  }, [refetchGraph]);
+  useEffect(
+    () => () => {
+      if (refetchGraphDebounceRef.current)
+        clearTimeout(refetchGraphDebounceRef.current);
+    },
+    [],
+  );
 
   // Execute filter Cypher when selected filter changes or when graph data refreshes
   // (so the filtered view stays in sync with live recon/agent data)
-  const filterRefreshKey = data?.nodes.length ?? 0
+  const filterRefreshKey = data?.nodes.length ?? 0;
   useEffect(() => {
     if (!selectedFilterCypherQuery || !projectId) {
-      setFilterGraphData(null)
-      return
+      setFilterGraphData(null);
+      return;
     }
-    let cancelled = false
-    setFilterLoading(true)
-    executeCypher(selectedFilterCypherQuery).then(result => {
-      if (cancelled) return
-      setFilterLoading(false)
+    let cancelled = false;
+    setFilterLoading(true);
+    executeCypher(selectedFilterCypherQuery).then((result) => {
+      if (cancelled) return;
+      setFilterLoading(false);
       if ('error' in result) {
-        setFilterGraphData(null)
+        setFilterGraphData(null);
       } else {
-        setFilterGraphData({ nodes: result.nodes, links: result.links, projectId })
+        setFilterGraphData({
+          nodes: result.nodes,
+          links: result.links,
+          projectId,
+        });
       }
-    })
-    return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFilterCypherQuery, projectId, executeCypher, filterRefreshKey])
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFilterCypherQuery, projectId, executeCypher, filterRefreshKey]);
 
   // Recon logs SSE hook
   const {
@@ -308,9 +416,13 @@ export default function GraphPage() {
     clearLogs,
   } = useReconSSE({
     projectId,
-    enabled: reconState?.status === 'running' || reconState?.status === 'starting' || reconState?.status === 'paused' || reconState?.status === 'stopping',
+    enabled:
+      reconState?.status === 'running' ||
+      reconState?.status === 'starting' ||
+      reconState?.status === 'paused' ||
+      reconState?.status === 'stopping',
     onLog: triggerGraphRefetch,
-  })
+  });
 
   // Partial Recon multi-run status hook
   const {
@@ -322,12 +434,12 @@ export default function GraphPage() {
   } = useMultiPartialReconStatus({
     projectId,
     enabled: !!projectId,
-  })
+  });
 
   // Derive the active run_id for SSE from the drawer state
   const activePartialReconRunId = activeLogsDrawer?.startsWith('partialRecon:')
     ? activeLogsDrawer.slice('partialRecon:'.length)
-    : null
+    : null;
 
   // Partial Recon multi-run SSE hook (only connects to the visible drawer's run)
   const {
@@ -339,10 +451,10 @@ export default function GraphPage() {
     activeRunId: activePartialReconRunId,
     onLog: triggerGraphRefetch,
     onComplete: () => {
-      triggerGraphRefetch()
-      refetchPartialReconStatuses()
+      triggerGraphRefetch();
+      refetchPartialReconStatuses();
     },
-  })
+  });
 
   // GVM status hook
   const {
@@ -356,9 +468,10 @@ export default function GraphPage() {
   } = useGvmStatus({
     projectId,
     enabled: !!projectId,
-  })
+  });
 
-  const isGvmRunning = gvmState?.status === 'running' || gvmState?.status === 'starting'
+  const isGvmRunning =
+    gvmState?.status === 'running' || gvmState?.status === 'starting';
 
   // GVM logs SSE hook
   const {
@@ -368,8 +481,12 @@ export default function GraphPage() {
     clearLogs: clearGvmLogs,
   } = useGvmSSE({
     projectId,
-    enabled: gvmState?.status === 'running' || gvmState?.status === 'starting' || gvmState?.status === 'paused' || gvmState?.status === 'stopping',
-  })
+    enabled:
+      gvmState?.status === 'running' ||
+      gvmState?.status === 'starting' ||
+      gvmState?.status === 'paused' ||
+      gvmState?.status === 'stopping',
+  });
 
   // GitHub Hunt status hook
   const {
@@ -382,9 +499,11 @@ export default function GraphPage() {
   } = useGithubHuntStatus({
     projectId,
     enabled: !!projectId,
-  })
+  });
 
-  const isGithubHuntRunning = githubHuntState?.status === 'running' || githubHuntState?.status === 'starting'
+  const isGithubHuntRunning =
+    githubHuntState?.status === 'running' ||
+    githubHuntState?.status === 'starting';
 
   // GitHub Hunt logs SSE hook
   const {
@@ -394,8 +513,12 @@ export default function GraphPage() {
     clearLogs: clearGithubHuntLogs,
   } = useGithubHuntSSE({
     projectId,
-    enabled: githubHuntState?.status === 'running' || githubHuntState?.status === 'starting' || githubHuntState?.status === 'paused' || githubHuntState?.status === 'stopping',
-  })
+    enabled:
+      githubHuntState?.status === 'running' ||
+      githubHuntState?.status === 'starting' ||
+      githubHuntState?.status === 'paused' ||
+      githubHuntState?.status === 'stopping',
+  });
 
   // TruffleHog status hook
   const {
@@ -407,9 +530,11 @@ export default function GraphPage() {
   } = useTrufflehogStatus({
     projectId,
     enabled: !!projectId,
-  })
+  });
 
-  const isTrufflehogRunning = trufflehogState?.status === 'running' || trufflehogState?.status === 'starting'
+  const isTrufflehogRunning =
+    trufflehogState?.status === 'running' ||
+    trufflehogState?.status === 'starting';
 
   // TruffleHog logs SSE hook
   const {
@@ -419,24 +544,31 @@ export default function GraphPage() {
     clearLogs: clearTrufflehogLogs,
   } = useTrufflehogSSE({
     projectId,
-    enabled: trufflehogState?.status === 'running' || trufflehogState?.status === 'starting' || trufflehogState?.status === 'paused' || trufflehogState?.status === 'stopping',
-  })
+    enabled:
+      trufflehogState?.status === 'running' ||
+      trufflehogState?.status === 'starting' ||
+      trufflehogState?.status === 'paused' ||
+      trufflehogState?.status === 'stopping',
+  });
 
   // Active sessions hook — polls kali-sandbox session list
   const activeSessions = useActiveSessions({
     enabled: true,
     fastPoll: activeView === 'sessions',
-  })
+  });
 
   // ── Table view state (lifted from DataTable) ──────────────────────────
-  const tableRows = useTableData(data)
-  const filterTableRows = useTableData(filterGraphData ?? undefined)
-  const [globalFilter, setGlobalFilter] = useState('')
-  const [tableViewMode, setTableViewMode] = useState<TableViewMode>('nodeDetails')
-  const [jsReconSearch, setJsReconSearch] = useState('')
-  const [jsReconData, setJsReconData] = useState<JsReconData | null>(null)
-  const [activeNodeTypes, setActiveNodeTypes] = useState<Set<string>>(new Set())
-  const [tableInitialized, setTableInitialized] = useState(false)
+  const tableRows = useTableData(data);
+  const filterTableRows = useTableData(filterGraphData ?? undefined);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [tableViewMode, setTableViewMode] =
+    useState<TableViewMode>('nodeDetails');
+  const [jsReconSearch, setJsReconSearch] = useState('');
+  const [jsReconData, setJsReconData] = useState<JsReconData | null>(null);
+  const [activeNodeTypes, setActiveNodeTypes] = useState<Set<string>>(
+    new Set(),
+  );
+  const [tableInitialized, setTableInitialized] = useState(false);
 
   // Persistent per-project filter for which node types are hidden in the graph
   // bottom-bar chips. Survives reloads and project switches.
@@ -444,728 +576,882 @@ export default function GraphPage() {
     hiddenTypes: savedHiddenTypes,
     setHiddenTypes: setSavedHiddenTypes,
     isLoading: graphFilterPrefsLoading,
-  } = useGraphTypeFilterPrefs(projectId)
+  } = useGraphTypeFilterPrefs(projectId);
 
   const nodeTypeCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    tableRows.forEach(r => {
-      counts[r.node.type] = (counts[r.node.type] || 0) + 1
-    })
-    return counts
-  }, [tableRows])
+    const counts: Record<string, number> = {};
+    tableRows.forEach((r) => {
+      counts[r.node.type] = (counts[r.node.type] || 0) + 1;
+    });
+    return counts;
+  }, [tableRows]);
 
   const filterNodeTypeCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    filterTableRows.forEach(r => {
-      counts[r.node.type] = (counts[r.node.type] || 0) + 1
-    })
-    return counts
-  }, [filterTableRows])
+    const counts: Record<string, number> = {};
+    filterTableRows.forEach((r) => {
+      counts[r.node.type] = (counts[r.node.type] || 0) + 1;
+    });
+    return counts;
+  }, [filterTableRows]);
 
-  const effectiveNodeTypeCounts = selectedFilterId ? filterNodeTypeCounts : nodeTypeCounts
-  const nodeTypes = useMemo(() => Object.keys(effectiveNodeTypeCounts).sort(), [effectiveNodeTypeCounts])
+  const effectiveNodeTypeCounts = selectedFilterId
+    ? filterNodeTypeCounts
+    : nodeTypeCounts;
+  const nodeTypes = useMemo(
+    () => Object.keys(effectiveNodeTypeCounts).sort(),
+    [effectiveNodeTypeCounts],
+  );
 
   // Types we've already observed at least once. Used to distinguish "user
   // deselected this type" (still in seen set, don't re-add) from "type just
   // appeared for the first time" (not in seen set, auto-enable).
-  const seenNodeTypesRef = useRef<Set<string>>(new Set())
+  const seenNodeTypesRef = useRef<Set<string>>(new Set());
 
   // Reset active node types when filter selection changes (Surface filter switch).
   // Saved hidden-types are reapplied so the user's persistent selection survives
   // a Surface flip.
   useEffect(() => {
-    if (graphFilterPrefsLoading) return
-    const hidden = new Set(savedHiddenTypes)
-    seenNodeTypesRef.current = new Set(nodeTypes)
-    setActiveNodeTypes(new Set(nodeTypes.filter(t => !hidden.has(t))))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFilterId])
+    if (graphFilterPrefsLoading) return;
+    const hidden = new Set(savedHiddenTypes);
+    seenNodeTypesRef.current = new Set(nodeTypes);
+    setActiveNodeTypes(new Set(nodeTypes.filter((t) => !hidden.has(t))));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFilterId]);
 
   // Re-init when projectId changes so the per-project saved selection takes
   // effect on switch. tableInitialized is reset in a separate effect below.
   useEffect(() => {
-    setTableInitialized(false)
-    seenNodeTypesRef.current = new Set()
-  }, [projectId])
+    setTableInitialized(false);
+    seenNodeTypesRef.current = new Set();
+  }, [projectId]);
 
   useEffect(() => {
     // Defer first init until BOTH the graph data has types AND the user prefs
     // have loaded — otherwise we'd briefly show "all visible" and either flicker
     // or overwrite the saved selection.
     if (nodeTypes.length > 0 && !tableInitialized && !graphFilterPrefsLoading) {
-      const hidden = new Set(savedHiddenTypes)
-      seenNodeTypesRef.current = new Set(nodeTypes)
-      setActiveNodeTypes(new Set(nodeTypes.filter(t => !hidden.has(t))))
-      setTableInitialized(true)
-      return
+      const hidden = new Set(savedHiddenTypes);
+      seenNodeTypesRef.current = new Set(nodeTypes);
+      setActiveNodeTypes(new Set(nodeTypes.filter((t) => !hidden.has(t))));
+      setTableInitialized(true);
+      return;
     }
-    if (!tableInitialized) return
+    if (!tableInitialized) return;
     // Auto-enable genuinely new node types (never observed before) so attack
     // chain nodes created mid-session show up. Deselected types stay hidden.
-    const genuinelyNew = nodeTypes.filter((t: string) => !seenNodeTypesRef.current.has(t))
-    if (genuinelyNew.length === 0) return
-    genuinelyNew.forEach((t: string) => seenNodeTypesRef.current.add(t))
+    const genuinelyNew = nodeTypes.filter(
+      (t: string) => !seenNodeTypesRef.current.has(t),
+    );
+    if (genuinelyNew.length === 0) return;
+    genuinelyNew.forEach((t: string) => seenNodeTypesRef.current.add(t));
     setActiveNodeTypes((prev: Set<string>) => {
-      const next = new Set(prev)
-      genuinelyNew.forEach((t: string) => next.add(t))
-      return next
-    })
-  }, [nodeTypes, tableInitialized, graphFilterPrefsLoading, savedHiddenTypes])
+      const next = new Set(prev);
+      genuinelyNew.forEach((t: string) => next.add(t));
+      return next;
+    });
+  }, [nodeTypes, tableInitialized, graphFilterPrefsLoading, savedHiddenTypes]);
 
   const filteredByTypeOnly = useMemo(() => {
-    if (activeNodeTypes.size === 0) return []
-    return tableRows.filter(r => activeNodeTypes.has(r.node.type))
-  }, [tableRows, activeNodeTypes])
+    if (activeNodeTypes.size === 0) return [];
+    return tableRows.filter((r) => activeNodeTypes.has(r.node.type));
+  }, [tableRows, activeNodeTypes]);
 
   // ── Session (chain) visibility ──────────────────────────────────────
-  const CHAIN_NODE_TYPES = useMemo(() => new Set([
-    'AttackChain', 'ChainStep', 'ChainDecision', 'ChainFailure', 'ChainFinding',
-  ]), [])
+  const CHAIN_NODE_TYPES = useMemo(
+    () =>
+      new Set([
+        'AttackChain',
+        'ChainStep',
+        'ChainDecision',
+        'ChainFailure',
+        'ChainFinding',
+      ]),
+    [],
+  );
 
-  const effectiveBarData = selectedFilterId ? filterGraphData : data
+  const effectiveBarData = selectedFilterId ? filterGraphData : data;
 
   const sessionChainIds = useMemo(() => {
-    if (!effectiveBarData) return []
-    const ids = new Set<string>()
+    if (!effectiveBarData) return [];
+    const ids = new Set<string>();
     for (const node of effectiveBarData.nodes) {
-      const chainId = node.properties?.chain_id as string | undefined
+      const chainId = node.properties?.chain_id as string | undefined;
       if (chainId && CHAIN_NODE_TYPES.has(node.type)) {
-        ids.add(chainId)
+        ids.add(chainId);
       }
     }
-    return Array.from(ids).sort()
-  }, [effectiveBarData, CHAIN_NODE_TYPES])
+    return Array.from(ids).sort();
+  }, [effectiveBarData, CHAIN_NODE_TYPES]);
 
   const sessionTitles = useMemo(() => {
-    if (!effectiveBarData) return {} as Record<string, string>
-    const titles: Record<string, string> = {}
+    if (!effectiveBarData) return {} as Record<string, string>;
+    const titles: Record<string, string> = {};
     for (const node of effectiveBarData.nodes) {
       if (node.type === 'AttackChain') {
-        const chainId = node.properties?.chain_id as string | undefined
-        const title = node.properties?.title as string | undefined
+        const chainId = node.properties?.chain_id as string | undefined;
+        const title = node.properties?.title as string | undefined;
         if (chainId && title) {
-          titles[chainId] = title
+          titles[chainId] = title;
         }
       }
     }
-    return titles
-  }, [effectiveBarData])
+    return titles;
+  }, [effectiveBarData]);
 
-  const [hiddenSessions, setHiddenSessions] = useState<Set<string>>(new Set())
+  const [hiddenSessions, setHiddenSessions] = useState<Set<string>>(new Set());
 
   // Auto-show newly discovered sessions
   useEffect(() => {
     setHiddenSessions((prev: Set<string>) => {
-      const updated = new Set<string>()
+      const updated = new Set<string>();
       for (const id of prev) {
-        if (sessionChainIds.includes(id)) updated.add(id)
+        if (sessionChainIds.includes(id)) updated.add(id);
       }
-      return updated.size !== prev.size ? updated : prev
-    })
-  }, [sessionChainIds])
+      return updated.size !== prev.size ? updated : prev;
+    });
+  }, [sessionChainIds]);
 
   const handleToggleSession = useCallback((chainId: string) => {
     setHiddenSessions((prev: Set<string>) => {
-      const next = new Set(prev)
-      if (next.has(chainId)) next.delete(chainId)
-      else next.add(chainId)
-      return next
-    })
-  }, [])
+      const next = new Set(prev);
+      if (next.has(chainId)) next.delete(chainId);
+      else next.add(chainId);
+      return next;
+    });
+  }, []);
 
   const handleShowAllSessions = useCallback(() => {
-    setHiddenSessions(new Set())
-  }, [])
+    setHiddenSessions(new Set());
+  }, []);
 
   const handleHideAllSessions = useCallback(() => {
-    setHiddenSessions(new Set(sessionChainIds))
-  }, [sessionChainIds])
+    setHiddenSessions(new Set(sessionChainIds));
+  }, [sessionChainIds]);
 
   // "Hide other chains" / "Show all" toggle for the AI drawer
   const isOtherChainsHidden = useMemo(() => {
-    if (hiddenSessions.size === 0) return false
-    const otherChains = sessionChainIds.filter((id: string) => id !== sessionId)
-    if (otherChains.length === 0) return false
-    return otherChains.every((id: string) => hiddenSessions.has(id))
-  }, [hiddenSessions, sessionChainIds, sessionId])
+    if (hiddenSessions.size === 0) return false;
+    const otherChains = sessionChainIds.filter(
+      (id: string) => id !== sessionId,
+    );
+    if (otherChains.length === 0) return false;
+    return otherChains.every((id: string) => hiddenSessions.has(id));
+  }, [hiddenSessions, sessionChainIds, sessionId]);
 
   const handleToggleOtherChains = useCallback(() => {
-    const otherChains = sessionChainIds.filter((id: string) => id !== sessionId)
+    const otherChains = sessionChainIds.filter(
+      (id: string) => id !== sessionId,
+    );
     setHiddenSessions((prev: Set<string>) => {
-      const allOthersHidden = otherChains.every((id: string) => prev.has(id))
+      const allOthersHidden = otherChains.every((id: string) => prev.has(id));
       if (allOthersHidden) {
-        return new Set()
+        return new Set();
       } else {
-        return new Set(otherChains)
+        return new Set(otherChains);
       }
-    })
-  }, [sessionChainIds, sessionId])
+    });
+  }, [sessionChainIds, sessionId]);
   // ── End session visibility ────────────────────────────────────────
 
   // Table rows filtered by type + hidden sessions
   const filteredByType = useMemo(() => {
-    if (hiddenSessions.size === 0) return filteredByTypeOnly
-    return filteredByTypeOnly.filter((r: { node: { type: string; properties: Record<string, unknown> } }) => {
-      if (CHAIN_NODE_TYPES.has(r.node.type)) {
-        const chainId = r.node.properties?.chain_id as string | undefined
-        if (chainId && hiddenSessions.has(chainId)) return false
-      }
-      return true
-    })
-  }, [filteredByTypeOnly, hiddenSessions, CHAIN_NODE_TYPES])
+    if (hiddenSessions.size === 0) return filteredByTypeOnly;
+    return filteredByTypeOnly.filter(
+      (r: { node: { type: string; properties: Record<string, unknown> } }) => {
+        if (CHAIN_NODE_TYPES.has(r.node.type)) {
+          const chainId = r.node.properties?.chain_id as string | undefined;
+          if (chainId && hiddenSessions.has(chainId)) return false;
+        }
+        return true;
+      },
+    );
+  }, [filteredByTypeOnly, hiddenSessions, CHAIN_NODE_TYPES]);
 
   // Filtered graph data for GraphCanvas (filter nodes by type + hidden sessions, then prune links)
   const filteredGraphData = useMemo(() => {
-    if (!data) return undefined
-    const allTypesActive = activeNodeTypes.size === nodeTypes.length
-    const noSessionsHidden = hiddenSessions.size === 0
-    if (allTypesActive && noSessionsHidden) return data // nothing filtered
-    const filteredNodes = data.nodes.filter(n => {
-      if (!activeNodeTypes.has(n.type)) return false
+    if (!data) return undefined;
+    const allTypesActive = activeNodeTypes.size === nodeTypes.length;
+    const noSessionsHidden = hiddenSessions.size === 0;
+    if (allTypesActive && noSessionsHidden) return data; // nothing filtered
+    const filteredNodes = data.nodes.filter((n) => {
+      if (!activeNodeTypes.has(n.type)) return false;
       // Hide chain nodes belonging to hidden sessions
       if (hiddenSessions.size > 0 && CHAIN_NODE_TYPES.has(n.type)) {
-        const chainId = n.properties?.chain_id as string | undefined
-        if (chainId && hiddenSessions.has(chainId)) return false
+        const chainId = n.properties?.chain_id as string | undefined;
+        if (chainId && hiddenSessions.has(chainId)) return false;
       }
-      return true
-    })
-    const visibleIds = new Set(filteredNodes.map(n => n.id))
-    const filteredLinks = data.links.filter(l => {
-      const srcId = typeof l.source === 'string' ? l.source : l.source.id
-      const tgtId = typeof l.target === 'string' ? l.target : l.target.id
-      return visibleIds.has(srcId) && visibleIds.has(tgtId)
-    })
-    return { ...data, nodes: filteredNodes, links: filteredLinks }
-  }, [data, activeNodeTypes, nodeTypes.length, hiddenSessions, CHAIN_NODE_TYPES])
+      return true;
+    });
+    const visibleIds = new Set(filteredNodes.map((n) => n.id));
+    const filteredLinks = data.links.filter((l) => {
+      const srcId = typeof l.source === 'string' ? l.source : l.source.id;
+      const tgtId = typeof l.target === 'string' ? l.target : l.target.id;
+      return visibleIds.has(srcId) && visibleIds.has(tgtId);
+    });
+    return { ...data, nodes: filteredNodes, links: filteredLinks };
+  }, [
+    data,
+    activeNodeTypes,
+    nodeTypes.length,
+    hiddenSessions,
+    CHAIN_NODE_TYPES,
+  ]);
 
   // Clustered graph data for GraphCanvas (collapses >30 same-type leaf neighbors sharing a parent).
   // Applied AFTER filtering so hiding a child type also dissolves its clusters.
   const clusteredGraphData = useMemo(() => {
-    const src = filterGraphData ?? filteredGraphData
-    if (!src) return undefined
-    return clusterGraphData(src)
-  }, [filterGraphData, filteredGraphData])
+    const src = filterGraphData ?? filteredGraphData;
+    if (!src) return undefined;
+    return clusterGraphData(src);
+  }, [filterGraphData, filteredGraphData]);
 
   // Stable graph data for GraphCanvas: preserves node object identity across
   // refetches and pre-resolves link source/target string ids to node refs.
   // Without this, incremental updates (new nodes from recon/partial recon) flash
   // edges drawn to undefined coordinates ("edges to the void") until d3-force
   // finishes resolving ids on its next tick.
-  const stableGraphData = useStableGraphData(clusteredGraphData)
+  const stableGraphData = useStableGraphData(clusteredGraphData);
 
   // Clusters count as single nodes for the 3D threshold — use clustered count.
-  const displayedNodeCount = stableGraphData?.nodes.length ?? 0
-  const effectiveIs3D = is3D && displayedNodeCount <= AUTO_2D_THRESHOLD
+  const displayedNodeCount = stableGraphData?.nodes.length ?? 0;
+  const effectiveIs3D = is3D && displayedNodeCount <= AUTO_2D_THRESHOLD;
 
   // Effective table rows: use filter data when a data filter is active
-  const effectiveTableRows = selectedFilterId ? filterTableRows : filteredByType
+  const effectiveTableRows = selectedFilterId
+    ? filterTableRows
+    : filteredByType;
 
   const textFilteredCount = useMemo(() => {
-    if (!globalFilter) return effectiveTableRows.length
-    const search = globalFilter.toLowerCase()
-    return effectiveTableRows.filter(r =>
-      r.node.name?.toLowerCase().includes(search) ||
-      r.node.type?.toLowerCase().includes(search)
-    ).length
-  }, [effectiveTableRows, globalFilter])
+    if (!globalFilter) return effectiveTableRows.length;
+    const search = globalFilter.toLowerCase();
+    return effectiveTableRows.filter(
+      (r) =>
+        r.node.name?.toLowerCase().includes(search) ||
+        r.node.type?.toLowerCase().includes(search),
+    ).length;
+  }, [effectiveTableRows, globalFilter]);
 
-  const handleToggleNodeType = useCallback((type: string) => {
-    setActiveNodeTypes(prev => {
-      const next = new Set(prev)
-      if (next.has(type)) next.delete(type)
-      else next.add(type)
-      // Persist as HIDDEN list (inverse of visible) so newly discovered types
-      // default to visible without any DB write.
-      setSavedHiddenTypes(nodeTypes.filter(t => !next.has(t)))
-      return next
-    })
-  }, [nodeTypes, setSavedHiddenTypes])
+  const handleToggleNodeType = useCallback(
+    (type: string) => {
+      setActiveNodeTypes((prev) => {
+        const next = new Set(prev);
+        if (next.has(type)) next.delete(type);
+        else next.add(type);
+        // Persist as HIDDEN list (inverse of visible) so newly discovered types
+        // default to visible without any DB write.
+        setSavedHiddenTypes(nodeTypes.filter((t) => !next.has(t)));
+        return next;
+      });
+    },
+    [nodeTypes, setSavedHiddenTypes],
+  );
 
   const handleSelectAllTypes = useCallback(() => {
-    setActiveNodeTypes(new Set(nodeTypes))
-    setSavedHiddenTypes([])
-  }, [nodeTypes, setSavedHiddenTypes])
+    setActiveNodeTypes(new Set(nodeTypes));
+    setSavedHiddenTypes([]);
+  }, [nodeTypes, setSavedHiddenTypes]);
 
   const handleClearAllTypes = useCallback(() => {
-    setActiveNodeTypes(new Set())
-    setSavedHiddenTypes(nodeTypes.slice())
-  }, [nodeTypes, setSavedHiddenTypes])
+    setActiveNodeTypes(new Set());
+    setSavedHiddenTypes(nodeTypes.slice());
+  }, [nodeTypes, setSavedHiddenTypes]);
 
   const filteredExportRows = useCallback(() => {
-    let rows = effectiveTableRows
+    let rows = effectiveTableRows;
     if (globalFilter) {
-      const search = globalFilter.toLowerCase()
-      rows = rows.filter(r =>
-        r.node.name?.toLowerCase().includes(search) ||
-        r.node.type?.toLowerCase().includes(search)
-      )
+      const search = globalFilter.toLowerCase();
+      rows = rows.filter(
+        (r) =>
+          r.node.name?.toLowerCase().includes(search) ||
+          r.node.type?.toLowerCase().includes(search),
+      );
     }
-    return rows
-  }, [effectiveTableRows, globalFilter])
+    return rows;
+  }, [effectiveTableRows, globalFilter]);
 
   // Tracks which All-Nodes / JS Recon export format is currently being
   // generated, so the corresponding button can show a spinner instead of
   // the download icon.
-  const [allNodesExporting, setAllNodesExporting] = useState<'csv' | 'json' | 'md' | null>(null)
-  const [jsReconExporting, setJsReconExporting] = useState<'csv' | 'json' | 'md' | null>(null)
+  const [allNodesExporting, setAllNodesExporting] = useState<
+    'csv' | 'json' | 'md' | null
+  >(null);
+  const [jsReconExporting, setJsReconExporting] = useState<
+    'csv' | 'json' | 'md' | null
+  >(null);
 
   const handleExportCsv = useCallback(async () => {
-    if (allNodesExporting) return
-    setAllNodesExporting('csv')
+    if (allNodesExporting) return;
+    setAllNodesExporting('csv');
     try {
-      await exportToCsv(filteredExportRows())
-      toast.success('CSV exported')
+      await exportToCsv(filteredExportRows());
+      toast.success('CSV를 내보냈습니다');
     } catch (err) {
-      console.error('Failed to export CSV:', err)
-      toast.error('Failed to export CSV')
+      console.error('Failed to export CSV:', err);
+      toast.error('CSV 내보내기에 실패했습니다');
     } finally {
-      setAllNodesExporting(null)
+      setAllNodesExporting(null);
     }
-  }, [filteredExportRows, toast, allNodesExporting])
+  }, [filteredExportRows, toast, allNodesExporting]);
 
   const handleExportJson = useCallback(async () => {
-    if (allNodesExporting) return
-    setAllNodesExporting('json')
+    if (allNodesExporting) return;
+    setAllNodesExporting('json');
     try {
-      await exportToJson(filteredExportRows())
-      toast.success('JSON exported')
+      await exportToJson(filteredExportRows());
+      toast.success('JSON을 내보냈습니다');
     } catch (err) {
-      console.error('Failed to export JSON:', err)
-      toast.error('Failed to export JSON')
+      console.error('Failed to export JSON:', err);
+      toast.error('JSON 내보내기에 실패했습니다');
     } finally {
-      setAllNodesExporting(null)
+      setAllNodesExporting(null);
     }
-  }, [filteredExportRows, toast, allNodesExporting])
+  }, [filteredExportRows, toast, allNodesExporting]);
 
   const handleExportMarkdown = useCallback(async () => {
-    if (allNodesExporting) return
-    setAllNodesExporting('md')
+    if (allNodesExporting) return;
+    setAllNodesExporting('md');
     try {
-      await exportToMarkdown(filteredExportRows())
-      toast.success('Markdown exported')
+      await exportToMarkdown(filteredExportRows());
+      toast.success('Markdown을 내보냈습니다');
     } catch (err) {
-      console.error('Failed to export Markdown:', err)
-      toast.error('Failed to export Markdown')
+      console.error('Failed to export Markdown:', err);
+      toast.error('Markdown 내보내기에 실패했습니다');
     } finally {
-      setAllNodesExporting(null)
+      setAllNodesExporting(null);
     }
-  }, [filteredExportRows, toast, allNodesExporting])
+  }, [filteredExportRows, toast, allNodesExporting]);
 
   // ── End table view state ──────────────────────────────────────────────
 
   // Check if recon data exists
   const checkReconData = useCallback(async () => {
-    if (!projectId) return
+    if (!projectId) return;
     try {
-      const response = await fetch(`/api/recon/${projectId}/download`, { method: 'HEAD' })
-      setHasReconData(response.ok)
+      const response = await fetch(`/api/recon/${projectId}/download`, {
+        method: 'HEAD',
+      });
+      setHasReconData(response.ok);
     } catch {
-      setHasReconData(false)
+      setHasReconData(false);
     }
-  }, [projectId])
+  }, [projectId]);
 
   // Calculate graph stats when data changes
   useEffect(() => {
     if (data?.nodes) {
-      const nodesByType: Record<string, number> = {}
-      data.nodes.forEach(node => {
-        const type = node.type || 'Unknown'
-        nodesByType[type] = (nodesByType[type] || 0) + 1
-      })
+      const nodesByType: Record<string, number> = {};
+      data.nodes.forEach((node) => {
+        const type = node.type || 'Unknown';
+        nodesByType[type] = (nodesByType[type] || 0) + 1;
+      });
       setGraphStats({
         totalNodes: data.nodes.length,
         nodesByType,
-      })
+      });
     } else {
-      setGraphStats(null)
+      setGraphStats(null);
     }
-  }, [data])
+  }, [data]);
 
   // Calculate GVM-specific stats from graph data
   useEffect(() => {
     if (data?.nodes) {
-      const gvmTypes: Record<string, number> = {}
-      let total = 0
-      data.nodes.forEach(node => {
-        const isGvmVuln = node.type === 'Vulnerability' && node.properties?.source === 'gvm'
-        const isGvmTech = node.type === 'Technology' && (node.properties?.detected_by as string[] | undefined)?.includes('gvm')
+      const gvmTypes: Record<string, number> = {};
+      let total = 0;
+      data.nodes.forEach((node) => {
+        const isGvmVuln =
+          node.type === 'Vulnerability' && node.properties?.source === 'gvm';
+        const isGvmTech =
+          node.type === 'Technology' &&
+          (node.properties?.detected_by as string[] | undefined)?.includes(
+            'gvm',
+          );
         if (isGvmVuln || isGvmTech) {
-          const type = node.type || 'Unknown'
-          gvmTypes[type] = (gvmTypes[type] || 0) + 1
-          total++
+          const type = node.type || 'Unknown';
+          gvmTypes[type] = (gvmTypes[type] || 0) + 1;
+          total++;
         }
-      })
-      setGvmStats(total > 0 ? { totalGvmNodes: total, nodesByType: gvmTypes } : null)
+      });
+      setGvmStats(
+        total > 0 ? { totalGvmNodes: total, nodesByType: gvmTypes } : null,
+      );
     } else {
-      setGvmStats(null)
+      setGvmStats(null);
     }
-  }, [data])
+  }, [data]);
 
   // Check if GVM data exists
   const checkGvmData = useCallback(async () => {
-    if (!projectId) return
+    if (!projectId) return;
     try {
-      const response = await fetch(`/api/gvm/${projectId}/download`, { method: 'HEAD' })
-      setHasGvmData(response.ok)
+      const response = await fetch(`/api/gvm/${projectId}/download`, {
+        method: 'HEAD',
+      });
+      setHasGvmData(response.ok);
     } catch {
-      setHasGvmData(false)
+      setHasGvmData(false);
     }
-  }, [projectId])
+  }, [projectId]);
 
   // Check if GitHub Hunt data exists
   const checkGithubHuntData = useCallback(async () => {
-    if (!projectId) return
+    if (!projectId) return;
     try {
-      const response = await fetch(`/api/github-hunt/${projectId}/download`, { method: 'HEAD' })
-      setHasGithubHuntData(response.ok)
+      const response = await fetch(`/api/github-hunt/${projectId}/download`, {
+        method: 'HEAD',
+      });
+      setHasGithubHuntData(response.ok);
     } catch {
-      setHasGithubHuntData(false)
+      setHasGithubHuntData(false);
     }
-  }, [projectId])
+  }, [projectId]);
 
   // Check if TruffleHog data exists
   const checkTrufflehogData = useCallback(async () => {
-    if (!projectId) return
+    if (!projectId) return;
     try {
-      const response = await fetch(`/api/trufflehog/${projectId}/download`, { method: 'HEAD' })
-      setHasTrufflehogData(response.ok)
+      const response = await fetch(`/api/trufflehog/${projectId}/download`, {
+        method: 'HEAD',
+      });
+      setHasTrufflehogData(response.ok);
     } catch {
-      setHasTrufflehogData(false)
+      setHasTrufflehogData(false);
     }
-  }, [projectId])
+  }, [projectId]);
 
   // Check for recon/GVM/GitHub Hunt/TruffleHog data on mount and when project changes
   useEffect(() => {
-    checkReconData()
-    checkGvmData()
-    checkGithubHuntData()
-    checkTrufflehogData()
-  }, [checkReconData, checkGvmData, checkGithubHuntData, checkTrufflehogData])
+    checkReconData();
+    checkGvmData();
+    checkGithubHuntData();
+    checkTrufflehogData();
+  }, [checkReconData, checkGvmData, checkGithubHuntData, checkTrufflehogData]);
 
   // Bypass all caches and refetch, with a delayed second fetch
   // to catch background graph-DB writes that may still be flushing.
   const refetchAfterCompletion = useCallback(() => {
-    refetchFresh()
-    const t = setTimeout(() => refetchFresh(), 3000)
-    return () => clearTimeout(t)
-  }, [refetchFresh])
+    refetchFresh();
+    const t = setTimeout(() => refetchFresh(), 3000);
+    return () => clearTimeout(t);
+  }, [refetchFresh]);
 
   // Refresh graph data when recon completes
   useEffect(() => {
     if (reconState?.status === 'completed' || reconState?.status === 'error') {
-      const cleanup = refetchAfterCompletion()
-      checkReconData()
-      return cleanup
+      const cleanup = refetchAfterCompletion();
+      checkReconData();
+      return cleanup;
     }
-  }, [reconState?.status, refetchAfterCompletion, checkReconData])
+  }, [reconState?.status, refetchAfterCompletion, checkReconData]);
 
   // Refresh graph when GVM scan completes
   useEffect(() => {
     if (gvmState?.status === 'completed' || gvmState?.status === 'error') {
-      const cleanup = refetchAfterCompletion()
-      checkGvmData()
-      return cleanup
+      const cleanup = refetchAfterCompletion();
+      checkGvmData();
+      return cleanup;
     }
-  }, [gvmState?.status, refetchAfterCompletion, checkGvmData])
+  }, [gvmState?.status, refetchAfterCompletion, checkGvmData]);
 
   // Refresh when GitHub Hunt completes
   useEffect(() => {
-    if (githubHuntState?.status === 'completed' || githubHuntState?.status === 'error') {
-      const cleanup = refetchAfterCompletion()
-      checkGithubHuntData()
-      return cleanup
+    if (
+      githubHuntState?.status === 'completed' ||
+      githubHuntState?.status === 'error'
+    ) {
+      const cleanup = refetchAfterCompletion();
+      checkGithubHuntData();
+      return cleanup;
     }
-  }, [githubHuntState?.status, refetchAfterCompletion, checkGithubHuntData])
+  }, [githubHuntState?.status, refetchAfterCompletion, checkGithubHuntData]);
 
   // Refresh when TruffleHog completes
   useEffect(() => {
-    if (trufflehogState?.status === 'completed' || trufflehogState?.status === 'error') {
-      const cleanup = refetchAfterCompletion()
-      checkTrufflehogData()
-      return cleanup
+    if (
+      trufflehogState?.status === 'completed' ||
+      trufflehogState?.status === 'error'
+    ) {
+      const cleanup = refetchAfterCompletion();
+      checkTrufflehogData();
+      return cleanup;
     }
-  }, [trufflehogState?.status, refetchAfterCompletion, checkTrufflehogData])
+  }, [trufflehogState?.status, refetchAfterCompletion, checkTrufflehogData]);
 
   // Refresh graph when any partial recon run completes (detected via status changes in polling)
-  const prevPartialRunStatusesRef = useRef<Record<string, string>>({})
+  const prevPartialRunStatusesRef = useRef<Record<string, string>>({});
   useEffect(() => {
-    let shouldRefetch = false
-    const newStatuses: Record<string, string> = {}
+    let shouldRefetch = false;
+    const newStatuses: Record<string, string> = {};
     for (const run of allPartialReconRuns) {
-      newStatuses[run.run_id] = run.status
-      const prev = prevPartialRunStatusesRef.current[run.run_id]
-      if (prev && prev !== run.status && (run.status === 'completed' || run.status === 'error')) {
-        shouldRefetch = true
+      newStatuses[run.run_id] = run.status;
+      const prev = prevPartialRunStatusesRef.current[run.run_id];
+      if (
+        prev &&
+        prev !== run.status &&
+        (run.status === 'completed' || run.status === 'error')
+      ) {
+        shouldRefetch = true;
       }
     }
-    prevPartialRunStatusesRef.current = newStatuses
+    prevPartialRunStatusesRef.current = newStatuses;
     if (shouldRefetch) {
-      return refetchAfterCompletion()
+      return refetchAfterCompletion();
     }
-  }, [allPartialReconRuns, refetchAfterCompletion])
+  }, [allPartialReconRuns, refetchAfterCompletion]);
 
   const handleToggleAI = useCallback(() => {
-    setIsAIOpen((prev) => !prev)
-  }, [])
+    setIsAIOpen((prev) => !prev);
+  }, []);
 
   const handleCloseAI = useCallback(() => {
-    setIsAIOpen(false)
-  }, [])
+    setIsAIOpen(false);
+  }, []);
 
-  const handleToggleStealth = useCallback(async (newValue: boolean) => {
-    if (!projectId) return
-    try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stealthMode: newValue }),
-      })
-      if (res.ok && currentProject) {
-        setCurrentProject({ ...currentProject, stealthMode: newValue })
+  const handleToggleStealth = useCallback(
+    async (newValue: boolean) => {
+      if (!projectId) return;
+      try {
+        const res = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stealthMode: newValue }),
+        });
+        if (res.ok && currentProject) {
+          setCurrentProject({ ...currentProject, stealthMode: newValue });
+        }
+      } catch (error) {
+        console.error('Failed to toggle stealth mode:', error);
       }
-    } catch (error) {
-      console.error('Failed to toggle stealth mode:', error)
-    }
-  }, [projectId, currentProject, setCurrentProject])
+    },
+    [projectId, currentProject, setCurrentProject],
+  );
 
-  const handleToggleDeepThink = useCallback(async (newValue: boolean) => {
-    if (!projectId) return
-    try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentDeepThinkEnabled: newValue }),
-      })
-      if (res.ok && currentProject) {
-        setCurrentProject({ ...currentProject, agentDeepThinkEnabled: newValue })
+  const handleToggleDeepThink = useCallback(
+    async (newValue: boolean) => {
+      if (!projectId) return;
+      try {
+        const res = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentDeepThinkEnabled: newValue }),
+        });
+        if (res.ok && currentProject) {
+          setCurrentProject({
+            ...currentProject,
+            agentDeepThinkEnabled: newValue,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to toggle deep think:', error);
       }
-    } catch (error) {
-      console.error('Failed to toggle deep think:', error)
-    }
-  }, [projectId, currentProject, setCurrentProject])
+    },
+    [projectId, currentProject, setCurrentProject],
+  );
 
-  const handleModelChange = useCallback(async (modelId: string) => {
-    if (!projectId) return
-    try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentOpenaiModel: modelId }),
-      })
-      if (res.ok && currentProject) {
-        setCurrentProject({ ...currentProject, agentOpenaiModel: modelId })
+  const handleModelChange = useCallback(
+    async (modelId: string) => {
+      if (!projectId) return;
+      try {
+        const res = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentOpenaiModel: modelId }),
+        });
+        if (res.ok && currentProject) {
+          setCurrentProject({ ...currentProject, agentOpenaiModel: modelId });
+        }
+      } catch (error) {
+        console.error('Failed to change model:', error);
       }
-    } catch (error) {
-      console.error('Failed to change model:', error)
-    }
-  }, [projectId, currentProject, setCurrentProject])
+    },
+    [projectId, currentProject, setCurrentProject],
+  );
 
   const handleStartRecon = useCallback(() => {
-    setIsReconModalOpen(true)
-  }, [])
+    setIsReconModalOpen(true);
+  }, []);
 
   // Auto-open recon modal when navigating from project settings with autostart param
   useEffect(() => {
     if (searchParams.get('autostart') === 'true' && projectId) {
-      setIsReconModalOpen(true)
-      router.replace(`/graph?project=${projectId}`)
+      setIsReconModalOpen(true);
+      router.replace(`/graph?project=${projectId}`);
     }
-    const openLogs = searchParams.get('openlogs')
+    const openLogs = searchParams.get('openlogs');
     if (openLogs && projectId) {
-      setActiveLogsDrawer(openLogs as 'recon' | 'gvm' | 'githubHunt' | 'trufflehog' | `partialRecon:${string}`)
-      router.replace(`/graph?project=${projectId}`)
+      setActiveLogsDrawer(
+        openLogs as
+          | 'recon'
+          | 'gvm'
+          | 'githubHunt'
+          | 'trufflehog'
+          | `partialRecon:${string}`,
+      );
+      router.replace(`/graph?project=${projectId}`);
     }
-  }, [searchParams, projectId, router])
+  }, [searchParams, projectId, router]);
 
   const handleConfirmRecon = useCallback(async () => {
-    clearLogs()
-    const result = await startRecon()
+    clearLogs();
+    const result = await startRecon();
     if (result) {
-      setIsReconModalOpen(false)
-      setActiveLogsDrawer('recon')
-      toast.info('Recon scan started')
+      setIsReconModalOpen(false);
+      setActiveLogsDrawer('recon');
+      toast.info('Recon 스캔이 시작되었습니다');
     }
-  }, [startRecon, clearLogs, toast])
+  }, [startRecon, clearLogs, toast]);
 
   const handleDownloadJSON = useCallback(async () => {
-    if (!projectId) return
-    window.open(`/api/recon/${projectId}/download`, '_blank')
-  }, [projectId])
+    if (!projectId) return;
+    window.open(`/api/recon/${projectId}/download`, '_blank');
+  }, [projectId]);
 
-  const handleDeleteNode = useCallback(async (nodeId: string) => {
-    if (!projectId) return
-    const res = await fetch(`/api/graph?nodeId=${nodeId}&projectId=${projectId}`, {
-      method: 'DELETE',
-    })
-    if (!res.ok) {
-      const data = await res.json()
-      alertError(data.error || 'Failed to delete node')
-      return
-    }
-    toast.success('Node deleted')
-    refetchGraph()
-  }, [projectId, refetchGraph, toast])
+  const handleDeleteNode = useCallback(
+    async (nodeId: string) => {
+      if (!projectId) return;
+      const res = await fetch(
+        `/api/graph?nodeId=${nodeId}&projectId=${projectId}`,
+        {
+          method: 'DELETE',
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json();
+        alertError(data.error || '노드 삭제에 실패했습니다');
+        return;
+      }
+      toast.success('노드가 삭제되었습니다');
+      refetchGraph();
+    },
+    [projectId, refetchGraph, toast],
+  );
 
   const handleToggleLogs = useCallback(() => {
-    setActiveLogsDrawer(prev => prev === 'recon' ? null : 'recon')
-  }, [])
+    setActiveLogsDrawer((prev) => (prev === 'recon' ? null : 'recon'));
+  }, []);
 
   const handleStartGvm = useCallback(() => {
-    setIsGvmModalOpen(true)
-  }, [])
+    setIsGvmModalOpen(true);
+  }, []);
 
   const handleConfirmGvm = useCallback(async () => {
-    clearGvmLogs()
-    const result = await startGvm()
+    clearGvmLogs();
+    const result = await startGvm();
     if (result) {
-      setIsGvmModalOpen(false)
-      setActiveLogsDrawer('gvm')
-      toast.info('GVM scan started')
+      setIsGvmModalOpen(false);
+      setActiveLogsDrawer('gvm');
+      toast.info('GVM 스캔이 시작되었습니다');
     }
-  }, [startGvm, clearGvmLogs, toast])
+  }, [startGvm, clearGvmLogs, toast]);
 
   const handleDownloadGvmJSON = useCallback(async () => {
-    if (!projectId) return
-    window.open(`/api/gvm/${projectId}/download`, '_blank')
-  }, [projectId])
+    if (!projectId) return;
+    window.open(`/api/gvm/${projectId}/download`, '_blank');
+  }, [projectId]);
 
   const handleToggleGvmLogs = useCallback(() => {
-    setActiveLogsDrawer(prev => prev === 'gvm' ? null : 'gvm')
-  }, [])
+    setActiveLogsDrawer((prev) => (prev === 'gvm' ? null : 'gvm'));
+  }, []);
 
   const handleStartGithubHunt = useCallback(async () => {
     try {
-      clearGithubHuntLogs()
-      const result = await startGithubHunt()
+      clearGithubHuntLogs();
+      const result = await startGithubHunt();
       if (result) {
-        setActiveLogsDrawer('githubHunt')
-        toast.info('GitHub Hunt started')
+        setActiveLogsDrawer('githubHunt');
+        toast.info('GitHub Hunt가 시작되었습니다');
       }
     } catch (err) {
-      console.error('Failed to start GitHub Hunt:', err)
-      toast.error('Failed to start GitHub Hunt')
+      console.error('Failed to start GitHub Hunt:', err);
+      toast.error('GitHub Hunt 시작에 실패했습니다');
     }
-  }, [startGithubHunt, clearGithubHuntLogs, toast])
+  }, [startGithubHunt, clearGithubHuntLogs, toast]);
 
   const handleDownloadGithubHuntJSON = useCallback(async () => {
-    if (!projectId) return
-    window.open(`/api/github-hunt/${projectId}/download`, '_blank')
-  }, [projectId])
+    if (!projectId) return;
+    window.open(`/api/github-hunt/${projectId}/download`, '_blank');
+  }, [projectId]);
 
   const handleToggleGithubHuntLogs = useCallback(() => {
-    setActiveLogsDrawer(prev => prev === 'githubHunt' ? null : 'githubHunt')
-  }, [])
+    setActiveLogsDrawer((prev) =>
+      prev === 'githubHunt' ? null : 'githubHunt',
+    );
+  }, []);
 
   const handleStartTrufflehog = useCallback(async () => {
     try {
-      clearTrufflehogLogs()
-      const result = await startTrufflehog()
+      clearTrufflehogLogs();
+      const result = await startTrufflehog();
       if (result) {
-        setActiveLogsDrawer('trufflehog')
-        toast.info('Trufflehog scan started')
+        setActiveLogsDrawer('trufflehog');
+        toast.info('Trufflehog 스캔이 시작되었습니다');
       }
     } catch (err) {
-      console.error('Failed to start Trufflehog:', err)
-      toast.error('Failed to start Trufflehog')
+      console.error('Failed to start Trufflehog:', err);
+      toast.error('Trufflehog 스캔 시작에 실패했습니다');
     }
-  }, [startTrufflehog, clearTrufflehogLogs, toast])
+  }, [startTrufflehog, clearTrufflehogLogs, toast]);
 
   const handleDownloadTrufflehogJSON = useCallback(async () => {
-    if (!projectId) return
-    window.open(`/api/trufflehog/${projectId}/download`, '_blank')
-  }, [projectId])
+    if (!projectId) return;
+    window.open(`/api/trufflehog/${projectId}/download`, '_blank');
+  }, [projectId]);
 
   const handleToggleTrufflehogLogs = useCallback(() => {
-    setActiveLogsDrawer(prev => prev === 'trufflehog' ? null : 'trufflehog')
-  }, [])
+    setActiveLogsDrawer((prev) =>
+      prev === 'trufflehog' ? null : 'trufflehog',
+    );
+  }, []);
 
   // Auto-open partial recon logs drawer when a new run appears or transitions to running
-  const prevPartialRunStatusMapRef = useRef<Record<string, string>>({})
+  const prevPartialRunStatusMapRef = useRef<Record<string, string>>({});
   useEffect(() => {
     for (const run of activePartialRecons) {
-      const prev = prevPartialRunStatusMapRef.current[run.run_id]
+      const prev = prevPartialRunStatusMapRef.current[run.run_id];
       // Open drawer for newly appeared runs or runs transitioning to 'running'
       if (!prev || (run.status === 'running' && prev !== 'running')) {
-        setActiveLogsDrawer(`partialRecon:${run.run_id}`)
-        break // Only auto-open one at a time
+        setActiveLogsDrawer(`partialRecon:${run.run_id}`);
+        break; // Only auto-open one at a time
       }
     }
-    const newMap: Record<string, string> = {}
+    const newMap: Record<string, string> = {};
     for (const run of activePartialRecons) {
-      newMap[run.run_id] = run.status
+      newMap[run.run_id] = run.status;
     }
-    prevPartialRunStatusMapRef.current = newMap
-  }, [activePartialRecons])
+    prevPartialRunStatusMapRef.current = newMap;
+  }, [activePartialRecons]);
 
   // Pause/Resume/Stop handlers
-  const handlePauseRecon = useCallback(async () => { await pauseRecon() }, [pauseRecon])
-  const handleResumeRecon = useCallback(async () => { await resumeRecon() }, [resumeRecon])
-  const handleStopRecon = useCallback(async () => { await stopRecon() }, [stopRecon])
-  const handlePauseGvm = useCallback(async () => { await pauseGvm(); toast.info('GVM scan paused') }, [pauseGvm, toast])
-  const handleResumeGvm = useCallback(async () => { await resumeGvm(); toast.info('GVM scan resumed') }, [resumeGvm, toast])
-  const handleStopGvm = useCallback(async () => { await stopGvm(); toast.info('GVM scan stopped') }, [stopGvm, toast])
-  const handlePauseGithubHunt = useCallback(async () => { await pauseGithubHunt() }, [pauseGithubHunt])
-  const handleResumeGithubHunt = useCallback(async () => { await resumeGithubHunt() }, [resumeGithubHunt])
-  const handleStopGithubHunt = useCallback(async () => { await stopGithubHunt() }, [stopGithubHunt])
-  const handlePauseTrufflehog = useCallback(async () => { await pauseTrufflehog() }, [pauseTrufflehog])
-  const handleResumeTrufflehog = useCallback(async () => { await resumeTrufflehog() }, [resumeTrufflehog])
-  const handleStopTrufflehog = useCallback(async () => { await stopTrufflehog() }, [stopTrufflehog])
+  const handlePauseRecon = useCallback(async () => {
+    await pauseRecon();
+  }, [pauseRecon]);
+  const handleResumeRecon = useCallback(async () => {
+    await resumeRecon();
+  }, [resumeRecon]);
+  const handleStopRecon = useCallback(async () => {
+    await stopRecon();
+  }, [stopRecon]);
+  const handlePauseGvm = useCallback(async () => {
+    await pauseGvm();
+    toast.info('GVM 스캔이 일시 중지되었습니다');
+  }, [pauseGvm, toast]);
+  const handleResumeGvm = useCallback(async () => {
+    await resumeGvm();
+    toast.info('GVM 스캔이 재개되었습니다');
+  }, [resumeGvm, toast]);
+  const handleStopGvm = useCallback(async () => {
+    await stopGvm();
+    toast.info('GVM 스캔이 중지되었습니다');
+  }, [stopGvm, toast]);
+  const handlePauseGithubHunt = useCallback(async () => {
+    await pauseGithubHunt();
+  }, [pauseGithubHunt]);
+  const handleResumeGithubHunt = useCallback(async () => {
+    await resumeGithubHunt();
+  }, [resumeGithubHunt]);
+  const handleStopGithubHunt = useCallback(async () => {
+    await stopGithubHunt();
+  }, [stopGithubHunt]);
+  const handlePauseTrufflehog = useCallback(async () => {
+    await pauseTrufflehog();
+  }, [pauseTrufflehog]);
+  const handleResumeTrufflehog = useCallback(async () => {
+    await resumeTrufflehog();
+  }, [resumeTrufflehog]);
+  const handleStopTrufflehog = useCallback(async () => {
+    await stopTrufflehog();
+  }, [stopTrufflehog]);
 
   // Partial Recon handlers
-  const handleStopPartialRecon = useCallback(async (runId: string) => { await stopPartialRecon(runId) }, [stopPartialRecon])
+  const handleStopPartialRecon = useCallback(
+    async (runId: string) => {
+      await stopPartialRecon(runId);
+    },
+    [stopPartialRecon],
+  );
   const handleTogglePartialReconLogs = useCallback((runId: string) => {
-    setActiveLogsDrawer(prev => prev === `partialRecon:${runId}` ? null : `partialRecon:${runId}`)
-  }, [])
+    setActiveLogsDrawer((prev) =>
+      prev === `partialRecon:${runId}` ? null : `partialRecon:${runId}`,
+    );
+  }, []);
 
   // Emergency Pause All — freezes every running pipeline and agent at once
-  const isAnyPipelineRunning = isReconRunning || isGvmRunning || isGithubHuntRunning || isTrufflehogRunning || isAgentRunning || isPartialReconRunning
-  const [isEmergencyPausing, setIsEmergencyPausing] = useState(false)
+  const isAnyPipelineRunning =
+    isReconRunning ||
+    isGvmRunning ||
+    isGithubHuntRunning ||
+    isTrufflehogRunning ||
+    isAgentRunning ||
+    isPartialReconRunning;
+  const [isEmergencyPausing, setIsEmergencyPausing] = useState(false);
 
   // Auto-clear the pausing state once all pipelines have actually stopped
   useEffect(() => {
     if (isEmergencyPausing && !isAnyPipelineRunning) {
-      setIsEmergencyPausing(false)
+      setIsEmergencyPausing(false);
     }
-  }, [isEmergencyPausing, isAnyPipelineRunning])
+  }, [isEmergencyPausing, isAnyPipelineRunning]);
 
   const handleEmergencyPauseAll = useCallback(async () => {
-    setIsEmergencyPausing(true)
-    const tasks: Promise<unknown>[] = []
+    setIsEmergencyPausing(true);
+    const tasks: Promise<unknown>[] = [];
     if (reconState?.status === 'running' || reconState?.status === 'starting') {
-      tasks.push(pauseRecon())
+      tasks.push(pauseRecon());
     }
     if (gvmState?.status === 'running' || gvmState?.status === 'starting') {
-      tasks.push(pauseGvm())
+      tasks.push(pauseGvm());
     }
-    if (githubHuntState?.status === 'running' || githubHuntState?.status === 'starting') {
-      tasks.push(pauseGithubHunt())
+    if (
+      githubHuntState?.status === 'running' ||
+      githubHuntState?.status === 'starting'
+    ) {
+      tasks.push(pauseGithubHunt());
     }
-    if (trufflehogState?.status === 'running' || trufflehogState?.status === 'starting') {
-      tasks.push(pauseTrufflehog())
+    if (
+      trufflehogState?.status === 'running' ||
+      trufflehogState?.status === 'starting'
+    ) {
+      tasks.push(pauseTrufflehog());
     }
     for (const run of activePartialRecons) {
       if (run.status === 'running' || run.status === 'starting') {
-        tasks.push(stopPartialRecon(run.run_id))
+        tasks.push(stopPartialRecon(run.run_id));
       }
     }
     // Stop all running AI agent conversations
-    tasks.push(fetch('/api/agent/emergency-stop-all', { method: 'POST' }))
-    await Promise.allSettled(tasks)
-  }, [reconState?.status, gvmState?.status, githubHuntState?.status, trufflehogState?.status, activePartialRecons, pauseRecon, pauseGvm, pauseGithubHunt, pauseTrufflehog, stopPartialRecon])
+    tasks.push(fetch('/api/agent/emergency-stop-all', { method: 'POST' }));
+    await Promise.allSettled(tasks);
+  }, [
+    reconState?.status,
+    gvmState?.status,
+    githubHuntState?.status,
+    trufflehogState?.status,
+    activePartialRecons,
+    pauseRecon,
+    pauseGvm,
+    pauseGithubHunt,
+    pauseTrufflehog,
+    stopPartialRecon,
+  ]);
 
   // Show message if no project is selected
   if (!projectLoading && !projectId) {
     return (
       <div className={styles.page}>
         <div className={styles.noProject}>
-          <h2>No Project Selected</h2>
-          <p>Select a project from the dropdown in the header or create a new one.</p>
-          <button className="primaryButton" onClick={() => router.push('/projects')}>
-            Go to Projects
+          <h2>프로젝트가 선택되지 않았습니다</h2>
+          <p>
+            헤더의 드롭다운에서 프로젝트를 선택하거나 새 프로젝트를 생성하세요.
+          </p>
+          <button
+            className="primaryButton"
+            onClick={() => router.push('/projects')}
+          >
+            프로젝트로 이동
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -1230,7 +1516,9 @@ export default function GraphPage() {
         onStopPartialRecon={handleStopPartialRecon}
         onTogglePartialReconLogs={handleTogglePartialReconLogs}
         // Other Scans modal
-        onToggleOtherScansModal={() => setIsOtherScansModalOpen(prev => !prev)}
+        onToggleOtherScansModal={() =>
+          setIsOtherScansModalOpen((prev) => !prev)
+        }
         // Stealth mode
         stealthMode={currentProject?.stealthMode}
         // RoE
@@ -1293,23 +1581,51 @@ export default function GraphPage() {
         onTableViewModeChange={setTableViewMode}
         jsReconSearch={jsReconSearch}
         onJsReconSearchChange={setJsReconSearch}
-        onJsReconExportCsv={jsReconData ? async () => {
-          if (jsReconExporting) return
-          setJsReconExporting('csv')
-          try { await exportJsReconCsv(jsReconData) } finally { setJsReconExporting(null) }
-        } : undefined}
-        onJsReconExportJson={jsReconData ? async () => {
-          if (jsReconExporting) return
-          setJsReconExporting('json')
-          try { await exportJsReconJson(jsReconData) } finally { setJsReconExporting(null) }
-        } : undefined}
-        onJsReconExportMarkdown={jsReconData ? async () => {
-          if (jsReconExporting) return
-          setJsReconExporting('md')
-          try { await exportJsReconMarkdown(jsReconData) } finally { setJsReconExporting(null) }
-        } : undefined}
+        onJsReconExportCsv={
+          jsReconData
+            ? async () => {
+                if (jsReconExporting) return;
+                setJsReconExporting('csv');
+                try {
+                  await exportJsReconCsv(jsReconData);
+                } finally {
+                  setJsReconExporting(null);
+                }
+              }
+            : undefined
+        }
+        onJsReconExportJson={
+          jsReconData
+            ? async () => {
+                if (jsReconExporting) return;
+                setJsReconExporting('json');
+                try {
+                  await exportJsReconJson(jsReconData);
+                } finally {
+                  setJsReconExporting(null);
+                }
+              }
+            : undefined
+        }
+        onJsReconExportMarkdown={
+          jsReconData
+            ? async () => {
+                if (jsReconExporting) return;
+                setJsReconExporting('md');
+                try {
+                  await exportJsReconMarkdown(jsReconData);
+                } finally {
+                  setJsReconExporting(null);
+                }
+              }
+            : undefined
+        }
         jsReconExporting={jsReconExporting}
-        jsReconMeta={jsReconData ? `${jsReconData.scan_metadata?.js_files_analyzed || 0} files${jsReconData.summary?.validated_keys?.live ? ` | ${jsReconData.summary.validated_keys.live} LIVE` : ''}` : undefined}
+        jsReconMeta={
+          jsReconData
+            ? `${jsReconData.scan_metadata?.js_files_analyzed || 0} files${jsReconData.summary?.validated_keys?.live ? ` | ${jsReconData.summary.validated_keys.live} LIVE` : ''}`
+            : undefined
+        }
         is3D={effectiveIs3D}
         showLabels={showLabels}
         onToggle3D={setIs3D}
@@ -1365,7 +1681,11 @@ export default function GraphPage() {
                 error={error}
               />
             ) : tableViewMode === 'jsRecon' ? (
-              <JsReconTable projectId={projectId} search={jsReconSearch} onDataLoaded={setJsReconData} />
+              <JsReconTable
+                projectId={projectId}
+                search={jsReconSearch}
+                onDataLoaded={setJsReconData}
+              />
             ) : tableViewMode === 'killChain' ? (
               <KillChainTable projectId={projectId} />
             ) : tableViewMode === 'blastRadius' ? (
@@ -1423,7 +1743,6 @@ export default function GraphPage() {
             />
           ) : null}
         </div>
-
       </div>
 
       <ReconLogsDrawer
@@ -1452,7 +1771,7 @@ export default function GraphPage() {
         onPause={handlePauseGvm}
         onResume={handleResumeGvm}
         onStop={handleStopGvm}
-        title="GVM Vulnerability Scan Logs"
+        title="GVM 취약점 스캔 로그"
         phases={GVM_PHASES}
         totalPhases={4}
       />
@@ -1469,7 +1788,7 @@ export default function GraphPage() {
         onPause={handlePauseGithubHunt}
         onResume={handleResumeGithubHunt}
         onStop={handleStopGithubHunt}
-        title="GitHub Secret Hunt Logs"
+        title="GitHub 비밀 탐색 로그"
         phases={GITHUB_HUNT_PHASES}
         totalPhases={3}
       />
@@ -1486,26 +1805,30 @@ export default function GraphPage() {
         onPause={handlePauseTrufflehog}
         onResume={handleResumeTrufflehog}
         onStop={handleStopTrufflehog}
-        title="TruffleHog Secret Scanner Logs"
+        title="TruffleHog 비밀 스캐너 로그"
         phases={TRUFFLEHOG_PHASES}
         totalPhases={3}
       />
 
-      {allPartialReconRuns.map(run => (
+      {allPartialReconRuns.map((run) => (
         <ReconLogsDrawer
           key={run.run_id}
           isOpen={activeLogsDrawer === `partialRecon:${run.run_id}`}
           onClose={() => setActiveLogsDrawer(null)}
           logs={partialReconLogsMap[run.run_id] || []}
           currentPhase={partialReconPhaseMap[run.run_id]?.phase || null}
-          currentPhaseNumber={partialReconPhaseMap[run.run_id]?.phaseNumber || null}
+          currentPhaseNumber={
+            partialReconPhaseMap[run.run_id]?.phaseNumber || null
+          }
           status={(run.status as ReconStatus) || 'idle'}
           errorMessage={run.error}
           onClearLogs={() => clearPartialReconLogsForRun(run.run_id)}
           onStop={() => handleStopPartialRecon(run.run_id)}
-          title={`Partial Recon: ${WORKFLOW_TOOLS.find(t => t.id === run.tool_id)?.label || 'Running'}`}
-          phases={PARTIAL_RECON_PHASE_MAP[run.tool_id || ''] || ['Running']}
-          totalPhases={(PARTIAL_RECON_PHASE_MAP[run.tool_id || ''] || ['Running']).length}
+          title={`부분 Recon: ${WORKFLOW_TOOLS.find((t) => t.id === run.tool_id)?.label || '실행 중'}`}
+          phases={PARTIAL_RECON_PHASE_MAP[run.tool_id || ''] || ['실행 중']}
+          totalPhases={
+            (PARTIAL_RECON_PHASE_MAP[run.tool_id || ''] || ['실행 중']).length
+          }
           hidePhaseProgress
         />
       ))}
@@ -1528,8 +1851,13 @@ export default function GraphPage() {
         onRefetchGraph={refetchGraph}
         isOtherChainsHidden={isOtherChainsHidden}
         onToggleOtherChains={handleToggleOtherChains}
-        hasOtherChains={sessionChainIds.length > 1 || (sessionChainIds.length === 1 && sessionChainIds[0] !== sessionId)}
-        requireToolConfirmation={currentProject?.agentRequireToolConfirmation ?? true}
+        hasOtherChains={
+          sessionChainIds.length > 1 ||
+          (sessionChainIds.length === 1 && sessionChainIds[0] !== sessionId)
+        }
+        requireToolConfirmation={
+          currentProject?.agentRequireToolConfirmation ?? true
+        }
         graphViewCypher={selectedFilterCypher}
         onOpenFileSystem={toggleFileSystemDrawer}
       />
@@ -1557,13 +1885,15 @@ export default function GraphPage() {
         onClose={() => setIsGvmModalOpen(false)}
         onConfirm={handleConfirmGvm}
         projectName={currentProject?.name || 'Unknown'}
-        targetDomain={currentProject?.targetDomain || currentProject?.targetIps?.join(', ') || 'Unknown'}
+        targetDomain={
+          currentProject?.targetDomain ||
+          currentProject?.targetIps?.join(', ') ||
+          'Unknown'
+        }
         stats={gvmStats}
         isLoading={isGvmLoading}
         error={gvmError}
       />
-
-      <GitHubStarBanner hasAttackChain={(graphStats?.nodesByType?.['AttackChain'] ?? 0) > 0} />
 
       <PageBottomBar
         data={effectiveBarData ?? undefined}
@@ -1584,5 +1914,5 @@ export default function GraphPage() {
         onHideAllSessions={handleHideAllSessions}
       />
     </div>
-  )
+  );
 }

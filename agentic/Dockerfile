@@ -9,8 +9,6 @@ WORKDIR /app
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
     DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
@@ -84,17 +82,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends libicu-dev && r
     && ln -s /usr/share/dotnet/dotnet /usr/local/bin/dotnet
 ENV DOTNET_ROOT="/usr/share/dotnet"
 
+# Install uv (fast Python package installer & launcher).
+# Also used at runtime for stdio Python-ecosystem MCP servers (`uvx mcp-...`).
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
 # Copy requirements first for better caching.
 # NOTE: build context is the project root (./), not ./agentic — see docker-compose.yml
 COPY agentic/requirements.txt ./
 COPY agentic/requirements-kb.txt ./
 
 # Core Python dependencies (always installed)
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install uv (~10 MB) for stdio Python-ecosystem MCP servers (`uvx mcp-...`).
-# Lets users add stdio MCPs via the Settings UI without rebuilding the image.
-RUN pip install --no-cache-dir uv
+RUN uv pip install --system --no-cache -r requirements.txt
 
 # Build arg: set to "true" to skip heavy KB dependencies (~4.4 GB saved)
 # Use ./redamon.sh install --skipkbase to activate
@@ -104,7 +102,7 @@ ARG SKIP_KB=false
 # KB heavy dependencies: torch, sentence-transformers, faiss-cpu
 # Skipped when SKIP_KB=true (--skipkbase flag)
 RUN if [ "$SKIP_KB" != "true" ]; then \
-        pip install --no-cache-dir -r requirements-kb.txt; \
+        uv pip install --system --no-cache -r requirements-kb.txt; \
     fi
 
 # Pre-download the embedding model (~1.3 GB) unless KB is skipped.

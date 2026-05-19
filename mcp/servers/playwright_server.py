@@ -9,7 +9,7 @@ Tools:
 """
 
 from fastmcp import FastMCP
-import subprocess
+import asyncio
 import tempfile
 import textwrap
 import re
@@ -26,8 +26,8 @@ SERVER_PORT = int(os.getenv("PLAYWRIGHT_PORT", "8005"))
 mcp = FastMCP(SERVER_NAME)
 
 
-def _run_playwright_script(script: str, timeout: int = 45) -> str:
-    """Run a Playwright Python script in a subprocess and return its stdout."""
+async def _run_playwright_script(script: str, timeout: int = 45) -> str:
+    """Run a Playwright Python script in an async subprocess and return its stdout."""
     script_path = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -37,16 +37,24 @@ def _run_playwright_script(script: str, timeout: int = 45) -> str:
             f.flush()
             script_path = f.name
 
-        result = subprocess.run(
-            ['python3', script_path],
-            capture_output=True,
-            text=True,
-            timeout=timeout
+        proc = await asyncio.create_subprocess_exec(
+            'python3', script_path,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
 
-        output = ANSI_ESCAPE.sub('', result.stdout)
-        if result.returncode != 0 and result.stderr:
-            clean_stderr = ANSI_ESCAPE.sub('', result.stderr)
+        try:
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(
+                proc.communicate(), timeout=timeout
+            )
+        except asyncio.TimeoutError:
+            proc.kill()
+            await proc.wait()
+            return f"[ERROR] Script timed out after {timeout} seconds."
+
+        output = ANSI_ESCAPE.sub('', stdout_bytes.decode('utf-8', errors='replace'))
+        if proc.returncode != 0 and stderr_bytes:
+            clean_stderr = ANSI_ESCAPE.sub('', stderr_bytes.decode('utf-8', errors='replace'))
             # Filter out playwright verbose logging
             stderr_lines = [
                 line for line in clean_stderr.split('\n')
@@ -57,8 +65,6 @@ def _run_playwright_script(script: str, timeout: int = 45) -> str:
 
         return output if output.strip() else "[INFO] Script completed with no output"
 
-    except subprocess.TimeoutExpired:
-        return f"[ERROR] Script timed out after {timeout} seconds."
     except Exception as e:
         return f"[ERROR] {str(e)}"
     finally:
@@ -85,7 +91,7 @@ CHROME_UA = (
 
 
 @mcp.tool()
-def execute_playwright(url: str = "", script: str = "", selector: str = "", format: str = "text") -> str:
+async def execute_playwright(url: str = "", script: str = "", selector: str = "", format: str = "text") -> str:
     """
     Browser automation tool with two modes: content extraction or custom scripting.
 
@@ -122,14 +128,14 @@ def execute_playwright(url: str = "", script: str = "", selector: str = "", form
         - script="page.goto('http://10.0.0.5/search')\\npage.fill('input[name=q]', '<script>alert(1)</script>')\\npage.click('button[type=submit]')\\npage.wait_for_load_state('networkidle')\\nprint(page.content()[:5000])"
     """
     if script.strip():
-        return _execute_script_mode(script)
+        return await _execute_script_mode(script)
     elif url.strip():
-        return _execute_content_mode(url, selector, format)
+        return await _execute_content_mode(url, selector, format)
     else:
         return "[ERROR] Provide either 'url' (content extraction) or 'script' (custom automation)."
 
 
-def _execute_content_mode(url: str, selector: str, format: str) -> str:
+async def _execute_content_mode(url: str, selector: str, format: str) -> str:
     """Mode 1: Navigate to URL and extract rendered content."""
     use_html = format.lower() == "html"
     max_chars = 40000
@@ -187,7 +193,7 @@ def _execute_content_mode(url: str, selector: str, format: str) -> str:
                 browser.close()
     """)
 
-    return _run_playwright_script(script, timeout=45)
+    return await _run_playwright_script(script, timeout=45)
 
 
 _FORBIDDEN_ASYNC_PATTERNS = [
@@ -199,7 +205,7 @@ _FORBIDDEN_ASYNC_PATTERNS = [
 ]
 
 
-def _execute_script_mode(user_script: str) -> str:
+async def _execute_script_mode(user_script: str) -> str:
     """Mode 2: Run arbitrary Playwright Python script with pre-initialized browser."""
     for pattern, name in _FORBIDDEN_ASYNC_PATTERNS:
         if pattern.search(user_script):
@@ -239,7 +245,7 @@ def _execute_script_mode(user_script: str) -> str:
     ])
     wrapper = "\n".join(lines) + "\n"
 
-    return _run_playwright_script(wrapper, timeout=60)
+    return await _run_playwright_script(wrapper, timeout=60)
 
 
 if __name__ == "__main__":

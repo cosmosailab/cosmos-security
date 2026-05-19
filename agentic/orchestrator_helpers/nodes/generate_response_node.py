@@ -152,7 +152,7 @@ async def generate_response_node(
     )
 
     return {
-        "messages": [AIMessage(content=normalize_content(response.content))],
+        "messages": [AIMessage(content=normalize_content(response.content, response=response))],
         "task_complete": True,
         "completion_reason": state.get("completion_reason") or "Task completed successfully",
         "_report_generated": True,

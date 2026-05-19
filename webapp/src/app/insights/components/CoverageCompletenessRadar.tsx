@@ -1,15 +1,29 @@
-'use client'
+'use client';
 
-import { useMemo } from 'react'
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts'
-import { useTheme } from '@/hooks/useTheme'
-import { getChartPalette, getChartChrome, getTooltipStyle, getTooltipItemStyle, getTooltipLabelStyle } from '../utils/chartTheme'
-import { ChartCard } from './ChartCard'
-import type { GraphOverviewData } from '../types'
+import { useMemo } from 'react';
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
+import { useTheme } from '@/hooks/useTheme';
+import {
+  getChartPalette,
+  getChartChrome,
+  getTooltipStyle,
+  getTooltipItemStyle,
+  getTooltipLabelStyle,
+} from '../utils/chartTheme';
+import { ChartCard } from './ChartCard';
+import type { GraphOverviewData } from '../types';
 
 interface CoverageCompletenessRadarProps {
-  data: GraphOverviewData | undefined
-  isLoading: boolean
+  data: GraphOverviewData | undefined;
+  isLoading: boolean;
 }
 
 const METRICS = [
@@ -19,45 +33,56 @@ const METRICS = [
   { key: 'Tech Detect', nodeType: 'Technology' },
   { key: 'Vuln Scan', nodeType: 'Vulnerability' },
   { key: 'Crawling', nodeType: 'Endpoint' },
-]
+];
 
-export function CoverageCompletenessRadar({ data, isLoading }: CoverageCompletenessRadarProps) {
-  const { theme } = useTheme()
-  const palette = useMemo(() => getChartPalette(), [theme])
-  const chrome = useMemo(() => getChartChrome(), [theme])
-  const tooltipStyle = useMemo(() => getTooltipStyle(), [theme])
-  const tooltipItemStyle = useMemo(() => getTooltipItemStyle(), [theme])
-  const tooltipLabelStyle = useMemo(() => getTooltipLabelStyle(), [theme])
+export function CoverageCompletenessRadar({
+  data,
+  isLoading,
+}: CoverageCompletenessRadarProps) {
+  const { theme } = useTheme();
+  const palette = useMemo(() => getChartPalette(), [theme]);
+  const chrome = useMemo(() => getChartChrome(), [theme]);
+  const tooltipStyle = useMemo(() => getTooltipStyle(), [theme]);
+  const tooltipItemStyle = useMemo(() => getTooltipItemStyle(), [theme]);
+  const tooltipLabelStyle = useMemo(() => getTooltipLabelStyle(), [theme]);
 
   const chartData = useMemo(() => {
-    if (!data?.nodeCounts?.length) return []
+    if (!data?.nodeCounts?.length) return [];
 
-    const counts = new Map<string, number>()
+    const counts = new Map<string, number>();
     for (const n of data.nodeCounts) {
-      counts.set(n.label, n.count)
+      counts.set(n.label, n.count);
     }
 
-    const values = METRICS.map(m => counts.get(m.nodeType) || 0)
-    const maxVal = Math.max(...values, 1)
+    const values = METRICS.map((m) => counts.get(m.nodeType) || 0);
+    const maxVal = Math.max(...values, 1);
 
     return METRICS.map((m, i) => ({
       metric: m.key,
       value: Math.round((values[i] / maxVal) * 100),
       raw: values[i],
-    }))
-  }, [data])
+    }));
+  }, [data]);
 
-  const isEmpty = !data || data.totalNodes === 0
+  const isEmpty = !data || data.totalNodes === 0;
 
   return (
-    <ChartCard title="Recon Coverage" subtitle="Phase completeness" isLoading={isLoading} isEmpty={isEmpty}>
+    <ChartCard
+      title="정찰 커버리지"
+      subtitle="단계별 완성도"
+      isLoading={isLoading}
+      isEmpty={isEmpty}
+    >
       <ResponsiveContainer width="100%" height={220}>
         <RadarChart data={chartData}>
           <PolarGrid stroke={chrome.gridColor} />
-          <PolarAngleAxis dataKey="metric" tick={{ fontSize: 9, fill: chrome.axisColor }} />
+          <PolarAngleAxis
+            dataKey="metric"
+            tick={{ fontSize: 9, fill: chrome.axisColor }}
+          />
           <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
           <Radar
-            name="Coverage"
+            name="커버리지"
             dataKey="value"
             stroke={palette[4]}
             fill={palette[4]}
@@ -68,12 +93,14 @@ export function CoverageCompletenessRadar({ data, isLoading }: CoverageCompleten
             contentStyle={tooltipStyle}
             itemStyle={tooltipItemStyle}
             labelStyle={tooltipLabelStyle}
-            formatter={(value: number, _name: string, props: { payload?: { raw?: number } }) =>
-              [`${value}% (${props.payload?.raw ?? 0} nodes)`, 'Coverage']
-            }
+            formatter={(
+              value: number,
+              _name: string,
+              props: { payload?: { raw?: number } },
+            ) => [`${value}% (${props.payload?.raw ?? 0} nodes)`, 'Coverage']}
           />
         </RadarChart>
       </ResponsiveContainer>
     </ChartCard>
-  )
+  );
 }
