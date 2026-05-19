@@ -47,13 +47,13 @@ export function GlobalHeader() {
       <Link href="/graph" className={styles.logo}>
         <Image
           src="/logo.png"
-          alt="COSMOS SEQURITY"
+          alt="COSMOS SECURITY"
           width={28}
           height={28}
           className={styles.logoImg}
         />
         <span className={styles.logoText}>
-          <span className={styles.logoAccent}>COSMOS</span>SEQURITY
+          <span className={styles.logoAccent}>COSMOS</span>SECURITY
         </span>
       </Link>
 

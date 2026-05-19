@@ -55,13 +55,13 @@ export default function LoginPage() {
           <div className={styles.logoRow}>
             <Image
               src="/logo.png"
-              alt="COSMOS SEQURITY"
+              alt="COSMOS SECURITY"
               width={40}
               height={40}
               priority
             />
             <span className={styles.logoText}>
-              <span className={styles.logoAccent}>COSMOS</span>SEQURITY
+              <span className={styles.logoAccent}>COSMOS</span>SECURITY
             </span>
           </div>
           <p className={styles.subtitle}>로그인하세요</p>

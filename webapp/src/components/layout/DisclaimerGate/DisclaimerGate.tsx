@@ -143,18 +143,18 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
             />
             <h1 className={styles.welcomeTitle}>
               Welcome to <span className={styles.logoAccent}>COSMOS</span>
-              SEQURITY
+              SECURITY
             </h1>
           </div>
 
           <div className={styles.body}>
             <p className={styles.welcomeThank}>
               Thank you for downloading and installing{' '}
-              <strong>COSMOS SEQURITY</strong>!
+              <strong>COSMOS SECURITY</strong>!
             </p>
 
             <p className={styles.welcomeDesc}>
-              <strong>COSMOS SEQURITY</strong> is an open-source, AI-powered
+              <strong>COSMOS SECURITY</strong> is an open-source, AI-powered
               penetration testing platform that combines autonomous
               reconnaissance, graph-based attack surface mapping, and an
               intelligent agent to help security professionals work faster and
@@ -163,7 +163,7 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
 
             <div className={styles.missionBox}>
               <p className={styles.missionText}>
-                Our commitment is to keep <strong>COSMOS SEQURITY</strong>{' '}
+                Our commitment is to keep <strong>COSMOS SECURITY</strong>{' '}
                 always up-to-date and make it the{' '}
                 <strong>#1 open-source pentesting platform</strong> in the
                 world. To get there, we need the community&apos;s help.
@@ -191,7 +191,7 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
             >
               <Github size={20} />
               <Star size={18} className={styles.starIcon} />
-              <span>Star COSMOS SEQURITY on GitHub</span>
+              <span>Star COSMOS SECURITY on GitHub</span>
               <ExternalLink size={13} className={styles.starExternal} />
             </a>
           </div>
@@ -334,7 +334,7 @@ export function DisclaimerGate({ children }: DisclaimerGateProps) {
 
         <div className={styles.body}>
           <p className={styles.intro}>
-            <strong>COSMOS SEQURITY</strong> is an AI-powered penetration
+            <strong>COSMOS SECURITY</strong> is an AI-powered penetration
             testing platform intended exclusively for{' '}
             <strong>authorized security testing</strong>,{' '}
             <strong>educational purposes</strong>, and <strong>research</strong>
